@@ -35,19 +35,11 @@
     },
     "plugins": [
       "expo-font",
-      "expo-notifications",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#070e1a",
-          "image": "./assets/splash.png",
-          "imageWidth": 200
-        }
-      ]
+      "expo-notifications"
     ],
     "extra": {
       "eas": {
-        "projectId": "your-eas-project-id"
+        "projectId": "12836872-8512-4d9c-bc75-ff5887bdfefa"
       }
     }
   }
