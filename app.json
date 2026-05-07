@@ -35,20 +35,13 @@
     },
     "plugins": [
       "expo-font",
-      "expo-notifications",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#070e1a",
-          "image": "./assets/splash.png",
-          "imageWidth": 200
-        }
-      ]
+      "expo-notifications"
     ],
     "extra": {
       "eas": {
         "projectId": "2678cdd7-fa10-4b80-8aa5-f276b88a51a3"
       }
-    }
+    },
+    "owner": "bipulbala"
   }
 }
