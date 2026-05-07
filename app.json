@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "MyAstrology",
+    "slug": "myastrology",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#070e1a",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#070e1a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "in.myastrology.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#070e1a"
+      },
+      "package": "in.myastrology.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#070e1a",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}
