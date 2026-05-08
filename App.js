@@ -1,48 +1,34 @@
-// App.js — MyAstrology Root (Updated)
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as SplashScreen from 'expo-splash-screen'; 
-import { 
-  useFonts, 
-  NotoSerifBengali_400Regular, 
-  NotoSerifBengali_700Bold 
-} from '@expo-google-fonts/noto-serif-bengali';
-
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 import AppNavigator from './src/navigation/AppNavigator';
-import { Colors } from './src/theme';
 
-// স্প্ল্যাশ স্ক্রিন ধরে রাখা
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  // ফন্ট লোড করার সিস্টেম যোগ করা হলো
-  const [fontsLoaded] = useFonts({
-    'NotoSerifBengali': NotoSerifBengali_400Regular,
-    'NotoSerifBengali-Bold': NotoSerifBengali_700Bold,
+  const [fontsLoaded, fontError] = useFonts({
+    'NotoSerifBengali': require('./assets/fonts/NotoSerifBengali-Regular.ttf'),
+    'NotoSerifBengali-Bold': require('./assets/fonts/NotoSerifBengali-Bold.ttf'),
   });
 
-  useEffect(() => {
-    async function hideSplash() {
-      if (fontsLoaded) {
-        await SplashScreen.hideAsync();
-      }
-    }
-    hideSplash();
-  }, [fontsLoaded]);
+  const ready = fontsLoaded || fontError;
 
-  // ফন্ট লোড না হওয়া পর্যন্ত অ্যাপ সাদা স্ক্রিন দেখাবে না
-  if (!fontsLoaded) {
-    return null;
-  }
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
+
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer>
-          <StatusBar style="light" backgroundColor={Colors.bg} />
+          <StatusBar style="light" backgroundColor="#070e1a" />
           <AppNavigator />
         </NavigationContainer>
       </SafeAreaProvider>
