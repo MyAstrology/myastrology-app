@@ -10,7 +10,7 @@ import { Colors, Spacing } from '../theme';
 
 const CHANNEL_HANDLE = '@myastrology';
 const RSS_API = 'https://api.rss2json.com/v1/api.json?rss_url=';
-const YOUTUBE_RSS = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCmyastrology';
+const YOUTUBE_RSS = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCZCq3OfPJXZnleaXyL5bfxA';
 
 // YouTube thumbnail from video ID
 function getThumbnail(url) {
