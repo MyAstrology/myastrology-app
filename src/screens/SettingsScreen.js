@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { Colors } from '../theme';
 import {
   registerForPushNotifications,
@@ -50,6 +51,12 @@ export default function SettingsScreen({ navigation }) {
     if (key === 'panjikaNotif') {
       if (value) schedulePanjikaNotification('আজকের তিথি');
       else cancelAllNotifications();
+    }
+
+    // Dark Mode পরিবর্তন পুরো অ্যাপে প্রভাব ফেলবে (তুমি পরে Context দিয়ে যুক্ত করতে পারবে)
+    if (key === 'darkMode') {
+      // উদাহরণ: এখানে তুমি ThemeContext-এর মাধ্যমে গ্লোবাল থিম পরিবর্তন করতে পারবে
+      // toggleTheme(value);
     }
   };
 
@@ -131,7 +138,7 @@ export default function SettingsScreen({ navigation }) {
           { label: 'Website', value: 'myastrology.in', action: () => Linking.openURL('https://www.myastrology.in') },
           { label: 'YouTube', value: '@myastrology', action: () => Linking.openURL('https://youtube.com/@myastrology') },
           { label: 'WhatsApp', value: '+91 93331 22768', action: () => Linking.openURL('https://wa.me/919333122768') },
-          { label: 'App Version', value: '1.0.0', action: null },
+          { label: 'App Version', value: Constants.expoConfig?.version || '1.0.0', action: null },
         ].map((item, i) => (
           <TouchableOpacity key={i}
             style={[styles.settingRow, i < 3 && styles.settingBorder]}
@@ -147,12 +154,20 @@ export default function SettingsScreen({ navigation }) {
         ))}
       </View>
 
-      {/* Privacy */}
-      <TouchableOpacity style={styles.privacyRow}
-        onPress={() => Linking.openURL('https://www.myastrology.in/privacy-policy.html')}
-      >
-        <Text style={styles.privacyText}>🔒 Privacy Policy · Terms of Use</Text>
-      </TouchableOpacity>
+      {/* Privacy Policy ও Terms of Use আলাদা */}
+      <View style={styles.legalGroup}>
+        <TouchableOpacity style={styles.legalRow}
+          onPress={() => Linking.openURL('https://www.myastrology.in/privacy-policy.html')}
+        >
+          <Text style={styles.legalText}>🔒 Privacy Policy</Text>
+        </TouchableOpacity>
+        <View style={styles.legalDivider} />
+        <TouchableOpacity style={styles.legalRow}
+          onPress={() => Linking.openURL('https://www.myastrology.in/terms-of-use.html')}
+        >
+          <Text style={styles.legalText}>📝 Terms of Use</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -193,9 +208,16 @@ const styles = StyleSheet.create({
   settingBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(201,168,76,0.1)' },
   settingLabel: { fontSize: 14, color: Colors.text, fontWeight: '600' },
   settingSub: { fontSize: 11, color: Colors.textSub, marginTop: 2 },
-  privacyRow: {
-    margin: 16, alignItems: 'center',
-    padding: 10,
+  legalGroup: {
+    marginHorizontal: 16, marginBottom: 16,
+    borderRadius: 16, backgroundColor: Colors.bgCard,
+    borderWidth: 1, borderColor: Colors.goldBorder,
+    overflow: 'hidden',
   },
-  privacyText: { fontSize: 12, color: Colors.textMuted },
+  legalRow: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 16,
+  },
+  legalText: { fontSize: 14, color: Colors.text, fontWeight: '600' },
+  legalDivider: { height: 1, backgroundColor: 'rgba(201,168,76,0.1)', marginHorizontal: 16 },
 });
