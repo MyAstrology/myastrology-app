@@ -1,6 +1,9 @@
 // src/screens/BlogDetailScreen.js
-import React, { useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, Share } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import {
+  View, StyleSheet, ActivityIndicator, TouchableOpacity,
+  Text, Share, RefreshControl,
+} from 'react-native';
 import WebView from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
@@ -8,9 +11,14 @@ import { Colors, Spacing } from '../theme';
 export default function BlogDetailScreen({ route, navigation }) {
   const { slug, title } = route.params;
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const webViewRef = useRef(null);
   const insets = useSafeAreaInsets();
   const url = `https://www.myastrology.in/blog/${slug}.html`;
 
+  // ─── Share handler ────────────────────────────────
   const handleShare = async () => {
     try {
       await Share.share({
@@ -20,7 +28,7 @@ export default function BlogDetailScreen({ route, navigation }) {
     } catch {}
   };
 
-  // header-এ share button যোগ করা
+  // ─── Header share button ──────────────────────────
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -31,70 +39,104 @@ export default function BlogDetailScreen({ route, navigation }) {
     });
   }, [navigation]);
 
-  // Blog পেজে nav/footer লুকানো, reading mode চালু করা
-  const injectedJS = `
-    (function() {
-      // navigation ও footer লুকানো
-      ['nav', 'header', 'footer', '.hamburger', '._hdr', '._nav', '._ham', '.back-to-top']
-        .forEach(sel => {
-          const el = document.querySelector(sel);
-          if (el) el.style.display = 'none';
-        });
+  // ─── Reload logic ─────────────────────────────────
+  const loadBlog = useCallback(() => {
+    setError(false);
+    setLoading(true);
+    setProgress(0);
+    if (webViewRef.current) webViewRef.current.reload();
+  }, []);
 
-      // Reading-friendly style
-      document.body.style.padding = '16px';
-      document.body.style.maxWidth = '100%';
-      document.body.style.fontSize = '16px';
-      document.body.style.lineHeight = '1.8';
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadBlog();
+  }, [loadBlog]);
+
+  // ─── Injected JS ──────────────────────────────────
+  const injectedJS = `
+    (function(){
+      // হেডার, নেভিগেশন, ফুটার লুকানো
+      var hide = function(sel){
+        var el = document.querySelector(sel);
+        if(el) el.style.display = 'none';
+      };
+      hide('header');
+      hide('nav');
+      hide('footer');
+      hide('.site-header');
+      hide('.nav');
+      hide('.site-footer');
+      hide('.ham');
+      hide('.hamburger');
+      hide('.back-to-top');
+      hide('.wa-float');
+      hide('#back-to-top');
+
+      // বডি প্যাডিং ঠিক করা
+      document.body.style.paddingTop = '0';
+      document.body.style.paddingBottom = '0';
       document.body.style.backgroundColor = '#070e1a';
       document.body.style.color = '#e8dcc8';
-
-      // WhatsApp CTA যোগ করা
-      const cta = document.createElement('div');
-      cta.innerHTML = \`
-        <div style="
-          margin: 32px 0 16px;
-          padding: 16px;
-          background: rgba(37,211,102,0.1);
-          border: 1px solid rgba(37,211,102,0.3);
-          border-radius: 12px;
-          text-align: center;
-        ">
-          <p style="color:#e8dcc8;font-size:14px;margin:0 0 12px;font-family:serif;">
-            বিস্তারিত পরামর্শের জন্য Dr. Acharya-র সাথে কথা বলুন
-          </p>
-          <a href="https://wa.me/919333122768" style="
-            display:inline-block;
-            background:#25d366;
-            color:#fff;
-            padding:10px 24px;
-            border-radius:20px;
-            text-decoration:none;
-            font-weight:bold;
-            font-size:14px;
-          ">💬 WhatsApp-এ যোগাযোগ করুন</a>
-        </div>
-      \`;
-      document.body.appendChild(cta);
-      true;
     })();
   `;
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      {loading && (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color={Colors.gold} />
-          <Text style={styles.loaderText}>লোড হচ্ছে...</Text>
+      {/* এরর ভিউ */}
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>📡</Text>
+          <Text style={styles.errorTitle}>পেজ লোড করা যায়নি</Text>
+          <Text style={styles.errorSub}>
+            ইন্টারনেট সংযোগ পরীক্ষা করুন অথবা পরে আবার চেষ্টা করুন
+          </Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadBlog}>
+            <Text style={styles.retryText}>🔄 আবার চেষ্টা করুন</Text>
+          </TouchableOpacity>
         </View>
       )}
+
+      {/* প্রগ্রেস বার */}
+      {loading && !error && (
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+          <ActivityIndicator size="small" color={Colors.gold} style={{ marginLeft: 8 }} />
+        </View>
+      )}
+
+      {/* WebView */}
       <WebView
+        ref={webViewRef}
         source={{ uri: url }}
         style={styles.webview}
-        onLoadEnd={() => setLoading(false)}
+        onLoadStart={() => {
+          setLoading(true);
+          setError(false);
+        }}
+        onLoadEnd={() => {
+          setLoading(false);
+          setRefreshing(false);
+        }}
+        onError={() => {
+          setError(true);
+          setLoading(false);
+          setRefreshing(false);
+        }}
+        onLoadProgress={({ nativeEvent }) => setProgress(nativeEvent.progress)}
         injectedJavaScript={injectedJS}
         javaScriptEnabled
         domStorageEnabled
+        startInLoadingState={false}
+        pullToRefreshEnabled
+        renderError={() => (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorIcon}>📡</Text>
+            <Text style={styles.errorTitle}>পেজ লোড করা যায়নি</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={loadBlog}>
+              <Text style={styles.retryText}>🔄 আবার চেষ্টা করুন</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         onShouldStartLoadWithRequest={(req) => {
           // WhatsApp link বাইরে খুলবে
           if (req.url.startsWith('https://wa.me')) {
@@ -111,13 +153,31 @@ export default function BlogDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   webview: { flex: 1, backgroundColor: Colors.bg },
-  loader: {
+
+  // Error view
+  errorContainer: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Colors.bg, zIndex: 10, gap: 12,
+    backgroundColor: Colors.bg, zIndex: 10, padding: 20,
   },
-  loaderText: {
-    fontSize: 14, fontFamily: 'NotoSerifBengali',
-    color: Colors.textSecondary,
+  errorIcon: { fontSize: 48, marginBottom: 12 },
+  errorTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 6 },
+  errorSub: { fontSize: 13, color: Colors.textSub, textAlign: 'center', marginBottom: 16 },
+  retryBtn: {
+    backgroundColor: Colors.goldGlow,
+    borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10,
+    borderWidth: 1, borderColor: Colors.goldBorder,
+  },
+  retryText: { fontSize: 14, color: Colors.goldLight, fontWeight: '700' },
+
+  // Progress bar
+  progressContainer: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+    flexDirection: 'row', alignItems: 'center', zIndex: 10,
+    backgroundColor: Colors.bg,
+  },
+  progressBar: {
+    height: 3, backgroundColor: Colors.gold,
+    borderRadius: 1.5,
   },
 });
