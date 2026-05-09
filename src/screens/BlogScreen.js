@@ -1,91 +1,112 @@
 // src/screens/BlogScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, TextInput,
+  RefreshControl, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
 
-// Blog list থেকে fetch করা হবে
-async function fetchBlogList() {
-  try {
-    const res = await fetch('https://www.myastrology.in/src/content/blog/list.json');
-    const data = await res.json();
-    return data;
-  } catch {
-    // Fallback static list
-    return [
-      { slug: 'shani-sadesati-ki-hoy-keno-hoy-ki-korben', title: 'শনি সাড়েসাতি — কী করবেন?', category: 'জ্যোতিষ' },
-      { slug: 'pitru-dosh-shastriya-byakhya', title: 'পিত্রু দোষ — শাস্ত্রীয় ব্যাখ্যা', category: 'জ্যোতিষ' },
-      { slug: 'rahu-ketu-chaya-graha-jibone-prabhab-protikar', title: 'রাহু-কেতু — ছায়া গ্রহের রহস্য', category: 'জ্যোতিষ' },
-      { slug: 'hasta-rekha-jivan-manchitra', title: 'হস্তরেখা — জীবন মানচিত্র', category: 'হস্তরেখা' },
-      { slug: 'bibaha-rekha-ki-bole-biye-prem-dampattya', title: 'বিবাহ রেখা কী বলে?', category: 'হস্তরেখা' },
-      { slug: 'kalsarpa-yog-ki-prabhab-somadhan', title: 'কালসর্প যোগ — প্রভাব ও সমাধান', category: 'যোগ' },
-      { slug: 'manglik-yog-ki-prathamik-dharona', title: 'মাঙ্গলিক যোগ — প্রাথমিক ধারণা', category: 'যোগ' },
-      { slug: 'samudrik-shastra-ki-mukh-hasta-pada-bishleshan', title: 'সমুদ্রিক শাস্ত্র — মুখ-হাত-পা বিচার', category: 'সমুদ্রিক' },
-      { slug: 'bangla-maser-namakarana-nakshatra-purnima-rahasya', title: 'বাংলা মাসের নামকরণ রহস্য', category: 'পঞ্জিকা' },
-      { slug: 'mesha-lagna-jataker-swabhab-karma-bibaha-bhagya', title: 'মেষ লগ্ন জাতকের স্বভাব ও কর্ম', category: 'লগ্ন' },
-    ];
-  }
-}
+const API_URL = 'https://www.myastrology.in/src/content/blog/list.json';
 
-const CATEGORIES = ['সব', 'জ্যোতিষ', 'হস্তরেখা', 'যোগ', 'লগ্ন', 'পঞ্জিকা', 'দর্শন'];
+const CATEGORIES = ['সব', 'জ্যোতিষ', 'হস্তরেখা', 'যোগ', 'লগ্ন', 'পঞ্জিকা', 'দর্শন', 'দর্শন'];
+
+// হেল্পার: পোস্টের কন্টেন্ট থেকে আনুমানিক পড়ার সময় বের করে (মিনিটে)
+const getReadingTime = (content) => {
+  if (!content || content.length === 0) return 1;
+  const words = content.split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200)); // গড় ২০০ শব্দ/মিনিট
+};
 
 export default function BlogScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [posts, setPosts] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('সব');
 
-  useEffect(() => {
-    fetchBlogList().then(data => {
+  const fetchPosts = useCallback(async () => {
+    try {
+      setError(null);
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Server error');
+      const data = await res.json();
       const list = Array.isArray(data) ? data : (data.posts || data.articles || []);
       setPosts(list);
       setFiltered(list);
+    } catch (err) {
+      setError('ব্লগ লোড করা যায়নি।');
+    } finally {
       setLoading(false);
-    });
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchPosts();
+  }, [fetchPosts]);
 
   useEffect(() => {
     let result = posts;
     if (category !== 'সব') {
-      result = result.filter(p => p.category === category);
+      result = result.filter(p => (p.category || p.tags?.[0]) === category);
     }
     if (search) {
       result = result.filter(p =>
-        p.title?.toLowerCase().includes(search.toLowerCase())
+        p.title?.toLowerCase().includes(search.toLowerCase()) ||
+        p.description?.toLowerCase().includes(search.toLowerCase())
       );
     }
     setFiltered(result);
   }, [search, category, posts]);
 
   const renderPost = ({ item }) => (
-    <TouchableOpacity style={styles.postCard}
+    <TouchableOpacity style={styles.postCard} activeOpacity={0.8}
       onPress={() => navigation.navigate('BlogDetail', {
         slug: item.slug, title: item.title,
       })}
     >
-      <View style={styles.postMeta}>
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>{item.category || 'ব্লগ'}</Text>
+      <View style={styles.cardRow}>
+        <Image
+          source={{ uri: item.image || 'https://www.myastrology.in/images/fallback-1200x630.webp' }}
+          style={styles.thumbnail}
+          resizeMode="cover"
+        />
+        <View style={styles.cardContent}>
+          <View style={styles.postMeta}>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{item.category || item.tags?.[0] || 'ব্লগ'}</Text>
+            </View>
+            {item.date && <Text style={styles.postDate}>{item.date}</Text>}
+          </View>
+          <Text style={styles.postTitle} numberOfLines={2}>{item.title}</Text>
+          {item.description && (
+            <Text style={styles.postExcerpt} numberOfLines={2}>{item.description}</Text>
+          )}
+          <View style={styles.cardFooter}>
+            {item.readingTime && (
+              <Text style={styles.readingTime}>{item.readingTime} মিনিট</Text>
+            )}
+            <Text style={styles.readMore}>পড়ুন →</Text>
+          </View>
         </View>
       </View>
-      <Text style={styles.postTitle}>{item.title}</Text>
-      {item.excerpt && (
-        <Text style={styles.postExcerpt} numberOfLines={2}>{item.excerpt}</Text>
-      )}
-      <Text style={styles.readMore}>পড়ুন →</Text>
     </TouchableOpacity>
   );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.header}>📖 ব্লগ পোস্ট</Text>
+      <Text style={styles.header}>📖 ব্লগ</Text>
 
-      {/* Search */}
       <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
@@ -96,7 +117,6 @@ export default function BlogScreen({ navigation }) {
         />
       </View>
 
-      {/* Categories */}
       <FlatList
         horizontal data={CATEGORIES}
         showsHorizontalScrollIndicator={false}
@@ -114,9 +134,17 @@ export default function BlogScreen({ navigation }) {
         )}
       />
 
-      {loading ? (
-        <View style={styles.loader}>
+      {loading && !refreshing ? (
+        <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.gold} />
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={fetchPosts}>
+            <Text style={styles.retryBtnText}>আবার চেষ্টা করুন</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -125,6 +153,14 @@ export default function BlogScreen({ navigation }) {
           renderItem={renderPost}
           contentContainerStyle={styles.postList}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold} />
+          }
+          ListEmptyComponent={
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>কোনো ব্লগ পোস্ট পাওয়া যায়নি।</Text>
+            </View>
+          }
         />
       )}
     </View>
@@ -160,26 +196,53 @@ const styles = StyleSheet.create({
   postList: { padding: Spacing.md, gap: Spacing.md },
   postCard: {
     backgroundColor: Colors.bgCard, borderRadius: 14,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.goldBorder,
+    padding: 0, borderWidth: 1, borderColor: Colors.goldBorder,
+    overflow: 'hidden',
   },
-  postMeta: { flexDirection: 'row', marginBottom: Spacing.sm },
+  cardRow: { flexDirection: 'row' },
+  thumbnail: {
+    width: 100, height: '100%',
+    backgroundColor: Colors.goldGlow,
+  },
+  cardContent: { flex: 1, padding: Spacing.md },
+  postMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   categoryBadge: {
     backgroundColor: Colors.goldGlow, borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 3,
     borderWidth: 1, borderColor: Colors.goldBorder,
   },
   categoryText: { fontSize: 11, fontFamily: 'NotoSerifBengali', color: Colors.gold },
+  postDate: { fontSize: 11, fontFamily: 'NotoSerifBengali', color: Colors.textMuted },
   postTitle: {
     fontSize: 15, fontFamily: 'NotoSerifBengali',
-    fontWeight: '700', color: Colors.textPrimary, lineHeight: 24,
+    fontWeight: '700', color: Colors.textPrimary, lineHeight: 22, marginBottom: 4,
   },
   postExcerpt: {
     fontSize: 13, fontFamily: 'NotoSerifBengali',
-    color: Colors.textSecondary, lineHeight: 20, marginTop: 4,
+    color: Colors.textSecondary, lineHeight: 18, marginBottom: 8,
   },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  readingTime: { fontSize: 11, fontFamily: 'NotoSerifBengali', color: Colors.textMuted },
   readMore: {
     fontSize: 12, fontFamily: 'NotoSerifBengali',
-    color: Colors.gold, marginTop: Spacing.sm, fontWeight: '600',
+    color: Colors.gold, fontWeight: '600',
   },
-  loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  errorIcon: { fontSize: 48, marginBottom: 12 },
+  errorText: {
+    fontSize: 16, fontFamily: 'NotoSerifBengali',
+    color: Colors.danger, textAlign: 'center', marginBottom: 16,
+  },
+  retryBtn: {
+    backgroundColor: Colors.goldGlow, paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 20, borderWidth: 1, borderColor: Colors.goldBorder,
+  },
+  retryBtnText: {
+    fontSize: 14, fontFamily: 'NotoSerifBengali',
+    color: Colors.goldLight, fontWeight: '600',
+  },
+  emptyText: {
+    fontSize: 15, fontFamily: 'NotoSerifBengali',
+    color: Colors.textSecondary, textAlign: 'center',
+  },
 });
