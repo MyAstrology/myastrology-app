@@ -1,0 +1,142 @@
+// src/services/NotificationService.js
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+export async function registerForPushNotifications() {
+  if (!Device.isDevice) return null;
+  const { status: existing } = await Notifications.getPermissionsAsync();
+  let finalStatus = existing;
+  if (existing !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== 'granted') return null;
+
+  if (Platform.OS === 'android') {
+    const channels = [
+      { id: 'default', name: 'MyAstrology', color: '#c9a84c' },
+      { id: 'panjika', name: 'পঞ্জিকা আপডেট', color: '#f97316' },
+      { id: 'rashifal', name: 'দৈনিক রাশিফল', color: '#c9a84c' },
+      { id: 'youtube', name: 'নতুন ভিডিও', color: '#ff0000' },
+      { id: 'blog', name: 'নতুন ব্লগ', color: '#8b5cf6' },
+      { id: 'festival', name: 'উৎসব ও পার্বণ', color: '#ec4899' },
+    ];
+    for (const ch of channels) {
+      await Notifications.setNotificationChannelAsync(ch.id, {
+        name: ch.name,
+        importance: Notifications.AndroidImportance.HIGH,
+        lightColor: ch.color,
+        sound: 'default',
+      });
+    }
+  }
+
+  const token = await Notifications.getExpoPushTokenAsync({
+    projectId: '2678cdd7-fa10-4b80-8aa5-f276b88a51a3',
+  });
+  await AsyncStorage.setItem('pushToken', token.data);
+  return token.data;
+}
+
+export async function scheduleRashifalNotification() {
+  await Notifications.cancelScheduledNotificationAsync('rashifal-daily').catch(() => {});
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'rashifal-daily',
+    content: {
+      title: 'আজকের রাশিফল',
+      body: 'শুভ সকাল! আজকের গ্রহ অবস্থান ও রাশিফল জানুন।',
+      data: { screen: 'Rashifal' },
+      channelId: 'rashifal',
+    },
+    trigger: { hour: 7, minute: 0, repeats: true },
+  });
+}
+
+export async function schedulePanjikaNotification() {
+  await Notifications.cancelScheduledNotificationAsync('panjika-daily').catch(() => {});
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'panjika-daily',
+    content: {
+      title: 'আজকের পঞ্জিকা',
+      body: 'তিথি, নক্ষত্র ও রাহুকাল জানুন।',
+      data: { screen: 'Panjika' },
+      channelId: 'panjika',
+    },
+    trigger: { hour: 6, minute: 0, repeats: true },
+  });
+}
+
+export async function scheduleFestivalNotifications() {
+  const now = new Date();
+  const festivals = [
+    { name: 'দুর্গাপূজা', date: new Date(2026, 9, 1) },
+    { name: 'দীপাবলি', date: new Date(2026, 9, 20) },
+    { name: 'কালীপূজা', date: new Date(2026, 9, 21) },
+    { name: 'সরস্বতী পূজা', date: new Date(2027, 1, 1) },
+    { name: 'শিবরাত্রি', date: new Date(2027, 1, 26) },
+    { name: 'দোলযাত্রা', date: new Date(2027, 2, 4) },
+    { name: 'রথযাত্রা', date: new Date(2027, 5, 27) },
+  ];
+  for (const f of festivals) {
+    const d = new Date(f.date);
+    d.setDate(d.getDate() - 1);
+    d.setHours(9, 0, 0, 0);
+    if (d > now) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'আগামীকাল ' + f.name,
+          body: 'Dr. Acharya-র বিশেষ পরামর্শ নিন।',
+          data: { screen: 'Consult' },
+          channelId: 'festival',
+        },
+        trigger: { date: d },
+      }).catch(() => {});
+    }
+  }
+}
+
+export async function checkNewYouTubeVideo() {
+  try {
+    const RSS = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCmyastrology';
+    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS));
+    const data = await res.json();
+    if (!data.items?.length) return null;
+    const latest = data.items[0];
+    const saved = await AsyncStorage.getItem('lastYoutubeVideoId');
+    if (saved !== latest.guid) {
+      await AsyncStorage.setItem('lastYoutubeVideoId', latest.guid);
+      return { title: latest.title, thumbnail: latest.thumbnail, link: latest.link };
+    }
+    return null;
+  } catch { return null; }
+}
+
+export async function checkNewBlogPost() {
+  try {
+    const res = await fetch('https://www.myastrology.in/src/content/blog/list.json');
+    const data = await res.json();
+    const posts = Array.isArray(data) ? data : (data.posts || []);
+    if (!posts.length) return null;
+    const latest = posts[0];
+    const saved = await AsyncStorage.getItem('lastBlogSlug');
+    if (saved !== latest.slug) {
+      await AsyncStorage.setItem('lastBlogSlug', latest.slug);
+      return latest;
+    }
+    return null;
+  } catch { return null; }
+}
+
+export async function cancelAllScheduled() {
+  await Notifications.cancelAllScheduledNotificationsAsync();
+}
