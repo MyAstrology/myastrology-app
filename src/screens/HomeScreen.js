@@ -1,9 +1,8 @@
 // src/screens/HomeScreen.js
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Linking, Animated, Dimensions,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Rashis, Planets, Spacing } from '../theme';
@@ -26,6 +25,7 @@ function getBengaliDate() {
   return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+// তারা background
 function StarField() {
   const stars = useRef(
     Array.from({ length: 25 }, (_, i) => ({
@@ -73,32 +73,26 @@ export default function HomeScreen({ navigation }) {
   const greeting = getGreeting();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // পঞ্জিকা ডেটা — এখন সম্পূর্ণ ডায়নামিক
-  const [panjika, setPanjika] = useState(null);
-  const [loadingPanjika, setLoadingPanjika] = useState(true);
-  const [errorPanjika, setErrorPanjika] = useState(false);
-
-  const fetchPanjika = useCallback(async () => {
-    try {
-      setErrorPanjika(false);
-      setLoadingPanjika(true);
-      const res = await fetch('https://www.myastrology.in/panjika/today.json');
-      if (!res.ok) throw new Error('Network error');
-      const data = await res.json();
-      setPanjika(data);
-    } catch (e) {
-      setErrorPanjika(true);
-    } finally {
-      setLoadingPanjika(false);
-    }
-  }, []);
+  const [panjika] = useState({
+    tithi: 'শুক্লা তৃতীয়া',
+    nakshatra: 'রোহিণী',
+    yoga: 'সৌভাগ্য',
+    sunrise: 'ভোর ৫:১৬',
+    sunset: 'সন্ধ্যা ৬:২১',
+    rahukal: 'বেলা ১০:৩০ – ১২:০০',
+    amrit: 'বিকেল ৪:০০ – ৫:৩০',
+  });
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1, duration: 800, useNativeDriver: true,
     }).start();
-    fetchPanjika();
-  }, [fetchPanjika]);
+  }, []);
+
+  const openWhatsApp = () => Linking.openURL(
+    'https://wa.me/919333122768?text=' +
+    encodeURIComponent('নমস্কার Dr. Acharya 🙏 আমি পরামর্শ নিতে চাই।')
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -115,7 +109,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.greeting}>{greeting.icon} {greeting.text}</Text>
               <Text style={styles.date}>{getBengaliDate()}</Text>
             </View>
-            <TouchableOpacity style={styles.waBtn} onPress={() => Linking.openURL('https://wa.me/919333122768?text=' + encodeURIComponent('নমস্কার Dr. Acharya 🙏 আমি পরামর্শ নিতে চাই।'))} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.waBtn} onPress={openWhatsApp} activeOpacity={0.8}>
               <Text style={{ fontSize: 22 }}>💬</Text>
               <Text style={styles.waBtnText}>পরামর্শ</Text>
             </TouchableOpacity>
@@ -129,7 +123,9 @@ export default function HomeScreen({ navigation }) {
         >
           {Object.entries(Planets).map(([key, p]) => (
             <TouchableOpacity key={key} style={styles.grahaItem}
-              onPress={() => navigation.navigate('Blog', { screen: 'BlogList' })}
+              onPress={() => navigation.navigate('Blog', {
+                screen: 'BlogList',
+              })}
             >
               <View style={[styles.grahaCircle, {
                 borderColor: p.color + '88',
@@ -142,7 +138,7 @@ export default function HomeScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* পঞ্জিকা Card — API থেকে আসছে */}
+        {/* পঞ্জিকা Card */}
         <TouchableOpacity style={styles.panjikaCard}
           onPress={() => navigation.navigate('Tools', { screen: 'Panjika' })}
           activeOpacity={0.9}
@@ -158,60 +154,46 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.moreLink}>বিস্তারিত →</Text>
           </View>
 
-          {loadingPanjika ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={Colors.gold} />
-              <Text style={styles.loadingText}>পঞ্জিকা লোড হচ্ছে...</Text>
+          <View style={styles.panjikaHighlight}>
+            {[
+              { icon: '🌙', label: 'তিথি', value: panjika.tithi, color: Colors.moon },
+              { icon: '⭐', label: 'নক্ষত্র', value: panjika.nakshatra, color: Colors.gold },
+            ].map((item, i) => (
+              <View key={i} style={[styles.panjikaHItem, { borderColor: item.color + '44' }]}>
+                <Text style={{ fontSize: 22, marginBottom: 6 }}>{item.icon}</Text>
+                <Text style={styles.panjikaHLabel}>{item.label}</Text>
+                <Text style={styles.panjikaHValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.sunRow}>
+            <View style={styles.sunItem}>
+              <Text style={{ fontSize: 22 }}>🌅</Text>
+              <View style={{ marginLeft: 8 }}>
+                <Text style={styles.sunLabel}>সূর্যোদয়</Text>
+                <Text style={styles.sunValue}>{panjika.sunrise}</Text>
+              </View>
             </View>
-          ) : errorPanjika ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ পঞ্জিকা লোড করা যায়নি</Text>
-              <TouchableOpacity onPress={fetchPanjika}>
-                <Text style={styles.retryLink}>আবার চেষ্টা করুন</Text>
-              </TouchableOpacity>
+            <View style={styles.sunDivider} />
+            <View style={styles.sunItem}>
+              <Text style={{ fontSize: 22 }}>🌇</Text>
+              <View style={{ marginLeft: 8 }}>
+                <Text style={styles.sunLabel}>সূর্যাস্ত</Text>
+                <Text style={styles.sunValue}>{panjika.sunset}</Text>
+              </View>
             </View>
-          ) : panjika ? (
-            <>
-              <View style={styles.panjikaHighlight}>
-                {[
-                  { icon: '🌙', label: 'তিথি', value: panjika.tithi, color: Colors.moon },
-                  { icon: '⭐', label: 'নক্ষত্র', value: panjika.nakshatra, color: Colors.gold },
-                ].map((item, i) => (
-                  <View key={i} style={[styles.panjikaHItem, { borderColor: item.color + '44' }]}>
-                    <Text style={{ fontSize: 22, marginBottom: 6 }}>{item.icon}</Text>
-                    <Text style={styles.panjikaHLabel}>{item.label}</Text>
-                    <Text style={styles.panjikaHValue}>{item.value}</Text>
-                  </View>
-                ))}
-              </View>
+          </View>
 
-              <View style={styles.sunRow}>
-                <View style={styles.sunItem}>
-                  <Text style={{ fontSize: 22 }}>🌅</Text>
-                  <View style={{ marginLeft: 8 }}>
-                    <Text style={styles.sunLabel}>সূর্যোদয়</Text>
-                    <Text style={styles.sunValue}>{panjika.sunrise}</Text>
-                  </View>
-                </View>
-                <View style={styles.sunDivider} />
-                <View style={styles.sunItem}>
-                  <Text style={{ fontSize: 22 }}>🌇</Text>
-                  <View style={{ marginLeft: 8 }}>
-                    <Text style={styles.sunLabel}>সূর্যাস্ত</Text>
-                    <Text style={styles.sunValue}>{panjika.sunset}</Text>
-                  </View>
-                </View>
-              </View>
+          <View style={styles.rahuRow}>
+            <Text>⚠️ </Text>
+            <Text style={styles.rahuText}>রাহুকাল: {panjika.rahukal}</Text>
+          </View>
 
-              <View style={styles.rahuRow}>
-                <Text style={styles.rahuText}>⚠️ রাহুকাল: {panjika.rahukal}</Text>
-              </View>
-
-              <View style={styles.amritRow}>
-                <Text style={styles.amritText}>🍀 অমৃতযোগ: {panjika.amrit}</Text>
-              </View>
-            </>
-          ) : null}
+          <View style={styles.amritRow}>
+            <Text>🍀 </Text>
+            <Text style={styles.amritText}>অমৃতযোগ: {panjika.amrit}</Text>
+          </View>
         </TouchableOpacity>
 
         {/* দ্রুত অ্যাক্সেস */}
@@ -271,6 +253,23 @@ export default function HomeScreen({ navigation }) {
             জ্যোতিষী ও হস্তরেখাবিদ, রাণাঘাট
           </Text>
         </View>
+
+        {/* Consult CTA */}
+        <TouchableOpacity style={styles.consultCard} onPress={openWhatsApp} activeOpacity={0.85}>
+          <View style={styles.consultLeft}>
+            <Text style={{ fontSize: 28 }}>🙏</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.consultTitle}>ব্যক্তিগত পরামর্শ নিন</Text>
+            <Text style={styles.consultSub}>WhatsApp-এ Dr. Acharya-র সাথে কথা বলুন</Text>
+            <View style={styles.consultBadge}>
+              <Text style={{ fontSize: 10, color: Colors.whatsapp }}>
+                ✓ বিনামূল্যে প্রাথমিক আলোচনা
+              </Text>
+            </View>
+          </View>
+          <Text style={{ fontSize: 22, color: Colors.whatsapp }}>→</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 40 }} />
       </Animated.ScrollView>
@@ -362,15 +361,6 @@ const styles = StyleSheet.create({
   },
   amritText: { fontSize: 13, color: Colors.mercury, fontWeight: '600' },
 
-  loadingContainer: { padding: 16, alignItems: 'center', gap: 8 },
-  loadingText: { fontSize: 12, color: Colors.textSub },
-  errorBox: {
-    padding: 16, alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(181,32,32,0.05)', borderRadius: 10,
-  },
-  errorText: { fontSize: 12, color: Colors.mars },
-  retryLink: { fontSize: 12, color: Colors.gold, fontWeight: '600' },
-
   quickGrid: {
     flexDirection: 'row', flexWrap: 'wrap',
     paddingHorizontal: 16, gap: 10, marginBottom: 8,
@@ -413,4 +403,24 @@ const styles = StyleSheet.create({
     fontStyle: 'italic', textAlign: 'center',
   },
   quoteAuthor: { fontSize: 14, fontWeight: '700', color: Colors.gold },
+
+  consultCard: {
+    margin: 16, borderRadius: 18,
+    backgroundColor: Colors.whatsappBg,
+    borderWidth: 1.5, borderColor: 'rgba(37,211,102,0.25)',
+    padding: 16, flexDirection: 'row',
+    alignItems: 'center', gap: 12,
+  },
+  consultLeft: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: 'rgba(37,211,102,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  consultTitle: { fontSize: 16, fontWeight: '700', color: Colors.whatsapp },
+  consultSub: { fontSize: 12, color: Colors.textSub, marginTop: 2 },
+  consultBadge: {
+    marginTop: 6, backgroundColor: 'rgba(37,211,102,0.15)',
+    borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
+    alignSelf: 'flex-start',
+  },
 });
