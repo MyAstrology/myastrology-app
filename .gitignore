@@ -1,0 +1,19 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.env
+.env.local
+.env.*.local
+
+# API keys — এই ফাইলটি push করবেন না
+src/secrets.js
