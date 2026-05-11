@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius } from '../theme';
+import { askGemini } from '../gemini';
 
 // ═══════════════════════════════════════════════════════════
 // ★ তথ্যসমৃদ্ধ স্থানীয় জ্ঞানভাণ্ডার (৩০+ বিষয়)
@@ -163,34 +164,48 @@ export default function AIChatScreen() {
     setShowQuick(false);
 
     const userMsg = { id: Date.now().toString(), role: 'user', content: q };
+    const history = messages.filter(m => m.id !== '0').slice(-8); // last 4 turns
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setLoading(true);
 
-    // লোকাল নলেজ বেস থেকে উত্তর খোঁজা (সামান্য বিলম্ব সহ)
-    setTimeout(() => {
-      const result = searchKnowledgeBase(q);
-      
-      let reply, url, showWA = false;
-      
-      if (result) {
-        reply = `📖 **${result.title}**\n\n${result.description}\n\n🔍 উপরের লিংকে ক্লিক করে বিস্তারিত জানুন। ব্যক্তিগত পরামর্শের জন্য নিচের WhatsApp বাটনে ক্লিক করুন।`;
-        url = result.url;
-        showWA = true;
-      } else {
-        reply = 'এই বিষয়ে আমার কাছে রেডিমেড তথ্য নেই। তবে Dr. Acharya আপনার প্রশ্নের সঠিক উত্তর দিতে পারবেন। নিচের WhatsApp বাটনে ক্লিক করে সরাসরি পরামর্শ নিন। 🙏';
-        showWA = true;
-      }
+    try {
+      // Gemini API প্রথমে চেষ্টা করি
+      const geminiReply = await askGemini(q, history);
 
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: reply,
-        url: url,
-        showWhatsApp: showWA,
-      }]);
-      setLoading(false);
-    }, 800);
+      if (geminiReply) {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: geminiReply,
+          showWhatsApp: true,
+        }]);
+        setLoading(false);
+        return;
+      }
+    } catch (_) {
+      // Gemini ব্যর্থ হলে local fallback
+    }
+
+    // লোকাল নলেজ বেস fallback
+    const result = searchKnowledgeBase(q);
+    let reply, url, showWA = true;
+
+    if (result) {
+      reply = `📖 ${result.title}\n\n${result.description}\n\n🔍 বিস্তারিত জানতে নিচের লিংকে ক্লিক করুন।`;
+      url = result.url;
+    } else {
+      reply = 'এই বিষয়ে সঠিক উত্তরের জন্য Dr. Acharya-র সাথে সরাসরি কথা বলুন। 🙏';
+    }
+
+    setMessages(prev => [...prev, {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: reply,
+      url,
+      showWhatsApp: showWA,
+    }]);
+    setLoading(false);
   }, [input, loading, messages]);
 
   return (
