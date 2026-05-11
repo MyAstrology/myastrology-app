@@ -25,12 +25,12 @@ export async function registerForPushNotifications() {
 
   if (Platform.OS === 'android') {
     const channels = [
-      { id: 'default', name: 'MyAstrology', color: '#c9a84c' },
-      { id: 'panjika', name: 'পঞ্জিকা আপডেট', color: '#f97316' },
-      { id: 'rashifal', name: 'দৈনিক রাশিফল', color: '#c9a84c' },
-      { id: 'youtube', name: 'নতুন ভিডিও', color: '#ff0000' },
-      { id: 'blog', name: 'নতুন ব্লগ', color: '#8b5cf6' },
-      { id: 'festival', name: 'উৎসব ও পার্বণ', color: '#ec4899' },
+      { id: 'default',  name: 'MyAstrology',       color: '#c9a84c' },
+      { id: 'panjika',  name: 'পঞ্জিকা আপডেট',    color: '#f97316' },
+      { id: 'rashifal', name: 'দৈনিক রাশিফল',     color: '#c9a84c' },
+      { id: 'youtube',  name: 'নতুন ভিডিও',        color: '#ff0000' },
+      { id: 'blog',     name: 'নতুন ব্লগ',         color: '#8b5cf6' },
+      { id: 'festival', name: 'উৎসব ও পার্বণ',     color: '#ec4899' },
     ];
     for (const ch of channels) {
       await Notifications.setNotificationChannelAsync(ch.id, {
@@ -92,30 +92,66 @@ export async function schedulePanjikaNotification() {
   });
 }
 
+// 2026–2027 সম্পূর্ণ উৎসব তালিকা
+const FESTIVALS_2026_2027 = [
+  // 2026
+  { name: 'মহাশিবরাত্রি',    date: [2026,  2, 17] },
+  { name: 'দোলযাত্রা',       date: [2026,  3,  3] },
+  { name: 'রামনবমী',          date: [2026,  3, 29] },
+  { name: 'অক্ষয় তৃতীয়া',   date: [2026,  4, 21] },
+  { name: 'রথযাত্রা',         date: [2026,  6, 24] },
+  { name: 'জন্মাষ্টমী',      date: [2026,  8, 15] },
+  { name: 'মহালয়া',          date: [2026,  9, 17] },
+  { name: 'দুর্গাষষ্ঠী',     date: [2026,  9, 22] },
+  { name: 'দুর্গাসপ্তমী',    date: [2026,  9, 23] },
+  { name: 'দুর্গাঅষ্টমী',    date: [2026,  9, 24] },
+  { name: 'দুর্গানবমী',      date: [2026,  9, 25] },
+  { name: 'দুর্গাদশমী/বিজয়া',date: [2026,  9, 26] },
+  { name: 'লক্ষ্মীপূজা',    date: [2026, 10,  2] },
+  { name: 'কালীপূজা/দীপাবলি',date: [2026, 10, 20] },
+  { name: 'ভাইফোঁটা',        date: [2026, 10, 22] },
+  { name: 'জগদ্ধাত্রী পূজা', date: [2026, 11,  1] },
+  { name: 'কার্তিক পূজা',    date: [2026, 11, 14] },
+  { name: 'ইতু পূজা',        date: [2026, 11, 22] },
+  // 2027
+  { name: 'মকর সংক্রান্তি', date: [2027,  1, 14] },
+  { name: 'সরস্বতী পূজা',   date: [2027,  1, 31] },
+  { name: 'শিবরাত্রি',       date: [2027,  2,  6] },
+  { name: 'দোলযাত্রা',       date: [2027,  3, 22] },
+  { name: 'চৈত্রসংক্রান্তি', date: [2027,  4, 13] },
+  { name: 'বাংলা নববর্ষ',   date: [2027,  4, 14] },
+  { name: 'রথযাত্রা',        date: [2027,  7, 13] },
+];
+
 export async function scheduleFestivalNotifications() {
   const now = new Date();
-  const festivals = [
-    { name: 'দুর্গাপূজা', date: new Date(2026, 9, 1) },
-    { name: 'দীপাবলি', date: new Date(2026, 9, 20) },
-    { name: 'কালীপূজা', date: new Date(2026, 9, 21) },
-    { name: 'সরস্বতী পূজা', date: new Date(2027, 1, 1) },
-    { name: 'শিবরাত্রি', date: new Date(2027, 1, 26) },
-    { name: 'দোলযাত্রা', date: new Date(2027, 2, 4) },
-    { name: 'রথযাত্রা', date: new Date(2027, 5, 27) },
-  ];
-  for (const f of festivals) {
-    const d = new Date(f.date);
-    d.setDate(d.getDate() - 1);
-    d.setHours(9, 0, 0, 0);
-    if (d > now) {
+  for (const f of FESTIVALS_2026_2027) {
+    const [yr, mo, dy] = f.date;
+    const festDay = new Date(yr, mo - 1, dy);
+    // Notify the evening before at 8pm
+    const notifyAt = new Date(yr, mo - 1, dy - 1, 20, 0, 0, 0);
+    if (notifyAt > now) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'আগামীকাল ' + f.name,
-          body: 'Dr. Acharya-র বিশেষ পরামর্শ নিন।',
+          title: `🪔 আগামীকাল ${f.name}`,
+          body: 'Dr. Acharya-র বিশেষ পরামর্শ নিন। শুভ অনুষ্ঠানের জন্য প্রস্তুতি নিন।',
           data: { screen: 'Consult' },
           channelId: 'festival',
         },
-        trigger: { date: d },
+        trigger: { date: notifyAt },
+      }).catch(() => {});
+    }
+    // Day-of notification at 7am
+    const morningNotify = new Date(yr, mo - 1, dy, 7, 0, 0, 0);
+    if (morningNotify > now) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `🙏 আজ ${f.name}`,
+          body: 'শুভেচ্ছা! পঞ্জিকা ও মুহূর্ত দেখুন।',
+          data: { screen: 'Panjika' },
+          channelId: 'festival',
+        },
+        trigger: { date: morningNotify },
       }).catch(() => {});
     }
   }
@@ -153,13 +189,31 @@ export async function checkNewBlogPost() {
     const saved = await AsyncStorage.getItem('lastBlogSlug');
     if (saved !== latest.slug) {
       await AsyncStorage.setItem('lastBlogSlug', latest.slug);
-      return latest;
+      return latest; // includes .image, .title, .slug
     }
     return null;
   } catch { return null; }
 }
 
-// তিথি পরিবর্তনের সময় notification schedule করে
+export async function notifyNewBlogPost(post) {
+  if (!post?.title) return;
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📝 নতুন ব্লগ পোস্ট',
+      body: post.title,
+      data: {
+        screen: 'BlogDetail',
+        slug: post.slug,
+        title: post.title,
+        imageUrl: post.image || null,
+      },
+      channelId: 'blog',
+      ...(post.image ? { attachments: [{ url: post.image }] } : {}),
+    },
+    trigger: null, // immediate
+  }).catch(() => {});
+}
+
 export async function scheduleTithiChangeNotification() {
   try {
     await Notifications.cancelScheduledNotificationAsync('tithi-change').catch(() => {});

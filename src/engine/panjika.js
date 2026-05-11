@@ -34,8 +34,9 @@ const KARANA = [
   'শকুনি','চতুষ্পদ','নাগ','কিন্তুঘ্ন',
 ];
 
-// রাহুকাল বার অনুযায়ী (দিনের ৮ ভাগের কোন ভাগ)
-const RAHU_SLOTS = [8, 2, 7, 5, 6, 4, 3]; // Sun…Sat
+const RAHU_SLOTS  = [8, 2, 7, 5, 6, 4, 3]; // Sun…Sat
+const YAMA_SLOTS  = [5, 4, 3, 2, 1, 0, 6]; // Sun–Sat
+const GULIKA_SLOTS = [7, 6, 5, 4, 3, 2, 1]; // Sun–Sat
 
 // ── Math helpers ────────────────────────────────────────
 const toRad = d => d * Math.PI / 180;
@@ -67,7 +68,6 @@ function moonLon(jd) {
     - 0.186 * Math.sin(toRad(mod360(357.528 + 0.9856003 * n))));
 }
 
-// সূর্যোদয়/সূর্যাস্তের decimal ঘণ্টা (IST) — lat/lon প্যারামিটার
 function _sunDecimal(date, lat, lon, rising) {
   const jd = jdn(date) + 0.5 - lon / 360;
   const n = jd - 2451545.0;
@@ -103,6 +103,145 @@ const AMRIT_NAKS = {
   3:[4,11,21], 4:[1,8,16], 5:[3,12,22], 6:[5,13,25],
 };
 
+// ── বাংলা সংখ্যা ──────────────────────────────────────
+const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+export const toBn = n => String(Math.abs(Math.round(n))).replace(/\d/g, d => BN_DIGITS[+d]);
+
+// ── বাংলা তারিখ ───────────────────────────────────────
+// BN_STARTS[m] = [gregMonth(1-based), gregDay] when Bengali month m+1 starts in a non-leap year
+const BN_MONTHS = ['বৈশাখ','জ্যৈষ্ঠ','আষাঢ়','শ্রাবণ','ভাদ্র','আশ্বিন',
+                   'কার্তিক','অগ্রহায়ণ','পৌষ','মাঘ','ফাল্গুন','চৈত্র'];
+const BN_MONTH_DAYS = [31,31,31,31,31,30,30,30,30,30,30,30];
+const BN_DAYS_BN = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+
+// Bengali calendar starts approx April 14/15 each Gregorian year
+const BN_START_GREG = [
+  [4, 14], // Boishakh
+  [5, 15],
+  [6, 15],
+  [7, 16],
+  [8, 17],
+  [9, 17],
+  [10,17],
+  [11,16],
+  [12,15],
+  [1, 14], // Magh (next year)
+  [2, 13],
+  [3, 14], // Chaitra
+];
+
+export function getBengaliDate(date = new Date()) {
+  const greg = { y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate() };
+
+  // Find which Bengali month & year this Gregorian date falls in
+  // Try current Gregorian year and the next year as epoch
+  for (let yearOffset = 0; yearOffset <= 1; yearOffset++) {
+    const baseGregYear = greg.y - yearOffset;
+    // Build starts array: months 0–11 mapped to absolute day counts
+    const toAbs = (gy, gm, gd) => {
+      // Days since epoch 2000-01-01 for quick comparison
+      const d0 = new Date(2000, 0, 1);
+      return Math.floor((new Date(gy, gm - 1, gd) - d0) / 86400000);
+    };
+    const absDate = toAbs(greg.y, greg.m, greg.d);
+
+    for (let bm = 11; bm >= 0; bm--) {
+      const [sm, sd] = BN_START_GREG[bm];
+      const sy = bm >= 9 ? baseGregYear + 1 : baseGregYear; // Magh/Falgun/Chaitra start in next Gregorian year
+      const startAbs = toAbs(sy, sm, sd);
+      if (absDate >= startAbs) {
+        const dayInMonth = absDate - startAbs + 1;
+        // Bengali year: Boishakh starts, bnYear = gregYear - 594 (approx)
+        const bnYear = bm < 9 ? baseGregYear - 593 : baseGregYear - 594;
+        return {
+          day: dayInMonth,
+          month: bm,
+          monthName: BN_MONTHS[bm],
+          year: bnYear,
+          dayName: BN_DAYS_BN[date.getDay()],
+          formatted: `${toBn(dayInMonth)} ${BN_MONTHS[bm]} ${toBn(bnYear)}`,
+        };
+      }
+    }
+  }
+  // Fallback
+  return { day: 1, month: 0, monthName: BN_MONTHS[0], year: greg.y - 593, formatted: '' };
+}
+
+// ── মুহূর্ত গণনা ──────────────────────────────────────
+export function getMuhurtas(date = new Date(), lat = DEFAULT_LAT, lon = DEFAULT_LON) {
+  const srDec = _sunDecimal(date, lat, lon, true);
+  const ssDec = _sunDecimal(date, lat, lon, false);
+  const dayLen = ssDec - srDec;
+  const seg = dayLen / 8;
+  const day = date.getDay();
+
+  // ব্রাহ্মমুহূর্ত: sunrise - 96 minutes
+  const brahmaStart = srDec - 1.6;
+  const brahmaEnd   = srDec - 0.8;
+
+  // অভিজিৎ মুহূর্ত: midday ± 24 min
+  const midday = (srDec + ssDec) / 2;
+  const abhijitStart = midday - 0.4;
+  const abhijitEnd   = midday + 0.4;
+
+  // গোধূলি লগ্ন: sunset ± 24 min
+  const godhuliBefore = ssDec - 0.4;
+  const godhuliAfter  = ssDec + 0.4;
+
+  // যমগণ্ড: দিনের ৮ভাগের যম-স্লট
+  const yamaSlot  = YAMA_SLOTS[day];
+  const yamaStart = srDec + seg * (yamaSlot - 1);
+  const yamaEnd   = yamaStart + seg;
+
+  // গুলিক কাল
+  const gulikaSlot  = GULIKA_SLOTS[day];
+  const gulikaStart = srDec + seg * (gulikaSlot - 1);
+  const gulikaEnd   = gulikaStart + seg;
+
+  // রাহুকাল
+  const rahuSlot  = RAHU_SLOTS[day];
+  const rahuStart = srDec + seg * (rahuSlot - 1);
+  const rahuEnd   = rahuStart + seg;
+
+  return {
+    brahma:   { start: fmtTime(brahmaStart),   end: fmtTime(brahmaEnd),   label: 'ব্রাহ্মমুহূর্ত',   auspicious: true },
+    abhijit:  { start: fmtTime(abhijitStart),  end: fmtTime(abhijitEnd),  label: 'অভিজিৎ মুহূর্ত',  auspicious: true },
+    godhuli:  { start: fmtTime(godhuliBefore), end: fmtTime(godhuliAfter),label: 'গোধূলি লগ্ন',     auspicious: true },
+    yamaganda:{ start: fmtTime(yamaStart),     end: fmtTime(yamaEnd),     label: 'যমগণ্ড',          auspicious: false },
+    gulika:   { start: fmtTime(gulikaStart),   end: fmtTime(gulikaEnd),   label: 'গুলিক কাল',       auspicious: false },
+    rahukal:  { start: fmtTime(rahuStart),     end: fmtTime(rahuEnd),     label: 'রাহুকাল',         auspicious: false },
+  };
+}
+
+// ── মাসের পঞ্জিকা (30-দিন অ্যারে) ───────────────────
+export function getMonthPanjika(year, month, lat = DEFAULT_LAT, lon = DEFAULT_LON) {
+  const days = new Date(year, month, 0).getDate(); // days in month
+  const result = [];
+  for (let d = 1; d <= days; d++) {
+    const date = new Date(year, month - 1, d);
+    const jd   = jdn(date) + 0.5 - lon / 360 + TZ / 24;
+    const sLon  = sunLon(jd);
+    const mLon  = moonLon(jd);
+    const diff  = mod360(mLon - sLon);
+    const tIdx  = Math.floor(diff / 12);
+    const paksha = tIdx < 15 ? 0 : 1;
+    const tName  = tIdx === 14 ? 'পূর্ণিমা'
+      : tIdx === 29 ? 'অমাবস্যা'
+      : PAKSHA[paksha] + TITHIS[tIdx % 15];
+    const nakIdx = Math.floor(mod360(mLon) / (360 / 27)) % 27;
+    const bnDate = getBengaliDate(date);
+    result.push({
+      date, d, weekDay: date.getDay(),
+      tithiIdx: tIdx, tithi: tName, paksha,
+      nakshatra: NAKSHATRAS[nakIdx],
+      bnDay: bnDate.day, bnMonth: bnDate.month,
+      isPurnima: tIdx === 14, isAmabasya: tIdx === 29,
+    });
+  }
+  return result;
+}
+
 // ── Public API ───────────────────────────────────────────
 
 export function getTodayPanjika(date = new Date(), lat = DEFAULT_LAT, lon = DEFAULT_LON) {
@@ -111,32 +250,23 @@ export function getTodayPanjika(date = new Date(), lat = DEFAULT_LAT, lon = DEFA
   const mLon = moonLon(jd);
   const diff = mod360(mLon - sLon);
 
-  // তিথি
-  const tithiIdx = Math.floor(diff / 12); // 0–29
+  const tithiIdx = Math.floor(diff / 12);
   const paksha = tithiIdx < 15 ? 0 : 1;
   const tithiName = tithiIdx === 14 ? 'পূর্ণিমা'
     : tithiIdx === 29 ? 'অমাবস্যা'
     : PAKSHA[paksha] + TITHIS[tithiIdx % 15];
 
-  // নক্ষত্র
   const nakIdx = Math.floor(mod360(mLon) / (360 / 27)) % 27;
-
-  // যোগ
   const yogaIdx = Math.floor(mod360(sLon + mLon) / (360 / 27)) % 27;
-
-  // করণ
   const karanaIdx = Math.floor(diff / 6) % 11;
 
-  // সূর্যোদয় / সূর্যাস্ত
   const srDec = _sunDecimal(date, lat, lon, true);
   const ssDec = _sunDecimal(date, lat, lon, false);
 
-  // রাহুকাল
   const seg = (ssDec - srDec) / 8;
   const rSlot = RAHU_SLOTS[date.getDay()];
   const rStart = srDec + seg * (rSlot - 1);
 
-  // অমৃতযোগ
   const amritNaks = AMRIT_NAKS[date.getDay()] || [];
   const amStart = amritNaks.includes(nakIdx)
     ? srDec + seg * 3
@@ -144,19 +274,18 @@ export function getTodayPanjika(date = new Date(), lat = DEFAULT_LAT, lon = DEFA
   const amritStr = `${fmtTime(amStart)} – ${fmtTime(amStart + 1.5)}`;
 
   return {
-    tithi:    tithiName,
+    tithi:     tithiName,
     nakshatra: NAKSHATRAS[nakIdx],
-    yoga:     YOGAS[yogaIdx],
-    karana:   KARANA[karanaIdx],
-    sunrise:  fmtTime(srDec),
-    sunset:   fmtTime(ssDec),
-    rahukal:  `${fmtTime(rStart)} – ${fmtTime(rStart + seg)}`,
-    amrit:    amritStr,
+    yoga:      YOGAS[yogaIdx],
+    karana:    KARANA[karanaIdx],
+    sunrise:   fmtTime(srDec),
+    sunset:    fmtTime(ssDec),
+    rahukal:   `${fmtTime(rStart)} – ${fmtTime(rStart + seg)}`,
+    amrit:     amritStr,
     tithiIdx,
   };
 }
 
-// পরবর্তী তিথি পরিবর্তনের সময়
 export function getNextTithiChange(date = new Date(), lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   const now = date.getTime();
   for (let min = 1; min <= 1440; min++) {
