@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, RefreshControl,
+  StyleSheet, ActivityIndicator, RefreshControl, Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
@@ -29,12 +29,18 @@ const toBn = (n) => String(Math.abs(Math.round(n))).replace(/[0-9]/g, d => BD[+d
 // তারা দেখানোর জন্য
 const renderStars = (score) => '★'.repeat(score) + '☆'.repeat(5 - score);
 
-export default function RashifalScreen({ navigation }) {
+export default function RashifalScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const today = new Date().toISOString().split('T')[0];
 
-  const [rashifalData, setRashifalData] = useState(null); // পুরো ১২ রাশির অ্যারে
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  // HomeScreen থেকে selected rashi আসতে পারে
+  const paramRashi = route?.params?.rashi;
+  const initIndex = paramRashi
+    ? RASHIS.findIndex(r => r.name === paramRashi.name)
+    : 0;
+
+  const [rashifalData, setRashifalData] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(initIndex < 0 ? 0 : initIndex);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -43,7 +49,7 @@ export default function RashifalScreen({ navigation }) {
     try {
       setError(null);
       const url = `https://www.myastrology.in/rashifal/${today}.json`;
-      const response = await fetch(url);
+      const response = await fetch(url, { timeout: 8000 });
       if (!response.ok) throw new Error('Server error');
       const json = await response.json();
       if (Array.isArray(json) && json.length === 12) {
@@ -52,7 +58,7 @@ export default function RashifalScreen({ navigation }) {
         throw new Error('Invalid data');
       }
     } catch (err) {
-      setError('রাশিফল লোড করা যায়নি।');
+      setError('রাশিফল এখন পাওয়া যাচ্ছে না।');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -118,10 +124,15 @@ export default function RashifalScreen({ navigation }) {
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorIcon}>🌙</Text>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={fetchRashifalData}>
-            <Text style={styles.retryBtnText}>আবার চেষ্টা করুন</Text>
+            <Text style={styles.retryBtnText}>🔄 আবার চেষ্টা করুন</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.retryBtn, { marginTop: 10, backgroundColor: 'rgba(201,168,76,0.15)', borderColor: Colors.gold }]}
+            onPress={() => Linking.openURL('https://www.myastrology.in/rashifal.html')}
+          >
+            <Text style={[styles.retryBtnText, { color: Colors.gold }]}>🌐 ওয়েবসাইটে দেখুন</Text>
           </TouchableOpacity>
         </View>
       ) : currentRashi ? (
