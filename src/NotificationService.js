@@ -1,8 +1,9 @@
-// src/services/NotificationService.js
+// src/NotificationService.js
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTodayPanjika, getNextTithiChange } from './engine/panjika';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -48,16 +49,31 @@ export async function registerForPushNotifications() {
   return token.data;
 }
 
-export async function scheduleRashifalNotification() {
+export async function scheduleRashifalNotification(rashiName = null) {
   await Notifications.cancelScheduledNotificationAsync('rashifal-daily').catch(() => {});
+
+  let title = '🌟 আজকের রাশিফল';
+  let body = 'শুভ সকাল! আজকের গ্রহ অবস্থান ও রাশিফল জানুন।';
+
+  if (rashiName) {
+    title = `🌟 ${rashiName} রাশিফল`;
+    body = `শুভ সকাল! ${rashiName} রাশির আজকের ফল জানুন।`;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const res = await fetch(`https://www.myastrology.in/rashifal/${today}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const found = data.find(r => r.rashi === rashiName);
+          if (found?.summary) body = found.summary;
+        }
+      }
+    } catch (_) {}
+  }
+
   await Notifications.scheduleNotificationAsync({
     identifier: 'rashifal-daily',
-    content: {
-      title: 'আজকের রাশিফল',
-      body: 'শুভ সকাল! আজকের গ্রহ অবস্থান ও রাশিফল জানুন।',
-      data: { screen: 'Rashifal' },
-      channelId: 'rashifal',
-    },
+    content: { title, body, data: { screen: 'Rashifal' }, channelId: 'rashifal' },
     trigger: { hour: 7, minute: 0, repeats: true },
   });
 }
@@ -107,18 +123,24 @@ export async function scheduleFestivalNotifications() {
 
 export async function checkNewYouTubeVideo() {
   try {
-    const RSS = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCmyastrology';
-    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS));
-    const data = await res.json();
-    if (!data.items?.length) return null;
-    const latest = data.items[0];
-    const saved = await AsyncStorage.getItem('lastYoutubeVideoId');
-    if (saved !== latest.guid) {
-      await AsyncStorage.setItem('lastYoutubeVideoId', latest.guid);
-      return { title: latest.title, thumbnail: latest.thumbnail, link: latest.link };
+    const CHANNEL_ID = 'UCZCq3OfPJXZnleaXyL5bfxA';
+    const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    const res = await fetch(apiUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'ok' && data.items?.length) {
+        const latest = data.items[0];
+        const saved = await AsyncStorage.getItem('lastYoutubeVideoId');
+        if (saved !== latest.guid) {
+          await AsyncStorage.setItem('lastYoutubeVideoId', latest.guid);
+          return { title: latest.title, thumbnail: latest.thumbnail, link: latest.link };
+        }
+        return null;
+      }
     }
-    return null;
-  } catch { return null; }
+  } catch (_) {}
+  return null;
 }
 
 export async function checkNewBlogPost() {
@@ -135,6 +157,27 @@ export async function checkNewBlogPost() {
     }
     return null;
   } catch { return null; }
+}
+
+// তিথি পরিবর্তনের সময় notification schedule করে
+export async function scheduleTithiChangeNotification() {
+  try {
+    await Notifications.cancelScheduledNotificationAsync('tithi-change').catch(() => {});
+    const change = getNextTithiChange(new Date());
+    if (!change) return;
+    const { time, tithiName } = change;
+    const panjika = getTodayPanjika();
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'tithi-change',
+      content: {
+        title: '🌙 তিথি পরিবর্তন হচ্ছে',
+        body: `${panjika.tithi} শেষ হয়ে ${tithiName} তিথি শুরু হবে।`,
+        data: { screen: 'Panjika' },
+        channelId: 'panjika',
+      },
+      trigger: { date: time },
+    });
+  } catch (_) {}
 }
 
 export async function cancelAllScheduled() {
