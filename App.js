@@ -12,9 +12,10 @@ import AppNavigator from './src/navigation/AppNavigator';
 import {
   registerForPushNotifications,
   schedulePanjikaNotification,
+  scheduleTithiChangeNotification,
   checkNewYouTubeVideo,
   checkNewBlogPost,
-} from './src/services/NotificationService';
+} from './src/NotificationService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,7 +41,9 @@ export default function App() {
     registerForPushNotifications();
 
     // Daily panjika notification
-    schedulePanjikaNotification('আজকের তিথি');
+    schedulePanjikaNotification();
+    // তিথি পরিবর্তন notification
+    scheduleTithiChangeNotification();
 
     // Check new YouTube video
     checkNewYouTubeVideo().then(video => {
@@ -110,7 +113,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer ref={navigationRef}>
-          <StatusBar style="light" backgroundColor="#070e1a" />
+          <StatusBar style="light" backgroundColor="#0e0e2a" />
           <AppNavigator />
         </NavigationContainer>
       </SafeAreaProvider>
