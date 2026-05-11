@@ -6,6 +6,10 @@ on:
 permissions:
   contents: write
 
+# GitHub Secrets যা set করতে হবে:
+#   EXPO_TOKEN    — expo.dev → Account Settings → Access Tokens
+#   GEMINI_API_KEY — Google AI Studio থেকে নেওয়া
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,52 +29,68 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Create secrets file
+        run: |
+          cat > src/secrets.js << 'SECRETEOF'
+          export const GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
+          SECRETEOF
+          echo "✅ secrets.js created"
+
       - name: Create assets & fonts
         run: |
           mkdir -p assets/fonts
-          sudo apt-get install -y imagemagick
+          sudo apt-get install -y imagemagick -q
 
-          # App icon — gold M on dark
+          # App icon — website navy gradient + gold OM symbol
           convert -size 1024x1024 \
-            -define gradient:angle=135 gradient:'#0d1f35-#070e1a' \
-            -gravity Center -fill '#c9a84c' \
-            -font DejaVu-Sans-Bold -pointsize 450 \
-            -annotate 0 "M" assets/icon.png
+            -define gradient:angle=135 gradient:'#1e0e3a-#0e0e2a' \
+            -gravity Center -fill '#c9922a' \
+            -font DejaVu-Sans-Bold -pointsize 400 \
+            -annotate 0 "M" \
+            -gravity Center -fill '#e8bc5a' -pointsize 80 \
+            -annotate +0+220 "MyAstrology" \
+            assets/icon.png
 
-          # Adaptive icon
-          convert -size 1024x1024 xc:'#070e1a' \
-            -gravity Center -fill '#c9a84c' \
+          # Adaptive icon (foreground only — no background)
+          convert -size 1024x1024 xc:'#0e0e2a' \
+            -gravity Center -fill '#c9922a' \
             -font DejaVu-Sans-Bold -pointsize 420 \
             -annotate 0 "M" assets/adaptive-icon.png
 
-          # Splash screen
+          # Splash screen — navy gradient + gold text
           convert -size 1284x2778 \
-            -define gradient:angle=180 gradient:'#0d1f35-#070e1a' \
-            -gravity Center -fill '#c9a84c' \
-            -font DejaVu-Sans-Bold -pointsize 140 \
-            -annotate 0 "MyAstrology" assets/splash.png
+            -define gradient:angle=180 gradient:'#12122a-#0e0e2a' \
+            -gravity Center -fill '#c9922a' \
+            -font DejaVu-Sans-Bold -pointsize 160 \
+            -annotate 0 "MyAstrology" \
+            -gravity Center -fill '#e8bc5a' -pointsize 50 \
+            -annotate +0+140 "Vedic Astrology by Dr. Prodyut Acharya" \
+            assets/splash.png
 
           # Favicon
-          convert -size 48x48 xc:'#c9a84c' assets/favicon.png
+          convert -size 48x48 xc:'#c9922a' assets/favicon.png
 
-          # Bengali Font download
-          curl -fsSL \
-            "https://fonts.gstatic.com/s/notoserifbengali/v17/hYkuPvggTvnzteaV7WD65tCMunA6bJ1HIyDL-7M.ttf" \
-            -o assets/fonts/NotoSerifBengali-Regular.ttf \
-            || echo "Font download failed, continuing..."
+          # NotoSerifBengali font download (Google Fonts CDN)
+          FONT_URL="https://fonts.gstatic.com/s/notoserifbengali/v17/hYkuPvggTvnzteaV7WD65tCMunA6bJ1HIyDL-7M.ttf"
+          curl -fsSL "$FONT_URL" -o assets/fonts/NotoSerifBengali-Regular.ttf \
+            || curl -fsSL "https://github.com/google/fonts/raw/main/ofl/notoserifbengali/NotoSerifBengali%5Bwdth%2Cwght%5D.ttf" \
+               -o assets/fonts/NotoSerifBengali-Regular.ttf \
+            || echo "⚠️ Font download failed — text may not render correctly"
 
-          # Bold = Regular (same font, weight handled by fontWeight)
-          cp assets/fonts/NotoSerifBengali-Regular.ttf \
-             assets/fonts/NotoSerifBengali-Bold.ttf 2>/dev/null || true
+          # Bold font (same file — fontWeight handles visual weight)
+          [ -f assets/fonts/NotoSerifBengali-Regular.ttf ] && \
+            cp assets/fonts/NotoSerifBengali-Regular.ttf \
+               assets/fonts/NotoSerifBengali-Bold.ttf
 
-          echo "=== Assets created ==="
-          ls -lh assets/
-          ls -lh assets/fonts/
+          echo "=== Assets ready ==="
+          ls -lh assets/ && ls -lh assets/fonts/ 2>/dev/null || true
 
-      - name: Build Android APK
+      - name: Build Android APK (Preview)
         run: eas build --platform android --profile preview --non-interactive
 
-      - name: Build complete
+      - name: Done
         run: |
+          echo ""
           echo "✅ Build complete!"
-          echo "expo.dev → MyAstrology → Builds → Download APK"
+          echo "👉 expo.dev → Projects → myastrology → Builds"
+          echo "👉 APK download করে phone-এ install করুন"
