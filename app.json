@@ -6,27 +6,23 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#070e1a",
-    "primaryColor": "#c9a84c",
+    "backgroundColor": "#0e0e2a",
+    "primaryColor": "#c9922a",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#070e1a"
+      "backgroundColor": "#0e0e2a"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "in.myastrology.app",
-      "buildNumber": "1",
-      "infoPlist": {
-        "NSCameraUsageDescription": "ছবি তোলার জন্য",
-        "NSPhotoLibraryUsageDescription": "ছবি নির্বাচন করতে"
-      }
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#070e1a"
+        "backgroundColor": "#0e0e2a"
       },
       "package": "in.myastrology.app",
       "versionCode": 1,
@@ -37,15 +33,14 @@
         "android.permission.VIBRATE",
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.POST_NOTIFICATIONS"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "notification": {
       "icon": "./assets/icon.png",
-      "color": "#c9a84c",
+      "color": "#c9922a",
       "androidMode": "default"
     },
     "plugins": [
@@ -54,7 +49,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#c9a84c",
+          "color": "#c9922a",
           "sounds": []
         }
       ]
