@@ -18,6 +18,9 @@ import NumerologyScreen from '../screens/NumerologyScreen';
 import PanjikaScreen from '../screens/PanjikaScreen';
 import BlogDetailScreen from '../screens/BlogDetailScreen';
 import RashifalScreen from '../screens/RashifalScreen';
+import VarshaphalaScreen from '../screens/VarshaphalaScreen';
+import GocharScreen from '../screens/GocharScreen';
+import GemstoneScreen from '../screens/GemstoneScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -29,17 +32,10 @@ const stackOpts = {
   cardStyle: { backgroundColor: Colors.bg },
 };
 
-function TabIcon({ emoji, label, focused, badge }) {
+function TabIcon({ emoji, label, focused }) {
   return (
     <View style={styles.tabIcon}>
-      <View>
-        <Text style={[styles.tabEmoji, focused && styles.tabEmojiFocused]}>{emoji}</Text>
-        {badge > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
-          </View>
-        )}
-      </View>
+      <Text style={[styles.tabEmoji, focused && styles.tabEmojiFocused]}>{emoji}</Text>
       <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{label}</Text>
     </View>
   );
@@ -50,6 +46,7 @@ function HomeStack() {
     <Stack.Navigator screenOptions={stackOpts}>
       <Stack.Screen name="HomeMain" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RashifalDetail" component={RashifalScreen} options={{ title: 'রাশিফল' }} />
+      <Stack.Screen name="Gemstone" component={GemstoneScreen} options={{ title: 'রত্নপাথর' }} />
     </Stack.Navigator>
   );
 }
@@ -62,6 +59,9 @@ function ToolsStack() {
       <Stack.Screen name="MatchMaking" component={MatchMakingScreen} options={{ title: 'কুষ্ঠি মিলন' }} />
       <Stack.Screen name="Numerology" component={NumerologyScreen} options={{ title: 'নিউমেরোলজি' }} />
       <Stack.Screen name="Panjika" component={PanjikaScreen} options={{ title: 'পঞ্জিকা' }} />
+      <Stack.Screen name="Varshaphala" component={VarshaphalaScreen} options={{ title: 'বর্ষফল' }} />
+      <Stack.Screen name="Gochar" component={GocharScreen} options={{ title: 'গ্রহ গোচর' }} />
+      <Stack.Screen name="Gemstone" component={GemstoneScreen} options={{ title: 'রত্নপাথর' }} />
     </Stack.Navigator>
   );
 }
@@ -101,7 +101,7 @@ export default function AppNavigator() {
       <Tab.Screen name="Blog" component={BlogStack}
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📖" label="ব্লগ" focused={focused} /> }} />
       <Tab.Screen name="YouTube" component={MoreStack}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎬" label="ভিডিও" focused={focused} /> }} />
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎦" label="ভিডিও" focused={focused} /> }} />
       <Tab.Screen name="Consult" component={ConsultScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📞" label="পরামর্শ" focused={focused} /> }} />
     </Tab.Navigator>
@@ -120,10 +120,4 @@ const styles = StyleSheet.create({
   tabEmojiFocused: { opacity: 1, transform: [{ scale: 1.15 }] },
   tabLabel: { fontSize: 9, color: 'rgba(201,168,76,0.5)' },
   tabLabelFocused: { color: '#c9a84c', fontWeight: '700' },
-  badge: {
-    position: 'absolute', top: -4, right: -8,
-    backgroundColor: '#ef4444', borderRadius: 8,
-    minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
-  },
-  badgeText: { color: '#fff', fontSize: 9, fontWeight: '700' },
 });

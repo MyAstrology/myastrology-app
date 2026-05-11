@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Rashis, Planets, Spacing } from '../theme';
 import { getTodayPanjika } from '../engine/panjika';
 import { loadUserCity } from '../engine/cities';
+import { useUser } from '../context/UserContext';
+import LuckyWidget from '../components/LuckyWidget';
 
 const { width } = Dimensions.get('window');
 
@@ -27,7 +29,6 @@ function getBengaliDate() {
   return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// তারা background
 function StarField() {
   const stars = useRef(
     Array.from({ length: 25 }, (_, i) => ({
@@ -74,6 +75,7 @@ export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const greeting = getGreeting();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { user } = useUser();
 
   const [panjika, setPanjika] = useState({
     tithi: '—', nakshatra: '—', yoga: '—',
@@ -104,6 +106,9 @@ export default function HomeScreen({ navigation }) {
     encodeURIComponent('নমস্কার Dr. Acharya 🙏 আমি পরামর্শ নিতে চাই।')
   );
 
+  const firstName = user?.name ? user.name.split(' ')[0] : null;
+  const userRashi = (user?.rashiIndex !== undefined) ? Rashis[user.rashiIndex] : null;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Animated.ScrollView
@@ -116,8 +121,17 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.header}>
             <View>
               <Text style={styles.om}>🕉️</Text>
-              <Text style={styles.greeting}>{greeting.icon} {greeting.text}</Text>
+              <Text style={styles.greeting}>
+                {greeting.icon} {greeting.text}{firstName ? `, ${firstName}` : ''}
+              </Text>
               <Text style={styles.date}>{getBengaliDate()}</Text>
+              {userRashi && (
+                <View style={styles.rashiBadgeWrap}>
+                  <Text style={[styles.rashiBadge, { color: userRashi.color }]}>
+                    {userRashi.symbol} {userRashi.name} রাশি
+                  </Text>
+                </View>
+              )}
             </View>
             <TouchableOpacity style={styles.waBtn} onPress={openWhatsApp} activeOpacity={0.8}>
               <Text style={{ fontSize: 22 }}>💬</Text>
@@ -204,14 +218,18 @@ export default function HomeScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
+        {/* আজকের ভাগ্য Widget */}
+        <Text style={styles.sectionTitle}>🍀 আজকের শুভসংকেত</Text>
+        <LuckyWidget onPress={() => navigation.navigate('Gemstone')} />
+
         {/* দ্রুত অ্যাক্সেস */}
-        <Text style={styles.sectionTitle}>⚡ দ্রুত অ্যাক্সেস</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 12 }]}>⚡ দ্রুত অ্যাক্সেস</Text>
         <View style={styles.quickGrid}>
           {[
-            { icon: '🔯', label: 'জন্মকুষ্ঠি', screen: 'Kundali', color: Colors.saturn },
+            { icon: '🔯', label: 'জন্মকুষ্ঠি', screen: 'Kundali',     color: Colors.saturn },
             { icon: '💑', label: 'কুষ্ঠি মিলন', screen: 'MatchMaking', color: Colors.venus },
-            { icon: '📅', label: 'পঞ্জিকা', screen: 'Panjika', color: Colors.gold },
-            { icon: '🔢', label: 'নিউমেরোলজি', screen: 'Numerology', color: Colors.mercury },
+            { icon: '📅', label: 'পঞ্জিকা',    screen: 'Panjika',     color: Colors.gold },
+            { icon: '🔢', label: 'নিউমেরোলজি', screen: 'Numerology',  color: Colors.mercury },
           ].map((item, i) => (
             <TouchableOpacity key={i}
               style={[styles.quickCard, { borderColor: item.color + '44' }]}
@@ -236,7 +254,11 @@ export default function HomeScreen({ navigation }) {
         >
           {Rashis.map((r, i) => (
             <TouchableOpacity key={i}
-              style={[styles.rashiCard, { borderColor: r.color + '55' }]}
+              style={[
+                styles.rashiCard,
+                { borderColor: r.color + '55' },
+                userRashi && i === user.rashiIndex && { borderColor: r.color, borderWidth: 2 },
+              ]}
               onPress={() => navigation.navigate('RashifalDetail', { rashi: r })}
               activeOpacity={0.8}
             >
@@ -245,6 +267,9 @@ export default function HomeScreen({ navigation }) {
               </View>
               <Text style={[styles.rashiName, { color: r.color }]}>{r.name}</Text>
               <Text style={styles.rashiLord}>{r.lord}</Text>
+              {userRashi && i === user.rashiIndex && (
+                <Text style={{ fontSize: 8, color: r.color, fontWeight: '700' }}>আমার</Text>
+              )}
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -256,7 +281,7 @@ export default function HomeScreen({ navigation }) {
             "জ্যোতিষ ভাগ্যের দাস নয় — এটি চেতনার আলো যা অন্ধকারে পথ দেখায়।"
           </Text>
           <View style={{ width: 40, height: 1.5, backgroundColor: Colors.saturn, marginVertical: 10, alignSelf: 'center' }} />
-          <Text style={styles.quoteAuthor}>ড. প্রদ্যুৎ আচার্য</Text>
+          <Text style={styles.quoteAuthor}>ডা. প্রদ্যুৎ আচার্য</Text>
           <Text style={{ fontSize: 11, color: Colors.textSub, textAlign: 'center' }}>
             জ্যোতিষী ও হস্তরেখাবিদ, রাণাঘাট
           </Text>
@@ -298,8 +323,10 @@ const styles = StyleSheet.create({
     alignItems: 'center', padding: 16,
   },
   om: { fontSize: 18, marginBottom: 4 },
-  greeting: { fontSize: 26, fontWeight: '700', color: Colors.goldLight },
+  greeting: { fontSize: 24, fontWeight: '700', color: Colors.goldLight },
   date: { fontSize: 13, color: Colors.textSub, marginTop: 2 },
+  rashiBadgeWrap: { marginTop: 5 },
+  rashiBadge: { fontSize: 12, fontWeight: '700' },
   waBtn: {
     backgroundColor: Colors.whatsappBg,
     borderWidth: 1, borderColor: 'rgba(37,211,102,0.3)',
