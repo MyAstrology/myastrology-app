@@ -6,6 +6,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Rashis, Planets, Spacing } from '../theme';
+import { getTodayPanjika } from '../engine/panjika';
+import { loadUserCity } from '../engine/cities';
 
 const { width } = Dimensions.get('window');
 
@@ -73,15 +75,23 @@ export default function HomeScreen({ navigation }) {
   const greeting = getGreeting();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [panjika] = useState({
-    tithi: 'শুক্লা তৃতীয়া',
-    nakshatra: 'রোহিণী',
-    yoga: 'সৌভাগ্য',
-    sunrise: 'ভোর ৫:১৬',
-    sunset: 'সন্ধ্যা ৬:২১',
-    rahukal: 'বেলা ১০:৩০ – ১২:০০',
-    amrit: 'বিকেল ৪:০০ – ৫:৩০',
+  const [panjika, setPanjika] = useState({
+    tithi: '—', nakshatra: '—', yoga: '—',
+    sunrise: '—', sunset: '—', rahukal: '—', amrit: '—',
   });
+  const [cityName, setCityName] = useState('রাণাঘাট');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const city = await loadUserCity();
+        setCityName(city.n);
+        setPanjika(getTodayPanjika(new Date(), city.lat, city.lng));
+      } catch (_) {
+        try { setPanjika(getTodayPanjika()); } catch (_) {}
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -123,9 +133,7 @@ export default function HomeScreen({ navigation }) {
         >
           {Object.entries(Planets).map(([key, p]) => (
             <TouchableOpacity key={key} style={styles.grahaItem}
-              onPress={() => navigation.navigate('Blog', {
-                screen: 'BlogList',
-              })}
+              onPress={() => navigation.navigate('AIChat')}
             >
               <View style={[styles.grahaCircle, {
                 borderColor: p.color + '88',
@@ -148,7 +156,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={{ fontSize: 26 }}>📅</Text>
               <View>
                 <Text style={styles.panjikaTitle}>আজকের পঞ্জিকা</Text>
-                <Text style={styles.panjikaSubtitle}>বিশুদ্ধসিদ্ধ পদ্ধতি</Text>
+                <Text style={styles.panjikaSubtitle}>📍 {cityName} • বিশুদ্ধসিদ্ধ</Text>
               </View>
             </View>
             <Text style={styles.moreLink}>বিস্তারিত →</Text>
@@ -281,7 +289,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
 
   headerWrap: {
-    backgroundColor: '#0a1525',
+    backgroundColor: Colors.headerGrad3,
     borderBottomWidth: 1, borderBottomColor: Colors.goldBorder,
     paddingBottom: 16, overflow: 'hidden',
   },
