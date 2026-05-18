@@ -5,8 +5,9 @@ import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme';
 import { useUser } from '../context/UserContext';
+import { PAGES } from '../config';
 
-const BASE_URL = 'https://www.myastrology.in/varshaphala.html';
+const BASE_URL = PAGES.varshaphala;
 
 export default function VarshaphalaScreen() {
   const insets = useSafeAreaInsets();

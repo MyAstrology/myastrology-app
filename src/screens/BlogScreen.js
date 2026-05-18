@@ -7,9 +7,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
+import { API, APP } from '../config';
 
-const API_URL = 'https://www.myastrology.in/src/content/blog/list.json';
-const FALLBACK_IMG = 'https://www.myastrology.in/images/fallback-1200x630.webp';
+const API_URL = API.blog;
+const FALLBACK_IMG = `${APP.website}/images/fallback-1200x630.webp`;
 
 const CATEGORIES = ['সব', 'জ্যোতিষ', 'হস্তরেখা', 'যোগ', 'লগ্ন', 'পঞ্জিকা', 'দর্শন'];
 

@@ -7,12 +7,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme';
+import { YOUTUBE } from '../config';
 
-const CHANNEL_ID  = 'UCZCq3OfPJXZnleaXyL5bfxA';
-const CHANNEL_URL = 'https://www.youtube.com/@myastrology';
-const RSS_URL     = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
-const RSS_API     = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
-const SITEMAP_URL = 'https://www.myastrology.in/video-sitemap.xml';
+const CHANNEL_URL = YOUTUBE.channelUrl;
+const RSS_API     = `${YOUTUBE.rss2JsonApi}${encodeURIComponent(YOUTUBE.rssUrl)}`;
+const SITEMAP_URL = YOUTUBE.sitemapUrl;
 
 // RSS2JSON response থেকে video list তৈরি
 function parseRSS(data) {
@@ -49,7 +48,7 @@ function parseSitemapXML(xml) {
 
 function getThumbnailFromURL(url) {
   const id = url?.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/)?.[1];
-  return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
+  return id ? YOUTUBE.thumbUrl(id) : null;
 }
 
 function formatDate(dateStr) {
