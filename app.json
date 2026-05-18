@@ -56,6 +56,24 @@
           "color": "#c9922a",
           "sounds": []
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.24",
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24,
+            "buildToolsVersion": "34.0.0",
+            "gradleVersion": "8.6",
+            "gradlePluginVersion": "8.3.0",
+            "extraProguardRules": "-keep class com.facebook.react.** { *; }\n-keep class expo.** { *; }"
+          },
+          "jvm": {
+            "jvmVersion": "17"
+          }
+        }
       ]
     ],
     "extra": {
