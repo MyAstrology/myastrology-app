@@ -8,6 +8,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Rashis } from '../theme';
+import { APP, CONTACT, YOUTUBE } from '../config';
 import {
   registerForPushNotifications,
   schedulePanjikaNotification,
@@ -197,10 +198,10 @@ export default function SettingsScreen() {
       <View style={styles.group}>
         <Text style={styles.groupTitle}>📱 App সম্পর্কে</Text>
         {[
-          { label: 'Website', value: 'myastrology.in', url: 'https://www.myastrology.in' },
-          { label: 'YouTube', value: '@myastrology',   url: 'https://youtube.com/@myastrology' },
-          { label: 'WhatsApp',value: '+91 93331 22768',url: 'https://wa.me/919333122768' },
-          { label: 'Version', value: '1.1.0' },
+          { label: 'Website', value: 'myastrology.in', url: APP.website },
+          { label: 'YouTube', value: '@myastrology',   url: YOUTUBE.channelUrl },
+          { label: 'WhatsApp',value: CONTACT.phone,    url: CONTACT.whatsapp },
+          { label: 'Version', value: APP.version },
         ].map((item, i) => (
           <TouchableOpacity key={i}
             style={[styles.settingRow, i < 3 && styles.rowBorder]}
@@ -214,7 +215,7 @@ export default function SettingsScreen() {
       </View>
 
       <TouchableOpacity style={{ margin: 16, alignItems: 'center' }}
-        onPress={() => Linking.openURL('https://www.myastrology.in/privacy-policy.html')}
+        onPress={() => Linking.openURL(APP.privacyUrl)}
       >
         <Text style={{ fontSize: 12, color: Colors.textMuted }}>🔒 Privacy Policy</Text>
       </TouchableOpacity>

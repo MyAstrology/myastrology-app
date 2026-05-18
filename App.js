@@ -1,4 +1,4 @@
-// App.js — MyAstrology Final Version
+// App.js
 import React, { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
@@ -7,8 +7,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
-import { Alert } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import { UserProvider, useUser } from './src/context/UserContext';
 import {
   registerForPushNotifications,
   schedulePanjikaNotification,
@@ -19,38 +20,33 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
-export default function App() {
+function AppContent() {
   const navigationRef = useRef(null);
   const notificationListener = useRef(null);
   const responseListener = useRef(null);
+  const { user, loading } = useUser();
 
-  // Font loading
   const [fontsLoaded, fontError] = useFonts({
     'NotoSerifBengali': require('./assets/fonts/NotoSerifBengali-Regular.ttf'),
     'NotoSerifBengali-Bold': require('./assets/fonts/NotoSerifBengali-Bold.ttf'),
   });
 
-  const ready = fontsLoaded || fontError;
+  const ready = (fontsLoaded || fontError) && !loading;
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
 
   useEffect(() => {
-    // Push notification setup
     registerForPushNotifications();
-
-    // Daily panjika notification
     schedulePanjikaNotification();
-    // তিথি পরিবর্তন notification
     scheduleTithiChangeNotification();
 
-    // Check new YouTube video
     checkNewYouTubeVideo().then(video => {
       if (video) {
         Notifications.scheduleNotificationAsync({
           content: {
-            title: '🎬 নতুন ভিডিও!',
+            title: '🎦 নতুন ভিডিও!',
             body: video.title,
             data: { screen: 'YouTube', url: video.link },
             channelId: 'youtube',
@@ -60,7 +56,6 @@ export default function App() {
       }
     });
 
-    // Check new blog post
     checkNewBlogPost().then(post => {
       if (post) {
         Notifications.scheduleNotificationAsync({
@@ -74,10 +69,7 @@ export default function App() {
       }
     });
 
-    // Notification tap handler
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
-    });
+    notificationListener.current = Notifications.addNotificationReceivedListener(() => {});
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
@@ -110,12 +102,20 @@ export default function App() {
   if (!ready) return null;
 
   return (
+    <NavigationContainer ref={navigationRef}>
+      <StatusBar style="light" backgroundColor="#0e0e2a" />
+      {user?.onboardingDone ? <AppNavigator /> : <OnboardingScreen />}
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer ref={navigationRef}>
-          <StatusBar style="light" backgroundColor="#0e0e2a" />
-          <AppNavigator />
-        </NavigationContainer>
+        <UserProvider>
+          <AppContent />
+        </UserProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

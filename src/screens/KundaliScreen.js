@@ -7,6 +7,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WebView from 'react-native-webview';
 import { Colors } from '../theme';
+import { PAGES } from '../config';
 
 export default function KundaliScreen() {
   const [loading, setLoading] = useState(true);
@@ -80,7 +81,7 @@ export default function KundaliScreen() {
       {/* WebView */}
       <WebView
         ref={webViewRef}
-        source={{ uri: 'https://www.myastrology.in/kundali.html' }}
+        source={{ uri: PAGES.kundali }}
         style={styles.webview}
         onLoadStart={() => {
           setLoading(true);

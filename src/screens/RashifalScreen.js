@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
+import { API } from '../config';
 
 const RASHIS = [
   { name: 'মেষ', symbol: '♈' },
@@ -48,7 +49,7 @@ export default function RashifalScreen({ route, navigation }) {
   const fetchRashifalData = useCallback(async () => {
     try {
       setError(null);
-      const url = `https://www.myastrology.in/rashifal/${today}.json`;
+      const url = API.rashifal(today);
       const response = await fetch(url, { timeout: 8000 });
       if (!response.ok) throw new Error('Server error');
       const json = await response.json();

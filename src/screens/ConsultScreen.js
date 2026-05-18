@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
+import { CONTACT } from '../config';
 
 const SERVICES = [
   { icon: '🔯', title: 'জন্মকুষ্ঠি বিশ্লেষণ', desc: 'সম্পূর্ণ কুষ্ঠি, দশা ও ফলাদেশ', price: '₹৫০০', duration: '৩০-৪৫ মিনিট', color: Colors.saturn },
@@ -23,7 +24,7 @@ export default function ConsultScreen() {
     const msg = service
       ? `নমস্কার Dr. Acharya 🙏 আমি "${service.title}" (${service.price}) পরামর্শ নিতে চাই।`
       : 'নমস্কার Dr. Acharya 🙏 আমি পরামর্শ নিতে চাই।';
-    Linking.openURL(`https://wa.me/919333122768?text=${encodeURIComponent(msg)}`);
+    Linking.openURL(`${CONTACT.whatsapp}?text=${encodeURIComponent(msg)}`);
   };
 
   const handleBook = (service) => {
@@ -33,7 +34,7 @@ export default function ConsultScreen() {
       [
         { text: 'বাতিল', style: 'cancel' },
         { text: '💬 WhatsApp', onPress: () => openWhatsApp(service) },
-        { text: '📞 কল করুন', onPress: () => Linking.openURL('tel:+919333122768') },
+        { text: '📞 কল করুন', onPress: () => Linking.openURL(`tel:${CONTACT.phone}`) },
       ]
     );
   };
@@ -109,7 +110,7 @@ export default function ConsultScreen() {
       </View>
 
       <TouchableOpacity style={styles.mapBtn}
-        onPress={() => Linking.openURL('https://maps.google.com/?q=23.1676,88.5809')}
+        onPress={() => Linking.openURL(CONTACT.mapsUrl)}
       >
         <Text style={{ fontSize: 14, color: Colors.gold, fontWeight: '600' }}>
           🗺️ Google Maps-এ দেখুন

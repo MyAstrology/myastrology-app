@@ -7,6 +7,7 @@ import {
 import WebView from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
+import { API } from '../config';
 
 export default function BlogDetailScreen({ route, navigation }) {
   const { slug, title } = route.params;
@@ -16,7 +17,7 @@ export default function BlogDetailScreen({ route, navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const webViewRef = useRef(null);
   const insets = useSafeAreaInsets();
-  const url = `https://www.myastrology.in/blog/${slug}.html`;
+  const url = API.blogPost(slug);
 
   // ─── Share handler ────────────────────────────────
   const handleShare = async () => {

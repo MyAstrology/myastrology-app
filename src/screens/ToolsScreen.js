@@ -1,111 +1,125 @@
-
-// src/screens/ToolsScreen.js
+// src/screens/ToolsScreen.js — AstroSage-level সব টুলস
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, Dimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../theme';
 
-const TOOLS = [
+const { width } = Dimensions.get('window');
+const CARD_W = (width - 48) / 3;
+
+const SECTIONS = [
   {
-    icon: '🔯', title: 'জন্মকুষ্ঠি', subtitle: 'VSOP87 নির্ভুল গণনা',
-    desc: 'লগ্ন, রাশি, নক্ষত্র, দশা ও সম্পূর্ণ ফলাদেশ',
-    screen: 'Kundali', color: '#c9a84c',
+    title: '🔮 কুণ্ডলী বিশ্লেষণ',
+    items: [
+      { icon: '🔯', label: 'জন্মকুষ্ঠি',    screen: 'Kundali',       color: Colors.saturn },
+      { icon: '💑', label: 'কুষ্ঠি মিলন',   screen: 'MatchMaking',   color: Colors.venus },
+      { icon: '📅', label: 'বর্ষফল',        screen: 'Varshaphala',   color: Colors.sun },
+      { icon: '🪐', label: 'গ্রহ গোচর',     screen: 'Gochar',        color: Colors.rahu },
+      { icon: '🌙', label: 'প্রশ্নকুণ্ডলী', screen: 'Prashna',       color: '#a78bfa' },
+    ],
   },
   {
-    icon: '💑', title: 'কুষ্ঠি মিলন', subtitle: 'অষ্টকূট পদ্ধতি',
-    desc: '৩৬ গুণ বিচার, মাঙ্গলিক দোষ নির্ণয়',
-    screen: 'MatchMaking', color: '#ec4899',
+    title: '🗓️ পঞ্জিকা ও গণনা',
+    items: [
+      { icon: '🗓️', label: 'পঞ্জিকা',       screen: 'Panjika',       color: Colors.gold },
+      { icon: '🔢', label: 'নিউমেরোলজি',   screen: 'Numerology',    color: Colors.mercury },
+      { icon: '💎', label: 'রত্নপাথর',      screen: 'Gemstone',      color: '#06b6d4' },
+      { icon: '🌟', label: 'রাশিফল',        screen: 'Rashifal',      color: Colors.gold },
+    ],
   },
   {
-    icon: '🔢', title: 'সংখ্যা জ্যোতিষ', subtitle: 'নিউমেরোলজি',
-    desc: 'নাম ও জন্মতারিখ অনুযায়ী ভাগ্য বিচার',
-    screen: 'Numerology', color: '#8b5cf6',
-  },
-  {
-    icon: '📅', title: 'বাংলা পঞ্জিকা', subtitle: 'দৈনিক তিথি-নক্ষত্র',
-    desc: 'রাহুকাল, শুভমুহূর্ত, যোগ ও করণ',
-    screen: 'Panjika', color: '#06b6d4',
+    title: '🏠 বাস্তু ও হস্তরেখা',
+    items: [
+      { icon: '🏠', label: 'বাস্তুশাস্ত্র', screen: 'Vastu',         color: '#10b981' },
+      { icon: '✋', label: 'হস্তরেখা',      screen: 'Palmistry',     color: '#f59e0b' },
+      { icon: '📖', label: 'বৈদিক জ্যোতিষ', screen: 'VedicAstrology', color: '#8b5cf6' },
+    ],
   },
 ];
 
+function ToolCard({ item, onPress }) {
+  return (
+    <TouchableOpacity
+      style={[styles.card, { borderColor: item.color + '55' }]}
+      onPress={onPress}
+      activeOpacity={0.78}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: item.color + '22' }]}>
+        <Text style={styles.icon}>{item.icon}</Text>
+      </View>
+      <Text style={styles.label} numberOfLines={2}>{item.label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function ToolsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top }]}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.title}>🔮 জ্যোতিষ টুলস</Text>
-      <Text style={styles.subtitle}>বিনামূল্যে · বৈজ্ঞানিক পদ্ধতি · বাংলায়</Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <Text style={styles.heading}>🔮 জ্যোতিষ টুলস</Text>
+      <Text style={styles.sub}>সব হিসাব এক জায়গায়</Text>
 
-      <View style={styles.grid}>
-        {TOOLS.map((tool, i) => (
-          <TouchableOpacity key={i} style={styles.toolCard}
-            onPress={() => navigation.navigate(tool.screen)}
-          >
-            <View style={[styles.toolIconWrap, { backgroundColor: tool.color + '22' }]}>
-              <Text style={styles.toolIcon}>{tool.icon}</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {SECTIONS.map((sec, si) => (
+          <View key={si} style={styles.section}>
+            <Text style={styles.sectionTitle}>{sec.title}</Text>
+            <View style={styles.grid}>
+              {sec.items.map((item, ii) => (
+                <ToolCard
+                  key={ii}
+                  item={item}
+                  onPress={() => navigation.navigate(item.screen)}
+                />
+              ))}
             </View>
-            <Text style={styles.toolTitle}>{tool.title}</Text>
-            <Text style={styles.toolSubtitle}>{tool.subtitle}</Text>
-            <Text style={styles.toolDesc}>{tool.desc}</Text>
-            <View style={[styles.toolBtn, { backgroundColor: tool.color + '33' }]}>
-              <Text style={[styles.toolBtnText, { color: tool.color }]}>
-                শুরু করুন →
-              </Text>
-            </View>
-          </TouchableOpacity>
+          </View>
         ))}
-      </View>
-
-      <View style={{ height: Spacing.xl }} />
-    </ScrollView>
+        <View style={{ height: 32 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  title: {
+  heading: {
     fontSize: 22, fontFamily: 'NotoSerifBengali',
     fontWeight: '700', color: Colors.goldLight,
-    padding: Spacing.md, paddingBottom: 4,
+    paddingHorizontal: Spacing.md, paddingTop: Spacing.sm,
   },
-  subtitle: {
-    fontSize: 13, fontFamily: 'NotoSerifBengali',
-    color: Colors.textSecondary, paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  grid: {
-    paddingHorizontal: Spacing.md, gap: Spacing.md,
-  },
-  toolCard: {
-    backgroundColor: Colors.bgCard, borderRadius: 16,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.goldBorder,
-  },
-  toolIconWrap: {
-    width: 56, height: 56, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  toolIcon: { fontSize: 28 },
-  toolTitle: {
-    fontSize: 18, fontFamily: 'NotoSerifBengali',
-    fontWeight: '700', color: Colors.textPrimary,
-  },
-  toolSubtitle: {
+  sub: {
     fontSize: 12, fontFamily: 'NotoSerifBengali',
-    color: Colors.gold, marginTop: 2, marginBottom: Spacing.sm,
+    color: Colors.textSecondary,
+    paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm,
   },
-  toolDesc: {
-    fontSize: 13, fontFamily: 'NotoSerifBengali',
-    color: Colors.textSecondary, lineHeight: 20,
+  scroll: { paddingHorizontal: Spacing.md },
+  section: { marginBottom: Spacing.lg },
+  sectionTitle: {
+    fontSize: 14, fontFamily: 'NotoSerifBengali',
+    fontWeight: '700', color: Colors.textSecondary,
     marginBottom: Spacing.sm,
+    borderLeftWidth: 3, borderLeftColor: Colors.gold,
+    paddingLeft: 10,
   },
-  toolBtn: {
-    borderRadius: 20, padding: Spacing.sm,
-    alignItems: 'center',
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  card: {
+    width: CARD_W, alignItems: 'center',
+    backgroundColor: Colors.bgCard,
+    borderRadius: 14, borderWidth: 1,
+    padding: 12, gap: 8,
   },
-  toolBtnText: {
-    fontSize: 13, fontFamily: 'NotoSerifBengali',
-    fontWeight: '700',
+  iconWrap: {
+    width: 48, height: 48, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  icon:  { fontSize: 26 },
+  label: {
+    fontSize: 12, fontFamily: 'NotoSerifBengali',
+    fontWeight: '600', color: Colors.text,
+    textAlign: 'center', lineHeight: 16,
   },
 });
