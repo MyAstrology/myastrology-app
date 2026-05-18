@@ -15,5 +15,5 @@ yarn-error.*
 .env.local
 .env.*.local
 
-# API keys — এই ফাইলটি push করবেন না
-src/secrets.js
+# API keys (secrets.js is now committed with real key for EAS build)
+# src/secrets.js
