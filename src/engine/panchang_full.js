@@ -217,10 +217,14 @@ export function getMonthCalendar(year, month) {
     const dateStr = `${year}-${mm}-${dd}`;
     const jdNoon  = v.JD(year, month + 1, d) + 5.5 / 24 - 0.5;
     let tithiIdx = 0, tithiName = '—';
+    let nakName = '—', yogaName = '—', karana = '—';
     try {
       const t = v.getTithi(jdNoon);
-      tithiIdx = t.index;
+      tithiIdx  = t.index;
       tithiName = TITHI_NAMES[t.index] || '—';
+      nakName   = NAKSHATRA_NAMES[v.getNakshatra(jdNoon).index] || '—';
+      yogaName  = YOGA_NAMES[v.getYoga(jdNoon).index] || '—';
+      karana    = v.getKarana(jdNoon).name || '—';
     } catch (_) {}
     const bnDate = getBengaliDate(dateStr);
     const wd = new Date(dateStr + 'T00:00:00').getDay();
@@ -229,7 +233,10 @@ export function getMonthCalendar(year, month) {
       day: d,
       weekday: wd,
       tithiIdx,
-      tithi: tithiName,
+      tithi:     tithiName,
+      nakshatra: nakName,
+      yoga:      yogaName,
+      karana,
       bengaliDay:   bnDate?.day       || null,
       bengaliMonth: bnDate?.monthName || '—',
       bengaliYear:  bnDate?.year      || null,
