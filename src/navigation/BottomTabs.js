@@ -32,7 +32,7 @@ export function BottomTabs() {
           paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', letterSpacing: 0 },
       }}
     >
       <Tab.Screen name="Home"     component={HomeScreen}     options={{ tabBarLabel: 'হোম',     tabBarIcon: ico('home-variant')           }} />
