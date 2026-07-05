@@ -11,8 +11,9 @@ const SECTIONS = [
   {
     title: 'জ্যোতিষ সেবা',
     items: [
-      { label: 'নামকরণ',        icon: 'baby-face-outline',      screen: 'Namakaran' },
-      { label: 'বিবাহ মিলাপ',   icon: 'heart-multiple-outline', url: 'https://www.myastrology.in/kundali-matching.html' },
+      { label: 'নামকরণ',        icon: 'baby-face-outline',      screen: 'Namakaran'   },
+      { label: 'বিবাহ মিলাপ',   icon: 'heart-multiple-outline', screen: 'MatchMaking' },
+      { label: 'সংখ্যাতত্ত্ব',  icon: 'numeric',                screen: 'Numerology'  },
       { label: 'বর্ষফল',        icon: 'chart-timeline-variant', url: 'https://www.myastrology.in/varshafal.html'        },
       { label: 'গোচর',          icon: 'orbit',                  url: 'https://www.myastrology.in/gochar.html'           },
     ],

@@ -2,12 +2,14 @@ import React from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { HomeScreen }      from '../screens/HomeScreen';
-import { PanchangScreen }  from '../screens/PanchangScreen';
-import { RashifalScreen }  from '../screens/RashifalScreen';
-import { KundaliScreen }   from '../screens/KundaliScreen';
-import { MoreScreen }      from '../screens/MoreScreen';
-import { NamakaranScreen } from '../screens/NamakaranScreen';
+import { HomeScreen }        from '../screens/HomeScreen';
+import { PanchangScreen }    from '../screens/PanchangScreen';
+import { RashifalScreen }    from '../screens/RashifalScreen';
+import { KundaliScreen }     from '../screens/KundaliScreen';
+import { MoreScreen }        from '../screens/MoreScreen';
+import { NamakaranScreen }   from '../screens/NamakaranScreen';
+import { MatchMakingScreen } from '../screens/MatchMakingScreen';
+import { NumerologyScreen }  from '../screens/NumerologyScreen';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -35,10 +37,20 @@ export function BottomTabs() {
       <Tab.Screen name="Kundali"  component={KundaliScreen}  options={{ tabBarLabel: 'কুণ্ডলী', tabBarIcon: ico('chart-donut')            }} />
       <Tab.Screen name="More"     component={MoreScreen}     options={{ tabBarLabel: 'আরও',     tabBarIcon: ico('dots-horizontal-circle') }} />
 
-      {/* Hidden screen — navigable from MoreScreen */}
+      {/* Hidden screens — navigable from MoreScreen */}
       <Tab.Screen
         name="Namakaran"
         component={NamakaranScreen}
+        options={{ tabBarButton: () => <View style={{ width: 0 }} />, tabBarLabel: '' }}
+      />
+      <Tab.Screen
+        name="MatchMaking"
+        component={MatchMakingScreen}
+        options={{ tabBarButton: () => <View style={{ width: 0 }} />, tabBarLabel: '' }}
+      />
+      <Tab.Screen
+        name="Numerology"
+        component={NumerologyScreen}
         options={{ tabBarButton: () => <View style={{ width: 0 }} />, tabBarLabel: '' }}
       />
     </Tab.Navigator>
