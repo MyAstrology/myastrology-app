@@ -5,9 +5,11 @@ import { PanchangaCard } from '../components/PanchangaCard';
 import { getTodayPanchang } from '../engine/panjika';
 import { colors } from '../theme/colors';
 
-const data = getTodayPanchang();
-
 export function PanchangScreen() {
+  let data;
+  try { data = getTodayPanchang(); } catch (_) {
+    data = { date: '', tithi: '—', nakshatra: '—', yoga: '—', sunrise: '—', sunset: '—' };
+  }
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Header />

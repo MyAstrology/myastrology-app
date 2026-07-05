@@ -1,4 +1,4 @@
-const p = require('../panjika-ephemeris');
+import p from '../panjika-ephemeris';
 
 export function getTodayPanchang() {
   const today = new Date().toISOString().split('T')[0];
