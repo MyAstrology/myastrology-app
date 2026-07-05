@@ -344,8 +344,8 @@ const s = StyleSheet.create({
   brand:   { fontSize: 26, fontWeight: '700', color: colors.gold, letterSpacing: 3, textTransform: 'uppercase' },
   tagline: { fontSize: 13, color: colors.goldLight, marginTop: 4, letterSpacing: 2, opacity: 0.85 },
 
-  tabBar:        { backgroundColor: colors.headerBg },
-  tabBarContent: { paddingHorizontal: spacing.sm, paddingBottom: 10 },
+  tabBar:        { backgroundColor: colors.headerBg, maxHeight: 52 },
+  tabBarContent: { paddingHorizontal: spacing.sm, paddingVertical: 10, alignItems: 'center', flexDirection: 'row' },
   tab:      { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
     borderWidth: 1, borderColor: colors.gold + '44', marginRight: 8 },
   tabActive:{ backgroundColor: colors.gold },

@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { getTodayPanchang } from '../engine/panjika';
+import { getPanchangForDate } from '../engine/panchang_full';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
@@ -41,8 +41,12 @@ const QUICK = [
 export function HomeScreen() {
   const navigation = useNavigation();
   const data = useMemo(() => {
-    try { return getTodayPanchang(); }
-    catch (_) { return { date: '', tithi: '—', nakshatra: '—', yoga: '—', sunrise: '—', sunset: '—' }; }
+    try {
+      const today = new Date();
+      const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      return getPanchangForDate(iso);
+    }
+    catch (_) { return { tithi: '—', nakshatra: '—', yoga: '—', sunrise: '—', sunset: '—' }; }
   }, []);
 
   return (
