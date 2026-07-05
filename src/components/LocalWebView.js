@@ -57,6 +57,7 @@ export function LocalWebView({ name, html, style }) {
       mixedContentMode="always"
       javaScriptEnabled={true}
       domStorageEnabled={true}
+      cacheEnabled={false}
       startInLoadingState={true}
       renderLoading={() => (
         <View style={s.center}>
