@@ -75,6 +75,49 @@ const GREGORIAN_FESTIVALS = [
   { month: 12, day: 25, name: 'বড়দিন' },
 ];
 
+// festival name → image key (matches keys in panjika-images.js)
+const NAME_IMAGE = {
+  'অক্ষয় তৃতীয়া':                    'Akshy-tritiya',
+  'রথযাত্রা':                          'Rath-Yatra',
+  'রক্ষাবন্ধন':                        'Rakhi-Purnima',
+  'গণেশ চতুর্থী':                      'Ganesh-Chaturthi',
+  'মহালয়া পঞ্চমী':                    'Mahalaya',
+  'কৃষ্ণ পঞ্চমী (মহালয়া)':           'Mahalaya',
+  'দুর্গা পূজা (ষষ্ঠী)':             'Durga-Puja',
+  'দুর্গা পূজা (সপ্তমী)':            'Durga-Puja',
+  'দুর্গা পূজা (অষ্টমী)':            'Durga-Puja',
+  'দুর্গা পূজা (নবমী)':              'Durga-Puja',
+  'বিজয়া দশমী (দুর্গা পূজা)':       'Durga-Puja',
+  'কোজাগরী পূর্ণিমা (লক্ষ্মী পূজা)':'Lokkhi-Puja',
+  'কার্তিক পূর্ণিমা (রাসযাত্রা)':   'Rash-Purnima',
+  'কালী পূজা':                         'Kali-Puja',
+  'উথান একাদশী':                       'Shukla-ekadashi',
+  'একাদশী ব্রত':                       'Shukla-ekadashi',
+  'সরস্বতী পূজা (বসন্ত পঞ্চমী)':    'Saraswati-Puja',
+  'মাঘী পূর্ণিমা':                     'Maghi-Purnima',
+  'শিবরাত্রি':                          'shiva-ratri',
+  'দোলযাত্রা / হোলি':                 'Dol-Purnima',
+  'রাম নবমী':                           'Ramnavami',
+  'পহেলা বৈশাখ · বাংলা নববর্ষ':     'Pahla-baisakh',
+  'রবীন্দ্র জন্মজয়ন্তী':             'Rabindra-Jayanti',
+  'পৌষ পার্বণ':                        'Pous-Sankranti',
+  'নেতাজির জন্মদিন':                  'Netaji-Subhash-Chandra',
+  'প্রজাতন্ত্র দিবস':                 'Prajatantra-Divas',
+  'আম্বেদকর জয়ন্তী':                 'Bheemrao-Ambedkar',
+  'স্বাধীনতা দিবস':                   'Independent-Days',
+  'গান্ধী জয়ন্তী':                    'Mahatma-Gandhi',
+  // birthAnniversaries
+  'স্বামী বিবেকানন্দ':                'Swami-Vivekananda',
+  'নেতাজি সুভাষচন্দ্র বসু':          'Netaji-Subhash-Chandra',
+  'শ্রীরামকৃষ্ণ পরমহংস':             'ramakrishna',
+  'ঈশ্বরচন্দ্র বিদ্যাসাগর':          'Vidyasagar',
+  'ড. বি. আর. আম্বেদকর':             'Bheemrao-Ambedkar',
+  'রবীন্দ্রনাথ ঠাকুর':               'Rabindra-Jayanti',
+  'মহাত্মা গান্ধী':                   'Mahatma-Gandhi',
+  'কাজী নজরুল ইসলাম':                'Nazrul-Islam',
+  'হরিচাঁদ ঠাকুর':                    'Harichand-Thakur',
+};
+
 // BMS table (duplicated from panchang_full for self-contained lookup)
 const BMS = [
   ['2023-04-15',1430,0],['2023-05-15',1430,1],['2023-06-15',1430,2],['2023-07-17',1430,3],
@@ -117,7 +160,10 @@ export function getFestivalsForMonth(year, month, calendarDays) {
 
   function add(dateStr, name, type) {
     const key = `${dateStr}|${name}`;
-    if (!seen.has(key)) { seen.add(key); results.push({ dateStr, name, type }); }
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push({ dateStr, name, type, imageKey: NAME_IMAGE[name] || null });
+    }
   }
 
   const mmPrefix = String(month + 1).padStart(2, '0');

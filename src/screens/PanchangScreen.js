@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Print   from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import PANJIKA_IMAGES from '../engine/panjika-images';
 import { getPanchangForDate, getMonthCalendar, getBengaliDate } from '../engine/panchang_full';
 import { getFestivalsForMonth } from '../engine/bengali_festivals';
 import { colors } from '../theme/colors';
@@ -303,13 +304,18 @@ function FestivalTab({ year, month }) {
         const bnDayStr = bnDate ? `${toBN(bnDate.day)} ${bnDate.monthName}` : '';
         return (
           <View key={idx} style={s.festItem}>
-            <View style={s.festDateBox}>
-              <Text style={s.festDayNum}>{toBN(dayNum)}</Text>
-              <Text style={s.festWd}>{wd}</Text>
-            </View>
+            {item.imageKey && PANJIKA_IMAGES[item.imageKey]
+              ? <Image source={PANJIKA_IMAGES[item.imageKey]} style={s.festImg} />
+              : (
+                <View style={s.festDateBox}>
+                  <Text style={s.festDayNum}>{toBN(dayNum)}</Text>
+                  <Text style={s.festWd}>{wd}</Text>
+                </View>
+              )
+            }
             <View style={s.festInfo}>
               <Text style={s.festName}>{item.name}</Text>
-              {bnDayStr ? <Text style={s.festBnDate}>{bnDayStr}</Text> : null}
+              <Text style={s.festBnDate}>{toBN(dayNum)} {wd} · {bnDayStr || ''}</Text>
             </View>
             <View style={[
               s.festBadge,
@@ -735,7 +741,8 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  festDateBox: { width: 44, alignItems: 'center' },
+  festImg:     { width: 48, height: 48, borderRadius: 10, backgroundColor: colors.divider },
+  festDateBox: { width: 48, alignItems: 'center' },
   festDayNum:  { fontSize: 18, color: colors.text, fontFamily: 'NotoSerifBengali-Bold', lineHeight: 22 },
   festWd:      { fontSize: 10, color: colors.textSecondary, fontFamily: 'NotoSerifBengali-Regular' },
   festInfo:    { flex: 1 },
