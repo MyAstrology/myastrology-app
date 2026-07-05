@@ -1,42 +1,55 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system';
 import { colors } from '../theme/colors';
 
-// Cache: assetModule -> localUri
-const _uriCache = {};
+const WEB_DIR = FileSystem.documentDirectory + 'myastro-web/';
+const _cache  = {};
 
-async function getLocalUri(assetModule) {
-  if (_uriCache[assetModule]) return _uriCache[assetModule];
+async function prepareAsset(assetModule) {
+  if (_cache[assetModule]) return _cache[assetModule];
+
+  // 1. Load from Expo asset bundle
   const asset = Asset.fromModule(assetModule);
   await asset.downloadAsync();
-  // Copy to a stable path in documentDirectory so relative resources work
-  const destDir = FileSystem.documentDirectory + 'myastro-web/';
-  await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
-  const destPath = destDir + asset.name + '.html';
-  await FileSystem.copyAsync({ from: asset.localUri, to: destPath });
-  _uriCache[assetModule] = destPath;
-  return destPath;
+
+  // 2. Ensure destination directory exists
+  await FileSystem.makeDirectoryAsync(WEB_DIR, { intermediates: true });
+
+  // 3. Destination path
+  const dest = WEB_DIR + asset.name + '.html';
+
+  // 4. Copy (skip if already current — compare size as quick check)
+  const src     = asset.localUri;
+  const srcInfo = await FileSystem.getInfoAsync(src, { size: true });
+  const dstInfo = await FileSystem.getInfoAsync(dest, { size: true });
+  if (!dstInfo.exists || dstInfo.size !== srcInfo.size) {
+    if (dstInfo.exists) await FileSystem.deleteAsync(dest, { idempotent: true });
+    await FileSystem.copyAsync({ from: src, to: dest });
+  }
+
+  _cache[assetModule] = dest;
+  return dest;
 }
 
-export function LocalWebView({ assetModule, style, injectedJavaScript, onMessage }) {
-  const [uri, setUri] = useState(null);
+export function LocalWebView({ assetModule, style }) {
+  const [uri,   setUri]   = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    getLocalUri(assetModule)
-      .then(u => { if (!cancelled) setUri(u); })
-      .catch(e => { if (!cancelled) setError(e.message); });
+    prepareAsset(assetModule)
+      .then(u  => { if (!cancelled) setUri(u);       })
+      .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; };
   }, [assetModule]);
 
   if (error) {
     return (
       <View style={[s.center, style]}>
-        <Text style={s.errTxt}>লোড হয়নি: {error}</Text>
+        <Text style={s.errTxt}>লোড ব্যর্থ: {error}</Text>
       </View>
     );
   }
@@ -45,7 +58,7 @@ export function LocalWebView({ assetModule, style, injectedJavaScript, onMessage
     return (
       <View style={[s.center, style]}>
         <ActivityIndicator size="large" color={colors.gold} />
-        <Text style={s.loadTxt}>লোড হচ্ছে...</Text>
+        <Text style={s.loadTxt}>লোড হচ্ছে…</Text>
       </View>
     );
   }
@@ -65,11 +78,9 @@ export function LocalWebView({ assetModule, style, injectedJavaScript, onMessage
       renderLoading={() => (
         <View style={s.center}>
           <ActivityIndicator size="large" color={colors.gold} />
-          <Text style={s.loadTxt}>লোড হচ্ছে...</Text>
+          <Text style={s.loadTxt}>গণনা হচ্ছে…</Text>
         </View>
       )}
-      injectedJavaScript={injectedJavaScript}
-      onMessage={onMessage}
     />
   );
 }
