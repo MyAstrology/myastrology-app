@@ -7,7 +7,7 @@ import { colors } from '../theme/colors';
 
 const data = getTodayPanchang();
 
-export function HomeScreen() {
+export function PanchangScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Header />
