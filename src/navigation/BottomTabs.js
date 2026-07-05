@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen }        from '../screens/HomeScreen';
 import { PanchangScreen }    from '../screens/PanchangScreen';
 import { RashifalScreen }    from '../screens/RashifalScreen';
@@ -16,6 +17,7 @@ const Tab = createBottomTabNavigator();
 const ico = name => ({ color, size }) => <MaterialCommunityIcons name={name} size={size} color={color} />;
 
 export function BottomTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -26,7 +28,9 @@ export function BottomTabs() {
           backgroundColor: colors.headerBg,
           borderTopColor:  colors.gold,
           borderTopWidth:  0.5,
-          height: 62, paddingBottom: 10, paddingTop: 6,
+          height: 58 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
+          paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
       }}
