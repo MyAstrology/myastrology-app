@@ -37,7 +37,10 @@ const MENU = [
   { tab: 'More',        icon: 'dots-horizontal-circle', label: 'আরও'           },
 ];
 
-function PanchangCell({ icon, label, value }) {
+function PanchangCell({ icon, label, value, timeStart, timeEnd }) {
+  const timeStr = (timeStart && timeEnd)
+    ? `${timeStart} – ${timeEnd}`
+    : timeEnd || timeStart || null;
   return (
     <View style={s.cell}>
       <View style={s.cellHeader}>
@@ -45,6 +48,7 @@ function PanchangCell({ icon, label, value }) {
         <Text style={s.cellLabel}>{label}</Text>
       </View>
       <Text style={s.cellValue} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      {timeStr ? <Text style={s.timeRange} numberOfLines={1} adjustsFontSizeToFit>{timeStr}</Text> : null}
     </View>
   );
 }
@@ -109,7 +113,7 @@ export function HomeScreen() {
           <View style={s.metaRow}>
             <Text style={s.metaText}>{enDateStr}</Text>
             <View style={s.metaDot} />
-            <Text style={s.metaText}>{EN_DAYS[today.getDay()]}</Text>
+            <Text style={s.metaText}>{data.weekday}</Text>
             <View style={s.metaDot} />
             <Text style={s.metaText}>{data.ritu}</Text>
           </View>
@@ -124,15 +128,18 @@ export function HomeScreen() {
           <View style={s.cardDivider} />
 
           <View style={s.cellGrid}>
-            <PanchangCell icon="moon-waning-crescent"  label="তিথি"     value={data.tithi}    />
+            <PanchangCell icon="moon-waning-crescent" label="তিথি"    value={data.tithi}
+              timeStart={data.tithiStart} timeEnd={data.tithiEnd} />
             <View style={s.cellVDiv} />
-            <PanchangCell icon="star-four-points"      label="নক্ষত্র"  value={data.nakshatra} />
+            <PanchangCell icon="star-four-points"     label="নক্ষত্র" value={data.nakshatra}
+              timeStart={data.nakshatraStart} timeEnd={data.nakshatraEnd} />
           </View>
           <View style={s.cardDivider} />
           <View style={s.cellGrid}>
-            <PanchangCell icon="infinity"              label="যোগ"      value={data.yoga}     />
+            <PanchangCell icon="infinity"             label="যোগ"     value={data.yoga}
+              timeStart={data.yogaStart} timeEnd={data.yogaEnd} />
             <View style={s.cellVDiv} />
-            <PanchangCell icon="hexagon-outline"       label="করণ"      value={data.karana}   />
+            <PanchangCell icon="hexagon-outline"      label="করণ"     value={data.karana} />
           </View>
           <View style={s.cardDivider} />
           <View style={s.cellGrid}>
@@ -236,6 +243,7 @@ const s = StyleSheet.create({
   cellHeader:{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
   cellLabel: { fontSize: 11, color: colors.textSecondary },
   cellValue: { fontSize: 15, color: colors.text, fontWeight: '700', textAlign: 'center' },
+  timeRange: { fontSize: 10, color: colors.primary, textAlign: 'center', marginTop: 3, opacity: 0.85 },
 
   sectionTitle: {
     fontSize: 11, fontWeight: '700', color: colors.textSecondary,

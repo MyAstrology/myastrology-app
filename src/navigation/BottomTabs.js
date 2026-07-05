@@ -41,21 +41,21 @@ export function BottomTabs() {
       <Tab.Screen name="Kundali"  component={KundaliScreen}  options={{ tabBarLabel: 'কুণ্ডলী', tabBarIcon: ico('chart-donut')            }} />
       <Tab.Screen name="More"     component={MoreScreen}     options={{ tabBarLabel: 'আরও',     tabBarIcon: ico('dots-horizontal-circle') }} />
 
-      {/* Hidden screens — navigable from MoreScreen */}
+      {/* Hidden screens — navigable from MoreScreen / hamburger menu */}
       <Tab.Screen
         name="Namakaran"
         component={NamakaranScreen}
-        options={{ tabBarButton: () => <View style={{ width: 0 }} />, tabBarLabel: '' }}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
       <Tab.Screen
         name="MatchMaking"
         component={MatchMakingScreen}
-        options={{ tabBarButton: () => <View style={{ width: 0 }} />, tabBarLabel: '' }}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
       <Tab.Screen
         name="Numerology"
         component={NumerologyScreen}
-        options={{ tabBarButton: () => <View style={{ width: 0 }} />, tabBarLabel: '' }}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>
   );

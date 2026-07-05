@@ -67,6 +67,40 @@ const RAHU_SLOT     = [8, 2, 7, 5, 6, 4, 3];
 const GULIKA_SLOT   = [6, 5, 4, 3, 2, 1, 7];
 const YAMAGNDA_SLOT = [4, 3, 2, 1, 8, 7, 6];
 
+// IST string "HH:MM:SS" → Julian Day
+function istStrToJD(y, m, d, istStr) {
+  if (!istStr) return null;
+  const [h, mn, s] = istStr.split(':').map(Number);
+  return v.JD(y, m, d) - 0.5 + (h + mn / 60 + (s || 0) / 3600 - 5.5) / 24;
+}
+
+// Binary search: find JD when getterFn(jd).index transitions away from currentIdx (= end)
+function findEndJD(getterFn, refJD, currentIdx) {
+  let lo = refJD, hi = refJD + 2;
+  if (getterFn(hi).index === currentIdx) return null;
+  for (let i = 0; i < 22; i++) {
+    const mid = (lo + hi) / 2;
+    if (getterFn(mid).index === currentIdx) lo = mid; else hi = mid;
+  }
+  return hi;
+}
+
+// Binary search: find JD when getterFn(jd).index transitions to currentIdx (= start)
+function findStartJD(getterFn, refJD, currentIdx) {
+  let lo = refJD - 2, hi = refJD;
+  if (getterFn(lo).index === currentIdx) return null;
+  for (let i = 0; i < 22; i++) {
+    const mid = (lo + hi) / 2;
+    if (getterFn(mid).index !== currentIdx) lo = mid; else hi = mid;
+  }
+  return hi;
+}
+
+function jdHM(jd) {
+  if (!jd) return null;
+  return v.jdToIST(jd).substring(0, 5);
+}
+
 function parseHMS(hms) {
   if (!hms) return null;
   const [h, m, s] = hms.split(':').map(Number);
@@ -112,6 +146,16 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   const paksha = tIdx < 15 ? 'শুক্লপক্ষ' : 'কৃষ্ণপক্ষ';
   const bnDate = getBengaliDate(dateStr);
 
+  // Compute slot start/end times via binary search
+  const refJD = p.sunrise ? istStrToJD(y, m, d, p.sunrise)
+                           : (v.JD(y, m, d) + 5.5 / 24 - 0.5 + 5 / 24);
+  const tSt = jdHM(findStartJD(v.getTithi,     refJD, tIdx));
+  const tEn = jdHM(findEndJD  (v.getTithi,     refJD, tIdx));
+  const nSt = jdHM(findStartJD(v.getNakshatra, refJD, p.nakshatra.index));
+  const nEn = jdHM(findEndJD  (v.getNakshatra, refJD, p.nakshatra.index));
+  const ySt = jdHM(findStartJD(v.getYoga,      refJD, p.yoga.index));
+  const yEn = jdHM(findEndJD  (v.getYoga,      refJD, p.yoga.index));
+
   const ay      = p.ayanamsa || 0;
   const ayDeg   = Math.floor(ay);
   const ayMin   = Math.floor((ay - ayDeg) * 60);
@@ -126,6 +170,9 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     bengaliMonth: bnDate ? bnDate.monthName : '—',
     bengaliYear:  bnDate ? bnDate.year      : null,
     ritu:         bnDate ? bnDate.ritu      : '—',
+    tithiStart:     tSt,  tithiEnd:     tEn,
+    nakshatraStart: nSt,  nakshatraEnd: nEn,
+    yogaStart:      ySt,  yogaEnd:      yEn,
     sunrise:  p.sunrise  ? p.sunrise.substring(0,5)  : '—',
     sunset:   p.sunset   ? p.sunset.substring(0,5)   : '—',
     transit:  p.transit  ? p.transit.substring(0,5)  : '—',
