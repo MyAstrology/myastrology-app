@@ -3,45 +3,31 @@ import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { getKundali, HOUSE_GRID, RASHI_NAMES } from '../engine/kundali';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
+import { COLORS, SPACING, RADIUS } from '../theme';
 
 let CITY_DB = [];
 try { CITY_DB = require('../cities').CITY_DB || []; } catch (e) {}
 
 const PLANET_COLOR = {
-  'সূ': '#F59E0B', 'চ':  '#94A3B8', 'মঙ্': '#EF4444',
-  'বু': '#10B981', 'বৃ':  '#8B5CF6', 'শু':  '#EC4899',
+  'সূ': '#F59E0B', 'চ': '#94A3B8', 'মঙ্': '#EF4444',
+  'বু': '#10B981', 'বৃ': '#8B5CF6', 'শু': '#EC4899',
   'শ':  '#6B7280', 'রা': '#374151', 'কে': '#78716C',
 };
 
-const WEEKDAY_COLOR = ['#F59E0B','#C0C0C0','#EF4444','#10B981','#F59E0B','#FFFFFF','#6B7280'];
-
-function InfoPill({ icon, label, value }) {
-  return (
-    <View style={styles.infoPill}>
-      <MaterialCommunityIcons name={icon} size={14} color={colors.primary} />
-      <Text style={styles.infoPillLabel}>{label}</Text>
-      <Text style={styles.infoPillValue}>{value}</Text>
-    </View>
-  );
-}
-
 function ChartCell({ house, houseMap, houseRashi, isLagna }) {
-  if (house === 0) return <View style={styles.cellCenter} />;
-  const rashiIdx = houseRashi[house];
-  const rashiName = RASHI_NAMES[rashiIdx];
-  const planets = houseMap[house] || [];
+  if (house === 0) return <View style={s.cellCenter} />;
+  const rashiName = RASHI_NAMES[houseRashi[house]];
+  const planets   = houseMap[house] || [];
   return (
-    <View style={[styles.cell, isLagna && styles.cellLagna]}>
-      <Text style={styles.cellHouse}>{house}</Text>
-      <Text style={styles.cellRashi} numberOfLines={1}>{rashiName}</Text>
-      {isLagna && <Text style={styles.lagnaTag}>লগ্ন</Text>}
-      <View style={styles.cellPlanets}>
+    <View style={[s.cell, isLagna && s.cellLagna]}>
+      <Text style={s.cellHouse}>{house}</Text>
+      <Text style={s.cellRashi} numberOfLines={1}>{rashiName}</Text>
+      {isLagna && <Text style={s.lagnaTag}>লগ্ন</Text>}
+      <View style={s.cellPlanets}>
         {planets.map((p, i) => (
-          <Text key={i} style={[styles.cellPlanet, { color: PLANET_COLOR[p] || colors.text }]}>{p}</Text>
+          <Text key={i} style={[s.cellPlanet, { color: PLANET_COLOR[p] || COLORS.charcoal }]}>{p}</Text>
         ))}
       </View>
     </View>
@@ -50,35 +36,29 @@ function ChartCell({ house, houseMap, houseRashi, isLagna }) {
 
 function KundaliChart({ result }) {
   return (
-    <View style={styles.chartContainer}>
-      <Text style={styles.chartTitle}>● জন্মকুণ্ডলী ●</Text>
+    <View style={s.chartCard}>
+      <Text style={s.chartTitle}>জন্মকুণ্ডলী</Text>
 
-      {/* Weekday + Panchang strip */}
-      <View style={styles.panchangStrip}>
-        <View style={[styles.barChip, { backgroundColor: colors.headerBg }]}>
-          <MaterialCommunityIcons name="calendar-week" size={13} color={WEEKDAY_COLOR[result.weekdayNum] || colors.gold} />
-          <Text style={[styles.barText, { color: WEEKDAY_COLOR[result.weekdayNum] || colors.gold }]}>
-            {result.weekday}
-          </Text>
+      <View style={s.panchangStrip}>
+        <View style={s.chip}>
+          <Ionicons name="calendar-outline" size={12} color={COLORS.gold} />
+          <Text style={s.chipText}>{result.weekday}</Text>
         </View>
-        <View style={styles.barChip}>
-          <MaterialCommunityIcons name="moon-waning-crescent" size={13} color={colors.primary} />
-          <Text style={styles.barTextDark}>{result.paksha} {result.tithi}</Text>
+        <View style={s.chip}>
+          <Ionicons name="moon-outline" size={12} color={COLORS.gold} />
+          <Text style={s.chipText}>{result.paksha} · {result.tithi}</Text>
         </View>
-        <View style={styles.barChip}>
-          <MaterialCommunityIcons name="star-four-points" size={13} color={colors.primary} />
-          <Text style={styles.barTextDark}>{result.nakshatra}</Text>
+        <View style={s.chip}>
+          <Ionicons name="star-outline" size={12} color={COLORS.gold} />
+          <Text style={s.chipText}>{result.nakshatra}</Text>
         </View>
       </View>
 
-      <View style={styles.lagnaRow}>
-        <MaterialCommunityIcons name="zodiac-aries" size={16} color={colors.gold} />
-        <Text style={styles.lagnaInfo}>লগ্ন: <Text style={styles.lagnaName}>{result.lagnaName}</Text></Text>
-      </View>
+      <Text style={s.lagnaInfo}>লগ্ন: <Text style={s.lagnaName}>{result.lagnaName}</Text></Text>
 
-      <View style={styles.grid}>
+      <View style={s.grid}>
         {HOUSE_GRID.map((row, ri) => (
-          <View key={ri} style={styles.gridRow}>
+          <View key={ri} style={s.gridRow}>
             {row.map((house, ci) => (
               <ChartCell
                 key={ci}
@@ -97,17 +77,15 @@ function KundaliChart({ result }) {
 
 function PlanetTable({ planets }) {
   return (
-    <View style={styles.tableCard}>
-      <Text style={styles.tableTitle}>● গ্রহ স্থান ●</Text>
+    <View style={s.tableCard}>
+      <Text style={s.chartTitle}>গ্রহ স্থান</Text>
       {planets.map((pl, i) => (
-        <View key={i} style={[styles.tableRow, i < planets.length - 1 && styles.tableRowBorder]}>
-          <Text style={[styles.tablePlanetShort, { color: PLANET_COLOR[pl.short] || colors.primary }]}>
-            {pl.short}
-          </Text>
-          <Text style={styles.tablePlanetName}>{pl.name}</Text>
-          <Text style={styles.tableRashi}>{pl.rashiName}</Text>
-          <View style={styles.tableHouseBadge}>
-            <Text style={styles.tableHouseText}>{pl.house}ম</Text>
+        <View key={i} style={[s.tableRow, i < planets.length - 1 && s.tableRowBorder]}>
+          <Text style={[s.tablePlanetShort, { color: PLANET_COLOR[pl.short] || COLORS.gold }]}>{pl.short}</Text>
+          <Text style={s.tablePlanetName}>{pl.name}</Text>
+          <Text style={s.tableRashi}>{pl.rashiName}</Text>
+          <View style={s.tableHouseBadge}>
+            <Text style={s.tableHouseText}>{pl.house}ম</Text>
           </View>
         </View>
       ))}
@@ -115,17 +93,17 @@ function PlanetTable({ planets }) {
   );
 }
 
-export function KundaliScreen() {
-  const [day, setDay]     = useState('');
+export default function KundaliScreen() {
+  const [day,   setDay]   = useState('');
   const [month, setMonth] = useState('');
-  const [year, setYear]   = useState('');
-  const [hour, setHour]   = useState('');
-  const [min, setMin]     = useState('');
-  const [cityQuery, setCityQuery] = useState('');
+  const [year,  setYear]  = useState('');
+  const [hour,  setHour]  = useState('');
+  const [min,   setMin]   = useState('');
+  const [cityQuery,    setCityQuery]    = useState('');
   const [selectedCity, setSelectedCity] = useState(null);
-  const [showCities, setShowCities] = useState(false);
+  const [showCities,   setShowCities]   = useState(false);
   const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
+  const [error,  setError]  = useState('');
 
   const filteredCities = cityQuery.length > 1
     ? CITY_DB.filter(c =>
@@ -135,16 +113,14 @@ export function KundaliScreen() {
 
   function calculate() {
     setError('');
-    const dd = day.padStart(2,'0'), mm = month.padStart(2,'0'), yy = year;
-    const hh = hour.padStart(2,'0'), mn = min.padStart(2,'0');
+    const dd = day.padStart(2, '0'), mm = month.padStart(2, '0'), yy = year;
+    const hh = hour.padStart(2, '0'), mn = min.padStart(2, '0');
     if (!yy || yy.length !== 4 || !dd || !mm) { setError('জন্মতারিখ সম্পূর্ণ করুন'); return; }
     if (!hh || !mn) { setError('জন্মসময় দিন'); return; }
-    const dateStr = `${yy}-${mm}-${dd}`;
-    const timeStr = `${hh}:${mn}`;
-    const lat = selectedCity?.lat ?? 22.5726;
-    const lon = selectedCity?.lng ?? 88.3639;
     try {
-      const r = getKundali(dateStr, timeStr, lat, lon);
+      const lat = selectedCity?.lat ?? 22.5726;
+      const lon = selectedCity?.lng ?? 88.3639;
+      const r = getKundali(`${yy}-${mm}-${dd}`, `${hh}:${mn}`, lat, lon);
       setResult(r);
     } catch (e) {
       setError('গণনায় সমস্যা হয়েছে।');
@@ -153,158 +129,90 @@ export function KundaliScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.header}>
-        <View style={styles.topLine} />
-        <Text style={styles.brand}>MyAstrology</Text>
-        <Text style={styles.tagline}>✦ জন্মকুণ্ডলী ✦</Text>
-        <View style={styles.bottomLine} />
+      <View style={s.header}>
+        <Text style={s.headerTitle}>কুণ্ডলী</Text>
+        <View style={s.goldLine} />
       </View>
 
       <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
+        style={s.scroll}
+        contentContainerStyle={s.content}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>জন্ম তথ্য প্রবেশ করুন</Text>
+        <View style={s.formCard}>
+          <Text style={s.formTitle}>জন্ম তথ্য প্রবেশ করুন</Text>
 
-          {/* Date section */}
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="calendar" size={18} color={colors.gold} />
+          <Text style={s.fieldLabel}>জন্মতারিখ</Text>
+          <View style={s.dateRow}>
+            <View style={s.dateBox}>
+              <Text style={s.dateSubLabel}>দিন</Text>
+              <TextInput style={s.dateInput} placeholder="১-৩১" placeholderTextColor={COLORS.subtleMuted}
+                value={day} onChangeText={setDay} keyboardType="numeric" maxLength={2} />
             </View>
-            <Text style={styles.sectionLabel}>জন্মতারিখ</Text>
-          </View>
-
-          <View style={styles.dateRow}>
-            <View style={styles.dateInputWrap}>
-              <Text style={styles.dateSubLabel}>দিন</Text>
-              <TextInput
-                style={styles.dateInput}
-                placeholder="১-৩১"
-                placeholderTextColor={colors.textSecondary}
-                value={day}
-                onChangeText={setDay}
-                keyboardType="numeric"
-                maxLength={2}
-                returnKeyType="next"
-              />
+            <Text style={s.dateSep}>/</Text>
+            <View style={s.dateBox}>
+              <Text style={s.dateSubLabel}>মাস</Text>
+              <TextInput style={s.dateInput} placeholder="১-১২" placeholderTextColor={COLORS.subtleMuted}
+                value={month} onChangeText={setMonth} keyboardType="numeric" maxLength={2} />
             </View>
-            <Text style={styles.dateSep}>/</Text>
-            <View style={styles.dateInputWrap}>
-              <Text style={styles.dateSubLabel}>মাস</Text>
-              <TextInput
-                style={styles.dateInput}
-                placeholder="১-১২"
-                placeholderTextColor={colors.textSecondary}
-                value={month}
-                onChangeText={setMonth}
-                keyboardType="numeric"
-                maxLength={2}
-                returnKeyType="next"
-              />
-            </View>
-            <Text style={styles.dateSep}>/</Text>
-            <View style={[styles.dateInputWrap, styles.yearWrap]}>
-              <Text style={styles.dateSubLabel}>বছর</Text>
-              <TextInput
-                style={[styles.dateInput, styles.yearInput]}
-                placeholder="যেমন: ১৯৯০"
-                placeholderTextColor={colors.textSecondary}
-                value={year}
-                onChangeText={setYear}
-                keyboardType="numeric"
-                maxLength={4}
-                returnKeyType="next"
-              />
+            <Text style={s.dateSep}>/</Text>
+            <View style={[s.dateBox, { flex: 2 }]}>
+              <Text style={s.dateSubLabel}>বছর</Text>
+              <TextInput style={s.dateInput} placeholder="১৯৯০" placeholderTextColor={COLORS.subtleMuted}
+                value={year} onChangeText={setYear} keyboardType="numeric" maxLength={4} />
             </View>
           </View>
 
-          {/* Time section */}
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="clock-time-four-outline" size={18} color={colors.gold} />
+          <Text style={s.fieldLabel}>জন্মসময় <Text style={s.fieldHint}>(২৪ ঘণ্টা)</Text></Text>
+          <View style={s.timeRow}>
+            <View style={s.dateBox}>
+              <Text style={s.dateSubLabel}>ঘণ্টা</Text>
+              <TextInput style={s.dateInput} placeholder="০-২৩" placeholderTextColor={COLORS.subtleMuted}
+                value={hour} onChangeText={setHour} keyboardType="numeric" maxLength={2} />
             </View>
-            <Text style={styles.sectionLabel}>জন্মসময় <Text style={styles.sectionHint}>(২৪ ঘণ্টা)</Text></Text>
-          </View>
-
-          <View style={styles.timeRow}>
-            <View style={styles.timeInputWrap}>
-              <Text style={styles.dateSubLabel}>ঘণ্টা (০-২৩)</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="যেমন: ২৩"
-                placeholderTextColor={colors.textSecondary}
-                value={hour}
-                onChangeText={setHour}
-                keyboardType="numeric"
-                maxLength={2}
-                returnKeyType="next"
-              />
-            </View>
-            <Text style={styles.timeSep}>:</Text>
-            <View style={styles.timeInputWrap}>
-              <Text style={styles.dateSubLabel}>মিনিট (০-৫৯)</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="যেমন: ৩০"
-                placeholderTextColor={colors.textSecondary}
-                value={min}
-                onChangeText={setMin}
-                keyboardType="numeric"
-                maxLength={2}
-                returnKeyType="done"
-              />
+            <Text style={s.dateSep}>:</Text>
+            <View style={s.dateBox}>
+              <Text style={s.dateSubLabel}>মিনিট</Text>
+              <TextInput style={s.dateInput} placeholder="০-৫৯" placeholderTextColor={COLORS.subtleMuted}
+                value={min} onChangeText={setMin} keyboardType="numeric" maxLength={2} />
             </View>
           </View>
 
-          {/* City section */}
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="map-marker-outline" size={18} color={colors.gold} />
-            </View>
-            <Text style={styles.sectionLabel}>জন্মস্থান</Text>
-          </View>
-
+          <Text style={s.fieldLabel}>জন্মস্থান</Text>
           <TextInput
-            style={styles.cityInput}
+            style={s.cityInput}
             placeholder="শহরের নাম লিখুন…"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={COLORS.subtleMuted}
             value={cityQuery}
             onChangeText={t => { setCityQuery(t); setShowCities(true); }}
             onFocus={() => setShowCities(true)}
           />
-
           {showCities && filteredCities.length > 0 && (
-            <View style={styles.cityDropdown}>
+            <View style={s.cityDropdown}>
               {filteredCities.map((c, i) => (
                 <TouchableOpacity
                   key={i}
-                  style={[styles.cityItem, i < filteredCities.length - 1 && styles.cityItemBorder]}
-                  onPress={() => {
-                    setCityQuery(c.bn || c.n);
-                    setSelectedCity(c);
-                    setShowCities(false);
-                  }}
+                  style={[s.cityItem, i < filteredCities.length - 1 && s.cityItemBorder]}
+                  onPress={() => { setCityQuery(c.bn || c.n); setSelectedCity(c); setShowCities(false); }}
                 >
-                  <MaterialCommunityIcons name="map-marker" size={14} color={colors.primary} />
-                  <Text style={styles.cityName}>{c.bn || c.n}</Text>
-                  <Text style={styles.cityState}>{c.g}</Text>
+                  <Ionicons name="location-outline" size={14} color={COLORS.gold} />
+                  <Text style={s.cityName}>{c.bn || c.n}</Text>
+                  <Text style={s.cityState}>{c.g}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
 
           {error ? (
-            <View style={styles.errorBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#EF4444" />
-              <Text style={styles.errorText}>{error}</Text>
+            <View style={s.errorBox}>
+              <Ionicons name="alert-circle-outline" size={16} color="#EF4444" />
+              <Text style={s.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          <TouchableOpacity style={styles.calcBtn} onPress={calculate} activeOpacity={0.8}>
-            <MaterialCommunityIcons name="chart-donut-variant" size={20} color={colors.gold} />
-            <Text style={styles.calcBtnText}>কুণ্ডলী তৈরি করুন</Text>
+          <TouchableOpacity style={s.calcBtn} onPress={calculate} activeOpacity={0.8}>
+            <Ionicons name="planet-outline" size={20} color={COLORS.white} />
+            <Text style={s.calcBtnText}>কুণ্ডলী তৈরি করুন</Text>
           </TouchableOpacity>
         </View>
 
@@ -319,253 +227,108 @@ export function KundaliScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { backgroundColor: colors.headerBg, paddingTop: 48, paddingBottom: 20, alignItems: 'center' },
-  topLine:    { width: 60, height: 1.5, backgroundColor: colors.gold, marginBottom: 14, opacity: 0.7 },
-  brand:      { fontSize: 26, fontWeight: '700', color: colors.gold, letterSpacing: 3, textTransform: 'uppercase' },
-  tagline:    { fontSize: 13, color: colors.goldLight, marginTop: 4, letterSpacing: 2, opacity: 0.85 },
-  bottomLine: { width: 60, height: 1.5, backgroundColor: colors.gold, marginTop: 14, opacity: 0.7 },
-  container:  { flex: 1, backgroundColor: colors.background },
-  content:    { padding: spacing.md, paddingBottom: 40 },
+const s = StyleSheet.create({
+  header:      { paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.lg, backgroundColor: COLORS.cream },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: COLORS.charcoal, marginBottom: SPACING.sm },
+  goldLine:    { height: 1, width: 40, backgroundColor: COLORS.gold, opacity: 0.5 },
+  scroll:      { flex: 1, backgroundColor: COLORS.cream },
+  content:     { padding: SPACING.lg, paddingBottom: 40 },
 
   formCard: {
-    backgroundColor: colors.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 20,
-    marginBottom: spacing.md,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    elevation: 2,
+    shadowColor: '#1C1C2E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
-  formTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 20,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
+  formTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.charcoal, marginBottom: SPACING.lg, textAlign: 'center' },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: COLORS.muted, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: SPACING.sm, marginTop: SPACING.sm },
+  fieldHint:  { fontSize: 11, fontWeight: '400', color: COLORS.subtleMuted, textTransform: 'none', letterSpacing: 0 },
 
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-    marginTop: 4,
-  },
-  sectionIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: colors.goldLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionLabel: { fontSize: 14, fontWeight: '700', color: colors.text },
-  sectionHint:  { fontSize: 12, fontWeight: '400', color: colors.textSecondary },
-
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
-    marginBottom: 18,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  dateInputWrap: { flex: 1, alignItems: 'center' },
-  yearWrap:      { flex: 2 },
-  dateSubLabel:  { fontSize: 10, color: colors.textSecondary, marginBottom: 5, fontWeight: '600' },
+  dateRow: { flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm, marginBottom: SPACING.md },
+  timeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm, marginBottom: SPACING.md },
+  dateBox: { flex: 1, alignItems: 'center' },
+  dateSubLabel: { fontSize: 10, color: COLORS.subtleMuted, marginBottom: 4, fontWeight: '600' },
   dateInput: {
     width: '100%',
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
-    backgroundColor: colors.background,
-    borderRadius: 10,
+    color: COLORS.charcoal,
+    backgroundColor: COLORS.cream,
+    borderRadius: RADIUS.sm,
     paddingVertical: 10,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  yearInput: { fontSize: 18 },
-  dateSep:  { fontSize: 22, color: colors.textSecondary, fontWeight: '300', paddingBottom: 10 },
-
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-    marginBottom: 18,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  timeInputWrap: { flex: 1, alignItems: 'center' },
-  timeInput: {
-    width: '100%',
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    paddingVertical: 10,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
-  },
-  timeSep: { fontSize: 26, color: colors.primary, fontWeight: '700', paddingBottom: 10 },
+  dateSep: { fontSize: 20, color: COLORS.muted, paddingBottom: 10 },
 
   cityInput: {
     fontSize: 14,
-    color: colors.text,
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    color: COLORS.charcoal,
+    backgroundColor: COLORS.cream,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 12,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: SPACING.sm,
   },
   cityDropdown: {
-    backgroundColor: colors.card,
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 10,
-    marginBottom: 8,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    marginBottom: SPACING.sm,
     overflow: 'hidden',
   },
-  cityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  cityItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  cityName:  { flex: 1, fontSize: 14, color: colors.text, fontWeight: '600' },
-  cityState: { fontSize: 12, color: colors.textSecondary },
+  cityItem:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: 10, gap: 8 },
+  cityItemBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.divider },
+  cityName:       { flex: 1, fontSize: 14, color: COLORS.charcoal, fontWeight: '600' },
+  cityState:      { fontSize: 12, color: COLORS.muted },
 
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 8,
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
+  errorBox:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FEF2F2', borderRadius: RADIUS.sm, padding: 10, marginBottom: SPACING.sm, borderWidth: 1, borderColor: '#FECACA' },
   errorText: { flex: 1, color: '#EF4444', fontSize: 13, fontWeight: '500' },
 
-  calcBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.headerBg,
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginTop: 18,
-    borderWidth: 1.5,
-    borderColor: colors.gold,
-  },
-  calcBtnText: { fontSize: 16, fontWeight: '700', color: colors.gold, letterSpacing: 1 },
+  calcBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: COLORS.charcoal, borderRadius: RADIUS.md, paddingVertical: 15, marginTop: SPACING.md },
+  calcBtnText: { fontSize: 16, fontWeight: '700', color: COLORS.gold, letterSpacing: 0.5 },
 
   // Chart
-  chartContainer: {
-    backgroundColor: colors.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 14,
-    marginBottom: spacing.md,
-  },
-  chartTitle: { textAlign: 'center', fontSize: 14, fontWeight: '700', color: colors.primary, marginBottom: 10 },
-
-  panchangStrip: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 10,
-  },
-  barChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.background,
-  },
-  barText:     { fontSize: 11, fontWeight: '700' },
-  barTextDark: { fontSize: 11, fontWeight: '600', color: colors.text },
-
-  lagnaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  lagnaInfo: { textAlign: 'center', fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  lagnaName: { fontSize: 14, fontWeight: '800', color: colors.primaryDark },
-
-  grid:    { gap: 2 },
-  gridRow: { flexDirection: 'row', gap: 2 },
+  chartCard:    { backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, elevation: 2, shadowColor: '#1C1C2E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+  chartTitle:   { textAlign: 'center', fontSize: 14, fontWeight: '700', color: COLORS.charcoal, marginBottom: SPACING.sm },
+  panchangStrip: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 6, marginBottom: SPACING.sm },
+  chip:         { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.cream },
+  chipText:     { fontSize: 11, fontWeight: '600', color: COLORS.charcoal },
+  lagnaInfo:    { textAlign: 'center', fontSize: 13, color: COLORS.muted, marginBottom: SPACING.sm },
+  lagnaName:    { fontSize: 14, fontWeight: '800', color: COLORS.goldDark },
+  grid:         { gap: 2 },
+  gridRow:      { flexDirection: 'row', gap: 2 },
   cell: {
-    flex: 1,
-    minHeight: 76,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: 4,
-    padding: 4,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    flex: 1, minHeight: 76,
+    backgroundColor: COLORS.cream,
+    borderWidth: 1, borderColor: COLORS.divider,
+    borderRadius: 4, padding: 4,
+    alignItems: 'center', justifyContent: 'flex-start',
   },
-  cellLagna: {
-    borderColor: colors.gold,
-    borderWidth: 2,
-    backgroundColor: '#FEF9E7',
-  },
-  cellCenter: { flex: 1, minHeight: 76, backgroundColor: colors.card },
-  cellHouse:  { fontSize: 9, color: colors.textSecondary, fontWeight: '600' },
-  cellRashi:  { fontSize: 9, color: colors.text, fontWeight: '700', marginTop: 1 },
-  lagnaTag:   { fontSize: 8, color: colors.gold, fontWeight: '800', marginTop: 1 },
-  cellPlanets: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 1,
-    marginTop: 2,
-  },
-  cellPlanet: { fontSize: 10, fontWeight: '800' },
+  cellLagna:   { borderColor: COLORS.gold, borderWidth: 2, backgroundColor: '#FEF9E7' },
+  cellCenter:  { flex: 1, minHeight: 76, backgroundColor: COLORS.white },
+  cellHouse:   { fontSize: 9, color: COLORS.subtleMuted, fontWeight: '600' },
+  cellRashi:   { fontSize: 9, color: COLORS.charcoal, fontWeight: '700', marginTop: 1 },
+  lagnaTag:    { fontSize: 8, color: COLORS.gold, fontWeight: '800', marginTop: 1 },
+  cellPlanets: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 1, marginTop: 2 },
+  cellPlanet:  { fontSize: 10, fontWeight: '800' },
 
   // Planet table
-  tableCard: {
-    backgroundColor: colors.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: spacing.md,
-  },
-  tableTitle:       { textAlign: 'center', fontSize: 14, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
+  tableCard:        { backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.md, elevation: 2, shadowColor: '#1C1C2E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
   tableRow:         { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 8 },
-  tableRowBorder:   { borderBottomWidth: 1, borderBottomColor: colors.divider },
+  tableRowBorder:   { borderBottomWidth: 1, borderBottomColor: COLORS.divider },
   tablePlanetShort: { width: 28, fontSize: 13, fontWeight: '800', textAlign: 'center' },
-  tablePlanetName:  { flex: 1, fontSize: 14, color: colors.text },
-  tableRashi:       { fontSize: 13, color: colors.text, fontWeight: '600', width: 72 },
-  tableHouseBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    backgroundColor: colors.goldLight,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  tableHouseText: { fontSize: 12, color: colors.primaryDark, fontWeight: '700' },
+  tablePlanetName:  { flex: 1, fontSize: 14, color: COLORS.charcoal },
+  tableRashi:       { fontSize: 13, color: COLORS.charcoal, fontWeight: '600', width: 72 },
+  tableHouseBadge:  { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, backgroundColor: COLORS.goldLight, borderWidth: 1, borderColor: COLORS.border },
+  tableHouseText:   { fontSize: 12, color: COLORS.goldDark, fontWeight: '700' },
 });
