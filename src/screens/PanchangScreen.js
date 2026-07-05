@@ -62,25 +62,36 @@ function usePjUri() {
   return uri;
 }
 
-// ── CSS injected into every WebView to make it look native ────────────────────
-// Hides website tab bar, share buttons, footer, scrollbar.
-// Keeps city-selector button so user can change timezone from within the view.
+// ── CSS injected into every WebView — whitelist approach ─────────────────────
+// Strategy: hide everything outside <main>, then inside <main> hide only
+// the website chrome (tab nav, interlinking grid). Keep .pj-tab-panel intact
+// so switchPjTab() can show/hide panels normally.
 
 const APP_CSS = `
-#pjTabs,.pj-tabs{display:none!important;}
-.share-row,.push-btn,.social-share,.fb-share,
-.pay-overlay,#pdfPromoOverlay,.about-sec,
-.testi-sec,.ft-links,.ftdisc,footer,.site-footer,
-.hero{display:none!important;}
-::-webkit-scrollbar{display:none!important;width:0!important;}
-html{scrollbar-width:none!important;}
+/* Everything outside <main> = hidden (footer, about, testi, SEO sections) */
+body>*:not(main){display:none!important;}
+
+/* Inside <main>: hide website tab bar + interlinking tools grid */
+#pjTabs,.pj-tabs,.pj-tools-wrap{display:none!important;}
+
+/* Clean body/main */
 body{
   background:#FAF8F3!important;
-  -webkit-tap-highlight-color:transparent!important;
+  padding:0!important;margin:0!important;
   overscroll-behavior:contain;
+  -webkit-tap-highlight-color:transparent!important;
 }
+main{padding:0!important;margin:0!important;}
+
+/* Hide scrollbar */
+::-webkit-scrollbar{display:none!important;width:0!important;}
+html{scrollbar-width:none!important;}
+
+/* Remove tap highlights & animations */
 *{-webkit-tap-highlight-color:transparent!important;}
 .pj-tab-panel{animation:none!important;}
+
+/* Polish content cards */
 .tban{border-radius:14px!important;}
 .auspicious-counter-wrap{border-radius:14px!important;}
 `;
