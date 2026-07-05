@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { registerRootComponent } from 'expo';
 import { useFonts } from 'expo-font';
+import { UserProvider } from './src/context/UserContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
 
 function App() {
@@ -17,9 +18,11 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <BottomTabs />
-      </NavigationContainer>
+      <UserProvider>
+        <NavigationContainer>
+          <BottomTabs />
+        </NavigationContainer>
+      </UserProvider>
     </SafeAreaProvider>
   );
 }
