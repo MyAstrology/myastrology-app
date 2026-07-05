@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["assets/web/**"],
+    "assetBundlePatterns": ["assets/web/**", "assets/fonts/**"],
     "android": {
       "package": "in.myastrology.app"
     }

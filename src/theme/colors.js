@@ -1,15 +1,16 @@
 export const colors = {
-  background: '#FDFAF4',
-  card: '#FFFFFF',
-  cardBorder: '#E8D9B5',
-  primary: '#C9A84C',
-  primaryDark: '#9B7E46',
-  headerBg: '#1C1810',
-  headerText: '#F5E6C8',
-  text: '#1C1810',
-  textSecondary: '#7B6B4E',
-  divider: '#EDE0C4',
-  gold: '#D4AF37',
-  goldLight: '#F5E6C8',
-  white: '#FFFFFF',
+  background:   '#FAF8F3',   // warm ivory
+  card:         '#FFFFFF',
+  cardBorder:   '#E2CFA0',   // warm gold border
+  primary:      '#B8960C',   // deep gold
+  primaryLight: '#D4AF37',   // medium gold
+  headerBg:     '#FAF8F3',   // light cream header (unified with background)
+  headerBorder: '#E2CFA0',   // thin gold divider
+  text:         '#1E1408',   // very dark warm brown
+  textSecondary:'#7B6B4E',   // warm taupe
+  divider:      '#EDE0C4',   // soft gold-tinted divider
+  gold:         '#C9A84C',   // accent gold
+  goldLight:    '#8C6A00',   // dark gold for light-bg text
+  tabBg:        '#FFFFFF',   // pure white tab bar
+  white:        '#FFFFFF',
 };

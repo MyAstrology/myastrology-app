@@ -16,7 +16,6 @@ const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
 
 const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const EN_DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 const QUICK = [
   { tab: 'Kundali',     icon: 'chart-donut',           label: 'জন্ম কুণ্ডলী'   },
@@ -90,7 +89,7 @@ export function HomeScreen() {
         contentContainerStyle={[s.content, { paddingTop: insets.top, paddingBottom: tabBarH + 16 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Compact Header ── */}
+        {/* ── Header ── */}
         <View style={s.header}>
           <Image source={LOGO} style={s.logo} />
           <View style={s.headerCenter}>
@@ -105,7 +104,9 @@ export function HomeScreen() {
         {/* ── Panchang Card ── */}
         <View style={s.card}>
           <View style={s.cardHeaderRow}>
-            <View style={s.dot} /><Text style={s.cardTitle}>আজকের পঞ্জিকা</Text><View style={s.dot} />
+            <View style={s.dot} />
+            <Text style={s.cardTitle}>আজকের পঞ্জিকা</Text>
+            <View style={s.dot} />
           </View>
 
           <Text style={s.bnDate}>{bnDateStr}</Text>
@@ -143,9 +144,9 @@ export function HomeScreen() {
           </View>
           <View style={s.cardDivider} />
           <View style={s.cellGrid}>
-            <PanchangCell icon="weather-sunset-up"     label="সূর্যোদয়" value={data.sunrise}  />
+            <PanchangCell icon="weather-sunset-up"   label="সূর্যোদয়" value={data.sunrise} />
             <View style={s.cellVDiv} />
-            <PanchangCell icon="weather-sunset-down"   label="সূর্যাস্ত" value={data.sunset}   />
+            <PanchangCell icon="weather-sunset-down" label="সূর্যাস্ত" value={data.sunset}  />
           </View>
         </View>
 
@@ -202,63 +203,108 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content:   {},
 
-  /* Compact header */
+  /* Header */
   header: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: colors.headerBg,
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: colors.gold + '33',
+    borderBottomWidth: 1, borderBottomColor: colors.headerBorder,
   },
-  logo:         { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: colors.gold + '88' },
+  logo: {
+    width: 38, height: 38, borderRadius: 19,
+    borderWidth: 1.5, borderColor: colors.gold + 'AA',
+  },
   headerCenter: { flex: 1, alignItems: 'center' },
-  brand:   { fontSize: 16, fontWeight: '800', color: colors.gold, letterSpacing: 3 },
-  tagline: { fontSize: 9,  color: colors.goldLight, letterSpacing: 1.5, opacity: 0.8, marginTop: 1 },
-  hamBtn:  { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
+  brand: {
+    fontSize: 16, fontWeight: '800', color: colors.text,
+    letterSpacing: 3,
+  },
+  tagline: {
+    fontSize: 9, color: colors.textSecondary,
+    letterSpacing: 1.2, marginTop: 1,
+    fontFamily: 'NotoSerifBengali-Regular',
+  },
+  hamBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
 
   /* Panchang card */
   card: {
     margin: spacing.md, backgroundColor: colors.card, borderRadius: 16,
     borderWidth: 1, borderColor: colors.cardBorder,
     paddingHorizontal: spacing.md, paddingVertical: 14,
-    shadowColor: colors.gold, shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.10, shadowRadius: 8, elevation: 4,
+    shadowColor: colors.gold, shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12, shadowRadius: 10, elevation: 3,
   },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10, gap: 8 },
-  dot:           { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
-  cardTitle:     { fontSize: 11, color: colors.primary, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  cardHeaderRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', marginBottom: 10, gap: 8,
+  },
+  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
+  cardTitle: {
+    fontSize: 11, color: colors.primary, fontWeight: '700',
+    letterSpacing: 2, textTransform: 'uppercase',
+    fontFamily: 'NotoSerifBengali-Bold',
+  },
 
-  bnDate:  { fontSize: 18, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: 5 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 10, flexWrap: 'wrap' },
-  metaText:{ fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
+  bnDate: {
+    fontSize: 18, color: colors.text, textAlign: 'center', marginBottom: 5,
+    fontFamily: 'NotoSerifBengali-Bold',
+  },
+  metaRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6, marginBottom: 10, flexWrap: 'wrap',
+  },
+  metaText: {
+    fontSize: 11, color: colors.textSecondary, fontWeight: '500',
+    fontFamily: 'NotoSerifBengali-Regular',
+  },
   metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textSecondary, opacity: 0.5 },
 
   cardDivider: { height: 1, backgroundColor: colors.divider },
 
-  pakshaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 },
-  pakshaText:{ fontSize: 13, color: colors.text, fontWeight: '600' },
+  pakshaRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6, paddingVertical: 8,
+  },
+  pakshaText: {
+    fontSize: 13, color: colors.text, fontWeight: '600',
+    fontFamily: 'NotoSerifBengali-Bold',
+  },
 
-  cellGrid:  { flexDirection: 'row', alignItems: 'stretch' },
-  cell:      { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center' },
-  cellVDiv:  { width: 1, backgroundColor: colors.divider },
-  cellHeader:{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
-  cellLabel: { fontSize: 11, color: colors.textSecondary },
-  cellValue: { fontSize: 15, color: colors.text, fontWeight: '700', textAlign: 'center' },
-  timeRange: { fontSize: 10, color: colors.primary, textAlign: 'center', marginTop: 3, opacity: 0.85 },
+  cellGrid:   { flexDirection: 'row', alignItems: 'stretch' },
+  cell:       { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center' },
+  cellVDiv:   { width: 1, backgroundColor: colors.divider },
+  cellHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
+  cellLabel:  {
+    fontSize: 11, color: colors.textSecondary,
+    fontFamily: 'NotoSerifBengali-Regular',
+  },
+  cellValue:  {
+    fontSize: 15, color: colors.text, fontWeight: '700',
+    textAlign: 'center', fontFamily: 'NotoSerifBengali-Bold',
+  },
+  timeRange:  {
+    fontSize: 10, color: colors.primary, textAlign: 'center',
+    marginTop: 3, opacity: 0.85,
+  },
 
   sectionTitle: {
     fontSize: 11, fontWeight: '700', color: colors.textSecondary,
     letterSpacing: 1.5, textTransform: 'uppercase',
     marginHorizontal: spacing.md, marginTop: 4, marginBottom: 8,
+    fontFamily: 'NotoSerifBengali-Bold',
   },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 10 },
   quickBtn: {
     width: CARD_W, backgroundColor: colors.card, borderRadius: 14,
     borderWidth: 1, borderColor: colors.cardBorder,
     alignItems: 'center', paddingVertical: 16, gap: 7,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    shadowColor: colors.gold, shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10, shadowRadius: 6, elevation: 2,
   },
-  quickLabel: { fontSize: 11, color: colors.text, fontWeight: '600', textAlign: 'center' },
+  quickLabel: {
+    fontSize: 11, color: colors.text, fontWeight: '600',
+    textAlign: 'center', fontFamily: 'NotoSerifBengali-Regular',
+  },
 
   infoStrip: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -267,14 +313,29 @@ const s = StyleSheet.create({
   infoText: { fontSize: 11, color: colors.textSecondary },
 
   /* Drawer */
-  overlay:      { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', flexDirection: 'row' },
-  drawer:       { width: '72%', backgroundColor: colors.headerBg, paddingHorizontal: 18, paddingBottom: 32 },
-  drawerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  drawerTitle:  { fontSize: 15, fontWeight: '800', color: colors.gold, letterSpacing: 3 },
-  drawerDivider:{ height: 1, backgroundColor: colors.gold + '44', marginBottom: 14 },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', flexDirection: 'row' },
+  drawer: {
+    width: '72%', backgroundColor: colors.card,
+    paddingHorizontal: 18, paddingBottom: 32,
+    borderRightWidth: 1, borderRightColor: colors.cardBorder,
+    elevation: 16,
+    shadowColor: '#000', shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.12, shadowRadius: 12,
+  },
+  drawerHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 10,
+  },
+  drawerTitle: {
+    fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 3,
+  },
+  drawerDivider: { height: 1, backgroundColor: colors.cardBorder, marginBottom: 14 },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.gold + '22',
+    paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  menuLabel: { flex: 1, fontSize: 14, color: colors.goldLight, fontWeight: '600' },
+  menuLabel: {
+    flex: 1, fontSize: 14, color: colors.text, fontWeight: '600',
+    fontFamily: 'NotoSerifBengali-Regular',
+  },
 });

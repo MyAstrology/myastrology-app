@@ -1,5 +1,4 @@
 import React from 'react';
-import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,14 +22,19 @@ export function BottomTabs() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor:   colors.gold,
-        tabBarInactiveTintColor: '#6B5C40',
+        tabBarInactiveTintColor: '#A89060',
         tabBarStyle: {
-          backgroundColor: colors.headerBg,
-          borderTopColor:  colors.gold,
-          borderTopWidth:  0.5,
+          backgroundColor: colors.tabBg,
+          borderTopColor:  colors.cardBorder,
+          borderTopWidth:  1,
           height: 58 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
+          elevation: 8,
+          shadowColor: colors.gold,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600', letterSpacing: 0 },
       }}
