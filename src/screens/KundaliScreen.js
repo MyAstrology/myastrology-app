@@ -122,6 +122,7 @@ export function KundaliScreen() {
   const [hour, setHour]   = useState('');
   const [min, setMin]     = useState('');
   const [cityQuery, setCityQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState(null);
   const [showCities, setShowCities] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -140,8 +141,10 @@ export function KundaliScreen() {
     if (!hh || !mn) { setError('জন্মসময় দিন'); return; }
     const dateStr = `${yy}-${mm}-${dd}`;
     const timeStr = `${hh}:${mn}`;
+    const lat = selectedCity?.lat ?? 22.5726;
+    const lon = selectedCity?.lng ?? 88.3639;
     try {
-      const r = getKundali(dateStr, timeStr);
+      const r = getKundali(dateStr, timeStr, lat, lon);
       setResult(r);
     } catch (e) {
       setError('গণনায় সমস্যা হয়েছে।');
@@ -278,7 +281,11 @@ export function KundaliScreen() {
                 <TouchableOpacity
                   key={i}
                   style={[styles.cityItem, i < filteredCities.length - 1 && styles.cityItemBorder]}
-                  onPress={() => { setCityQuery(c.bn || c.n); setShowCities(false); }}
+                  onPress={() => {
+                    setCityQuery(c.bn || c.n);
+                    setSelectedCity(c);
+                    setShowCities(false);
+                  }}
                 >
                   <MaterialCommunityIcons name="map-marker" size={14} color={colors.primary} />
                   <Text style={styles.cityName}>{c.bn || c.n}</Text>
