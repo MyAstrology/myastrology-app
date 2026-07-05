@@ -1,4 +1,4 @@
-const v = require('../vsop87-planets');
+import * as v from '../vsop87-planets';
 
 export const RASHI_NAMES = [
   'মেষ','বৃষ','মিথুন','কর্কট','সিংহ','কন্যা',

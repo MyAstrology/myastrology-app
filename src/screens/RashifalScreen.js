@@ -20,7 +20,10 @@ const RASHI_IMAGES = [
   require('../assets/rashi/pisces.png'),
 ];
 
-const data = getTodayRashifal();
+let data;
+try { data = getTodayRashifal(); } catch (_) {
+  data = { date: '', moonRashi: 0, moonRashiName: '—', rashifal: [] };
+}
 
 const TAG_COLOR = {
   'অতিশুভ':  { bg: '#E8F5E9', text: '#2E7D32', border: '#A5D6A7' },
