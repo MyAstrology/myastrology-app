@@ -1,8 +1,9 @@
 import './src/polyfills';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { registerRootComponent } from 'expo';
 
-export default function App() {
+function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>MyAstrology</Text>
@@ -16,3 +17,5 @@ const styles = StyleSheet.create({
   text: { fontSize: 28, fontWeight: '700', color: '#D4AF37', letterSpacing: 3 },
   sub:  { fontSize: 14, color: '#8A7A60', marginTop: 12 },
 });
+
+registerRootComponent(App);
