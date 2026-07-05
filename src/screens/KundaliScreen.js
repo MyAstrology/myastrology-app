@@ -1,20 +1,18 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
+import html from '../web-html/kundali';
 import { colors } from '../theme/colors';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const KUNDALI_HTML = require('../../assets/web/kundali.html');
 
 export function KundaliScreen() {
   return (
     <View style={s.root}>
-      <LocalWebView assetModule={KUNDALI_HTML} style={s.web} />
+      <LocalWebView name="kundali" html={html} style={s.wv} />
     </View>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  web:  { flex: 1 },
+  wv:   { flex: 1 },
 });

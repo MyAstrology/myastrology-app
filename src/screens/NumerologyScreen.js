@@ -1,20 +1,18 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
+import html from '../web-html/numerology';
 import { colors } from '../theme/colors';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const NUMEROLOGY_HTML = require('../../assets/web/numerology.html');
 
 export function NumerologyScreen() {
   return (
     <View style={s.root}>
-      <LocalWebView assetModule={NUMEROLOGY_HTML} style={s.web} />
+      <LocalWebView name="numerology" html={html} style={s.wv} />
     </View>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  web:  { flex: 1 },
+  wv:   { flex: 1 },
 });
