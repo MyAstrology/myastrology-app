@@ -30,6 +30,7 @@ const BN_MONTH_NAMES = ['বৈশাখ','জ্যৈষ্ঠ','আষাঢ�
 const INNER_TABS = [
   { key: 'today',    label: 'আজ' },
   { key: 'calendar', label: 'পঞ্জিকা' },
+  { key: 'events',   label: 'এই মাসের উৎসব' },
   { key: 'shubha',   label: 'এই মাসের শুভ দিন' },
   { key: 'old',      label: 'পুরনো বছরের পঞ্জিকা' },
   { key: 'pdf',      label: 'PDF ডাউনলোড' },
@@ -68,13 +69,8 @@ function usePjUri() {
 // so switchPjTab() can show/hide panels normally.
 
 const APP_CSS = `
-/* Everything outside <main> = hidden (footer, about, testi, SEO sections) */
 body>*:not(main){display:none!important;}
-
-/* Inside <main>: hide website tab bar + interlinking tools grid */
 #pjTabs,.pj-tabs,.pj-tools-wrap{display:none!important;}
-
-/* Clean body/main */
 body{
   background:#FAF8F3!important;
   padding:0!important;margin:0!important;
@@ -82,41 +78,62 @@ body{
   -webkit-tap-highlight-color:transparent!important;
 }
 main{padding:0!important;margin:0!important;}
-
-/* Hide scrollbar */
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 html{scrollbar-width:none!important;}
-
-/* Remove tap highlights & animations */
 *{-webkit-tap-highlight-color:transparent!important;}
 .pj-tab-panel{animation:none!important;}
-
-/* Polish content cards */
 .tban{border-radius:14px!important;}
 .auspicious-counter-wrap{border-radius:14px!important;}
 `;
 
+// পঞ্জিকা tab: keep only .cal-card (calendar) + .dtp (date detail panel)
+const CAL_CSS = `
+#pj-mas .month-events-wrap{display:none!important;}
+#pj-mas .dvd{display:none!important;}
+a#rashifal-today-link{display:none!important;}
+a[data-saptahik]{display:none!important;}
+#pj-mas .auspicious-counter-wrap{display:none!important;}
+#pj-mas .guide-wrap{display:none!important;}
+`;
+
+// এই মাসের উৎসব tab: keep .month-events-wrap + .auspicious-counter-wrap + .guide-wrap
+const EVENTS_CSS = `
+#pj-mas .cal-card{display:none!important;}
+#pj-mas .dtp{display:none!important;}
+#pj-mas .dvd{display:none!important;}
+a#rashifal-today-link{display:none!important;}
+a[data-saptahik]{display:none!important;}
+`;
+
+// JS to hide rashifal card parent divs (CSS cannot select parent elements)
+const HIDE_RASHI_PARENTS_JS = `
+setTimeout(function(){
+  var rL=document.getElementById('rashifal-today-link');
+  if(rL&&rL.parentElement)rL.parentElement.style.cssText='display:none!important;';
+  var sL=document.querySelector('a[data-saptahik]');
+  if(sL&&sL.parentElement)sL.parentElement.style.cssText='display:none!important;';
+},300);
+`;
+
 // ── injectedJavaScript builders ───────────────────────────────────────────────
 
-function makeJS(tabId) {
-  const switchCall = tabId
+function makeJS(tabId, extraCSS, extraJS) {
+  var css = APP_CSS + (extraCSS || '');
+  var switchCall = tabId
     ? `if(typeof switchPjTab==='function'){switchPjTab(${JSON.stringify(tabId)});}else{setTimeout(t,150);}`
-    : `/* আজ tab is default */`;
-
+    : '';
   return `(function(){
-  if(!document.getElementById('__appNative__')){
-    var st=document.createElement('style');
-    st.id='__appNative__';
-    st.textContent=${JSON.stringify(APP_CSS)};
-    document.head.appendChild(st);
-  }
-  function t(){${switchCall}}
-  t();
+  var st=document.getElementById('__appNative__');
+  if(!st){st=document.createElement('style');st.id='__appNative__';document.head.appendChild(st);}
+  st.textContent=${JSON.stringify(css)};
+  function t(){${switchCall}${extraJS || ''}}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',t);}else{t();}
 })();true;`;
 }
 
 const JS_TODAY    = makeJS(null);
-const JS_CALENDAR = makeJS('mas');
+const JS_CALENDAR = makeJS('mas', CAL_CSS, HIDE_RASHI_PARENTS_JS);
+const JS_EVENTS   = makeJS('mas', EVENTS_CSS, HIDE_RASHI_PARENTS_JS);
 const JS_OLD      = makeJS('pura');
 
 // ── Shared WebView wrapper ────────────────────────────────────────────────────
@@ -383,6 +400,7 @@ export function PanchangScreen() {
       <View style={[s.content, { paddingBottom: tabBarH }]}>
         {activeTab === 'today'    && <PjWebView uri={pjUri} injectedJavaScript={JS_TODAY} />}
         {activeTab === 'calendar' && <PjWebView uri={pjUri} injectedJavaScript={JS_CALENDAR} />}
+        {activeTab === 'events'   && <PjWebView uri={pjUri} injectedJavaScript={JS_EVENTS} />}
         {activeTab === 'shubha'   && <ShubhaDinTab year={today.getFullYear()} month={today.getMonth()} />}
         {activeTab === 'old'      && <PjWebView uri={pjUri} injectedJavaScript={JS_OLD} />}
         {activeTab === 'pdf'      && <PdfTab />}
