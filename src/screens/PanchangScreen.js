@@ -57,21 +57,20 @@ function usePjUri() {
 const APP_CSS = `
 body>*:not(main){display:none!important;}
 #pjTabs,.pj-tabs,.pj-tools-wrap{display:none!important;}
+.author-byline{display:none!important;}
 body{
   background:#FAF8F3!important;
   padding:0!important;margin:0!important;
   overscroll-behavior:contain;
   -webkit-tap-highlight-color:transparent!important;
 }
-main{padding:0!important;margin:0!important;}
+main{padding:0 0 80px 0!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 html{scrollbar-width:none!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
 .pj-tab-panel{animation:none!important;}
 .tban{border-radius:14px!important;}
 .auspicious-counter-wrap{border-radius:14px!important;}
-#pj-mas{padding-bottom:80px!important;}
-#pj-pura{padding-bottom:80px!important;}
 `;
 
 // পঞ্জিকা tab: keep only .cal-card (calendar) + .dtp (date detail panel)
@@ -91,12 +90,6 @@ const EVENTS_CSS = `
 #pj-mas .dvd{display:none!important;}
 a#rashifal-today-link{display:none!important;}
 a[data-saptahik]{display:none!important;}
-`;
-
-// পুরনো বছর tab: hide the booking card (no CSS class, identified by being a
-// non-.yr-entry-card direct child of #pj-pura)
-const OLD_CSS = `
-#pj-pura > div:not(.yr-entry-card){display:none!important;}
 `;
 
 // JS to hide rashifal card parent divs (CSS cannot select parent elements)
@@ -128,7 +121,7 @@ function makeJS(tabId, extraCSS, extraJS) {
 const JS_TODAY    = makeJS(null);
 const JS_CALENDAR = makeJS('mas', CAL_CSS, HIDE_RASHI_PARENTS_JS);
 const JS_EVENTS   = makeJS('mas', EVENTS_CSS, HIDE_RASHI_PARENTS_JS);
-const JS_OLD      = makeJS('pura', OLD_CSS);
+const JS_OLD      = makeJS('pura');
 
 // ── Shared WebView wrapper ────────────────────────────────────────────────────
 
@@ -173,8 +166,7 @@ export function PanchangScreen() {
   const [activeTab, setActiveTab] = useState('today');
   const [menuOpen,  setMenuOpen]  = useState(false);
 
-  const tabBarH = 58 + insets.bottom;
-  const pjUri   = usePjUri();
+  const pjUri = usePjUri();
 
   const MENU_ITEMS = [
     { tab: 'Home',        icon: 'home-variant',          label: 'হোম' },
@@ -218,7 +210,7 @@ export function PanchangScreen() {
       </View>
 
       {/* ── Content ── */}
-      <View style={[s.content, { paddingBottom: tabBarH }]}>
+      <View style={s.content}>
         {activeTab === 'today'    && <PjWebView uri={pjUri} injectedJavaScript={JS_TODAY} />}
         {activeTab === 'calendar' && <PjWebView uri={pjUri} injectedJavaScript={JS_CALENDAR} />}
         {activeTab === 'events'   && <PjWebView uri={pjUri} injectedJavaScript={JS_EVENTS} />}
