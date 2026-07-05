@@ -26,7 +26,7 @@ const BMS = [
   ['2028-12-16',1435,8],['2029-01-15',1435,9],['2029-02-13',1435,10],['2029-03-15',1435,11],
 ];
 
-function getBengaliDate(dateStr) {
+export function getBengaliDate(dateStr) {
   let found = null;
   for (let i = BMS.length - 1; i >= 0; i--) {
     if (dateStr >= BMS[i][0]) { found = BMS[i]; break; }
@@ -136,6 +136,15 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   const gulika    = (riseH && setH) ? getSlotTime(riseH, setH, GULIKA_SLOT[wd])    : null;
   const yamagnda  = (riseH && setH) ? getSlotTime(riseH, setH, YAMAGNDA_SLOT[wd])  : null;
 
+  const brahmaM = riseH ? { start: decToHM(riseH - 96/60), end: decToHM(riseH - 48/60) } : null;
+
+  const vs1 = YAMAGNDA_SLOT[wd];
+  const vs2 = vs1 < 8 ? vs1 + 1 : 1;
+  const varebela = (riseH && setH) ? {
+    start: getSlotTime(riseH, setH, vs1).start,
+    end:   getSlotTime(riseH, setH, vs2).end,
+  } : null;
+
   let abhijit = null;
   if (p.transit) {
     const tH = parseHMS(p.transit);
@@ -194,5 +203,37 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     gulika,
     yamagnda,
     abhijit,
+    brahmaM,
+    varebela,
   };
+}
+
+export function getMonthCalendar(year, month) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const results = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+    const jdNoon  = v.JD(year, month + 1, d) + 5.5 / 24 - 0.5;
+    let tithiIdx = 0, tithiName = '—';
+    try {
+      const t = v.getTithi(jdNoon);
+      tithiIdx = t.index;
+      tithiName = TITHI_NAMES[t.index] || '—';
+    } catch (_) {}
+    const bnDate = getBengaliDate(dateStr);
+    const wd = new Date(dateStr + 'T00:00:00').getDay();
+    results.push({
+      dateStr,
+      day: d,
+      weekday: wd,
+      tithiIdx,
+      tithi: tithiName,
+      bengaliDay:   bnDate?.day       || null,
+      bengaliMonth: bnDate?.monthName || '—',
+      bengaliYear:  bnDate?.year      || null,
+    });
+  }
+  return results;
 }
