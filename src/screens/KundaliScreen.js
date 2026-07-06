@@ -83,6 +83,9 @@ div.k-wrap#inputSection{padding:8px 12px 0!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:16px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:12px!important;}
 .ig{margin-bottom:10px!important;}
 .sel-ctrl{width:100%!important;padding:9px 10px!important;border:1.5px solid #e0cdbc!important;border-radius:9px!important;background:#fefcf9!important;font-size:.95rem!important;color:#3a2218!important;font-family:inherit!important;}
+/* #userName has no class — must target by ID */
+#userName{width:100%!important;padding:9px 10px!important;border:1.5px solid #e0cdbc!important;border-radius:9px!important;background:#fefcf9!important;font-size:.95rem!important;color:#3a2218!important;font-family:inherit!important;outline:none!important;}
+#userName:focus{border-color:#c8a87a!important;box-shadow:0 0 0 3px rgba(200,168,122,.15)!important;}
 .btn.btn-primary,.btn-primary{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;padding:14px 20px!important;background:#7a2e2e!important;color:#fff!important;border:none!important;border-radius:12px!important;font-size:1rem!important;font-weight:700!important;font-family:inherit!important;cursor:pointer!important;margin:12px 0 4px!important;}
 .btn-loading{opacity:.75!important;}
 .spinner{display:inline-block!important;width:16px!important;height:16px!important;border:2px solid rgba(255,255,255,.4)!important;border-top-color:#fff!important;border-radius:50%!important;animation:kspin .7s linear infinite!important;flex-shrink:0!important;}
@@ -100,13 +103,94 @@ div.k-wrap#inputSection{padding:8px 12px 0!important;}
 
 function buildInjectedJS(css) {
   return `(function(){
+  /* 1 — CSS */
   var st=document.getElementById('__kNative__');
   if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
-  /* showToast expects a #toastStack div — not in the HTML source */
+
+  /* 2 — toastStack (showToast uses it) */
   if(!document.getElementById('toastStack')){
     var ts=document.createElement('div');ts.id='toastStack';document.body.appendChild(ts);
   }
+
+  /* 3 — Fallbacks: run after page scripts, fill any gaps */
+  setTimeout(function(){
+
+    /* 3a — Populate select dropdowns if the main script didn't */
+    var d=document.getElementById('dobDay');
+    if(d&&d.options.length<=1){for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;d.appendChild(o);}}
+
+    var mo=document.getElementById('dobMonth');
+    if(mo&&mo.options.length<=1){
+      ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন',
+       'জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'
+      ].forEach(function(m,i){var o=document.createElement('option');o.value=i+1;o.textContent=m;mo.appendChild(o);});
+    }
+
+    var y=document.getElementById('dobYear');
+    if(y&&y.options.length<=1){var cy=new Date().getFullYear();for(var yr=cy;yr>=1900;yr--){var o=document.createElement('option');o.value=yr;o.textContent=yr;y.appendChild(o);}}
+
+    var h=document.getElementById('tobHour');
+    if(h&&h.options.length<=1){for(var hh=0;hh<24;hh++){var o=document.createElement('option');o.value=hh;o.textContent=String(hh).padStart(2,'0');h.appendChild(o);}}
+
+    var mn=document.getElementById('tobMin');
+    if(mn&&mn.options.length<=1){for(var mm=0;mm<60;mm++){var o=document.createElement('option');o.value=mm;o.textContent=String(mm).padStart(2,'0');mn.appendChild(o);}}
+
+    var sc=document.getElementById('tobSec');
+    if(sc&&sc.options.length<=1){for(var ss=0;ss<60;ss++){var o=document.createElement('option');o.value=ss;o.textContent=String(ss).padStart(2,'0');sc.appendChild(o);}}
+
+    /* 3b — GPS fallback */
+    if(typeof getGPSLocation==='undefined'){
+      window.getGPSLocation=function(){
+        var msg=document.getElementById('gpsMsg');
+        if(!navigator.geolocation){if(msg)msg.textContent='GPS সমর্থন নেই';return;}
+        if(msg)msg.textContent='লোকেশন অনুসন্ধান হচ্ছে...';
+        navigator.geolocation.getCurrentPosition(
+          function(pos){
+            var la=document.getElementById('lat'),lo=document.getElementById('lon');
+            if(la)la.value=pos.coords.latitude.toFixed(4);
+            if(lo)lo.value=pos.coords.longitude.toFixed(4);
+            if(msg)msg.textContent='লোকেশন পাওয়া গেছে';
+            if(typeof validateForm==='function')validateForm();
+          },
+          function(){if(msg)msg.textContent='লোকেশন পাওয়া যায়নি';}
+        );
+      };
+    }
+
+    /* 3c — City search fallback (guarded so original listener isn't doubled) */
+    var inp=document.getElementById('citySearch');
+    var sugg=document.getElementById('citySuggestions');
+    if(inp&&sugg&&!inp.__csOk){
+      inp.__csOk=true;
+      inp.addEventListener('input',function(){
+        var q=this.value.trim().toLowerCase();
+        sugg.innerHTML='';
+        if(q.length<3){sugg.style.display='none';return;}
+        var cd=(typeof CITY_DB!=='undefined')?CITY_DB:[];
+        var hits=cd.filter(function(c){return(c.n||'').toLowerCase().startsWith(q);}).slice(0,8);
+        if(!hits.length){sugg.style.display='none';return;}
+        hits.forEach(function(c){
+          var li=document.createElement('li');
+          li.textContent=c.n+(c.g?' ('+c.g+')':'');
+          li.addEventListener('click',function(){
+            inp.value=c.n;
+            var la=document.getElementById('lat'),lo=document.getElementById('lon');
+            if(la)la.value=parseFloat(c.lat).toFixed(4);
+            if(lo)lo.value=parseFloat(c.lng).toFixed(4);
+            sugg.style.display='none';
+            if(typeof validateForm==='function')validateForm();
+          });
+          sugg.appendChild(li);
+        });
+        sugg.style.display='block';
+      });
+      document.addEventListener('click',function(e){
+        if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
+      });
+    }
+
+  },600);
 })();true;`;
 }
 
