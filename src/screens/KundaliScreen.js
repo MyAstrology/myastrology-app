@@ -19,16 +19,20 @@ const LOGO = require('../../assets/logo.png');
 
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
-  // printDataJson is already a JSON string from the WebView postMessage.
-  // JSON.stringify wraps it in quotes and escapes internal quotes, BUT it does
-  // NOT escape </script>. When embedded inside a <script> tag the HTML parser
-  // will close the script block prematurely at any </script> in the payload,
-  // preventing root.innerHTML from ever being set → blank PDF.
-  let safeJson = JSON.stringify(printDataJson);
-  safeJson = safeJson.replace(/<\/script/gi, '<\\/script');
+  // Store the JSON payload in an HTML attribute instead of embedding it inside
+  // a <script> block. This completely eliminates the </script> injection risk:
+  // the HTML parser never sees </script> inside attribute values.
+  // Attribute encoding: & → &amp;, " → &quot; (the only characters that would
+  // break a double-quoted attribute value).
+  const attrSafe = printDataJson
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;');
+  html = html.replace('<body>', `<body data-kp="${attrSafe}">`);
+  // Replace the localStorage read with an attribute read. getAttribute returns
+  // the decoded value (entities resolved), so JSON.parse(raw) works correctly.
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
-    `raw=${safeJson};`
+    `try{raw=document.body.getAttribute('data-kp');}catch(e){}`
   );
   return html;
 }
