@@ -8,11 +8,44 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import KUNDALI_HTML from '../web-html/kundali';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
 const LOGO = require('../../assets/logo.png');
+
+function buildPrintHtml(bodyHtml) {
+  return `<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Hind Siliguri',sans-serif;padding:20px;background:#faf8f3;color:#2c1a0e;font-size:14px;line-height:1.6;}
+.tab-panel{display:block!important;margin-bottom:28px;}
+#tabNav,.kf-alt-actions,.fab-wrap{display:none!important;}
+.section-title{font-size:15px;font-weight:700;color:#3a2218;border-bottom:2px solid #ede0ce;padding-bottom:6px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+svg.title-icon{width:16px;height:16px;stroke:#7a2e2e;fill:none;flex-shrink:0;}
+.pg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:4px 0 12px;}
+.pg-item{display:flex;flex-direction:column;gap:2px;}
+.pg-item .lbl{font-size:11px;color:#8a6a50;font-weight:500;}
+.pg-item .val{font-size:14px;font-weight:700;color:#2c1a0e;}
+.planet-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
+.planet-table th{background:#7a2e2e;color:#fff;padding:6px;text-align:left;font-weight:600;}
+.planet-table td{padding:6px;border-bottom:1px solid #f0e4d4;color:#2c1a0e;}
+.planet-table tr:nth-child(even) td{background:#fdf8f3;}
+.chart-section{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.chart-box{width:100%;max-width:280px;}
+.chart-box svg{width:100%;height:auto;}
+</style>
+</head>
+<body>${bodyHtml}</body>
+</html>`;
+}
 
 // ── File URI (written once per session) ──────────────────────────────────────
 
@@ -207,18 +240,8 @@ function buildInjectedJS(css) {
 
   /* 3 — Premium popups: keep originals active (CSS injected via APP_CSS above) */
 
-  /* 4 — Block window.open (PDF print / rashifal tab) — WebView has no multi-window support */
-  var _origOpen=window.open;
-  window.open=function(url,target,features){
-    if(typeof url==='string'&&url.indexOf('kundali-print.html')>-1){
-      if(typeof showToast==='function'){
-        showToast('PDF প্রিন্ট ব্রাউজারে সমর্থিত। ওয়েবসাইট ভিজিট করুন।','info');
-      }
-      return null;
-    }
-    /* rashifal opens a new tab — silently swallow */
-    return null;
-  };
+  /* 4 — Block window.open — WebView has no multi-window support; _doPrint handles PDF */
+  window.open=function(){return null;};
 
   /* 4 — Fallbacks: run after page scripts, fill any gaps */
   setTimeout(function(){
@@ -295,6 +318,26 @@ function buildInjectedJS(css) {
       document.addEventListener('click',function(e){
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
+    }
+
+    /* 5 — Override _doPrint: generate PDF via expo-print instead of window.open */
+    if(typeof window._doPrint==='function'){
+      window._doPrint=function(){
+        var ra=document.getElementById('resultsArea');
+        if(!ra||ra.style.display==='none'){
+          if(typeof showToast==='function')showToast('প্রথমে কুষ্ঠি গণনা করুন।','error');
+          return;
+        }
+        /* Temporarily show all tab panels so PDF captures full kundali */
+        var panels=document.querySelectorAll('.tab-panel');
+        var saved=[];
+        panels.forEach(function(p,i){saved[i]=p.style.display;p.style.display='block';});
+        var bodyHtml=ra.innerHTML;
+        panels.forEach(function(p,i){p.style.display=saved[i];});
+        if(window.ReactNativeWebView){
+          window.ReactNativeWebView.postMessage(JSON.stringify({type:'generatePdf',html:bodyHtml}));
+        }
+      };
     }
 
   },600);
@@ -376,8 +419,23 @@ export function KundaliScreen() {
             injectedJavaScript={INJECTED_JS}
             onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
             onShouldStartLoadWithRequest={req => {
-              /* Allow the local file and about:blank only; block everything else */
               return req.url.startsWith('file://') || req.url === 'about:blank';
+            }}
+            onMessage={async (event) => {
+              try {
+                const msg = JSON.parse(event.nativeEvent.data);
+                if (msg.type === 'generatePdf') {
+                  const { uri } = await Print.printToFileAsync({
+                    html: buildPrintHtml(msg.html),
+                    base64: false,
+                  });
+                  await Sharing.shareAsync(uri, {
+                    mimeType: 'application/pdf',
+                    dialogTitle: 'কুণ্ডলী PDF সেভ করুন',
+                    UTI: 'com.adobe.pdf',
+                  });
+                }
+              } catch (_) {}
             }}
             renderLoading={() => (
               <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
