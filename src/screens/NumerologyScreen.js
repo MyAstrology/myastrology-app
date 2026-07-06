@@ -88,6 +88,8 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
   font-family:inherit!important;
 }
 .chip:hover,.chip:active{background:#fdf1ec!important;border-color:#7a2e2e!important;color:#7a2e2e!important;}
+/* ── Hide author byline ── */
+.num-author{display:none!important;}
 /* ── Hide promotional/SEO sections below form ── */
 .daily-box{display:none!important;}
 .stats{display:none!important;}

@@ -30,6 +30,9 @@ header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!import
 .mm-quicklink-btn{display:none!important;}
 /* ── Hide premium/special tabs ── */
 .mm-tab-premium,.mm-tab-special{display:none!important;}
+/* ── Hide author byline & SEO sections (below results) ── */
+.author-byline{display:none!important;}
+#seoSection,#faqSection,#testimonialSection{display:none!important;}
 footer,.site-footer{display:none!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
