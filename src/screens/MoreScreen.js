@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { AppHeader } from '../components/AppHeader';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
@@ -54,14 +55,9 @@ function MenuItem({ item }) {
 
 export function MoreScreen() {
   return (
-    <ScrollView style={s.container} showsVerticalScrollIndicator={false}>
-      <View style={s.header}>
-        <View style={s.headerLine} />
-        <Text style={s.brand}>MYASTROLOGY</Text>
-        <Text style={s.tagline}>আরও সেবা</Text>
-        <View style={s.headerLine} />
-      </View>
-
+    <View style={s.container}>
+      <AppHeader />
+      <ScrollView showsVerticalScrollIndicator={false}>
       {SECTIONS.map((sec, si) => (
         <View key={si} style={s.section}>
           <Text style={s.sectionTitle}>{sec.title}</Text>
@@ -77,17 +73,13 @@ export function MoreScreen() {
       ))}
 
       <View style={{ height: 32 }} />
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-
-  header: { backgroundColor: colors.headerBg, paddingTop: 52, paddingBottom: 20, alignItems: 'center' },
-  headerLine: { width: 56, height: 1.5, backgroundColor: colors.gold, opacity: 0.7, marginVertical: 12 },
-  brand:   { fontSize: 26, fontWeight: '800', color: colors.gold, letterSpacing: 4 },
-  tagline: { fontSize: 12, color: colors.goldLight, letterSpacing: 2, opacity: 0.85 },
 
   section:      { marginHorizontal: spacing.md, marginTop: spacing.md },
   sectionTitle: {
