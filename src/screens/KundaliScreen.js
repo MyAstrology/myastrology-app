@@ -42,31 +42,50 @@ function useKUri() {
 }
 
 // ── CSS injected into WebView — hide website chrome, keep form + results ─────
+// Explicit selectors only — NO body>*:not(main) to avoid hiding script tags
 
 const APP_CSS = `
-body>*:not(main){display:none!important;}
-body{
-  background:#FAF8F3!important;
-  padding:0!important;margin:0!important;
-  overscroll-behavior:contain;
-  -webkit-tap-highlight-color:transparent!important;
-}
-main{padding:0 0 80px 0!important;margin:0!important;}
-::-webkit-scrollbar{display:none!important;width:0!important;}
-html{scrollbar-width:none!important;}
-*{-webkit-tap-highlight-color:transparent!important;}
-#seoSection{display:none!important;}
-#faqSection{display:none!important;}
+header.site-header,nav.nav,#navMenu,.nav-overlay,#navOverlay,
+footer,.site-footer{display:none!important;}
+.author-byline{display:none!important;}
+section.k-wrap{display:none!important;}
 #moreServicesCard{display:none!important;}
 #ganeshabanner{display:none!important;}
 #_prmOv,#_cspOv{display:none!important;}
 .fab-wrap,.fab{display:none!important;}
+.kf-alt-actions{display:none!important;}
+button[onclick*="SaveProfile"],button[onclick*="saveProfile"]{display:none!important;}
+body{background:#FAF8F3!important;padding:0!important;margin:0!important;overscroll-behavior:contain;}
+main{padding:0 0 80px 0!important;margin:0!important;}
+::-webkit-scrollbar{display:none!important;width:0!important;}
+html{scrollbar-width:none!important;}
+*{-webkit-tap-highlight-color:transparent!important;}
+`;
+
+// Fallback: populate selects if page JS hasn't run (timing/file:// issue)
+const POPULATE_JS = `
+(function ensureSelects(){
+  function fill(){
+    var d=document.getElementById('dobDay');
+    if(d&&d.options.length<=1){for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;d.appendChild(o);}}
+    var y=document.getElementById('dobYear');
+    if(y&&y.options.length<=1){var cy=new Date().getFullYear();for(var yr=cy;yr>=1900;yr--){var o=document.createElement('option');o.value=yr;o.textContent=yr;y.appendChild(o);}}
+    var h=document.getElementById('tobHour');
+    if(h&&h.options.length<=1){for(var hh=0;hh<24;hh++){var o=document.createElement('option');o.value=hh;o.textContent=String(hh).padStart(2,'0');h.appendChild(o);}}
+    var m=document.getElementById('tobMin');
+    if(m&&m.options.length<=1){for(var mm=0;mm<60;mm++){var o=document.createElement('option');o.value=mm;o.textContent=String(mm).padStart(2,'0');m.appendChild(o);}}
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fill);}
+  else{fill();}
+  setTimeout(fill,800);
+})();
 `;
 
 const INJECTED_JS = `(function(){
   var st=document.getElementById('__kNative__');
   if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(APP_CSS)};
+  ${POPULATE_JS}
 })();true;`;
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
