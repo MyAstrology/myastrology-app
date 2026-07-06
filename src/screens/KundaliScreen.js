@@ -19,20 +19,16 @@ const LOGO = require('../../assets/logo.png');
 
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
-  // Store the JSON payload in an HTML attribute instead of embedding it inside
-  // a <script> block. This completely eliminates the </script> injection risk:
-  // the HTML parser never sees </script> inside attribute values.
-  // Attribute encoding: & → &amp;, " → &quot; (the only characters that would
-  // break a double-quoted attribute value).
-  const attrSafe = printDataJson
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;');
-  html = html.replace('<body>', `<body data-kp="${attrSafe}">`);
-  // Replace the localStorage read with an attribute read. getAttribute returns
-  // the decoded value (entities resolved), so JSON.parse(raw) works correctly.
+  // Embed the JSON payload directly in the script block using the industry-
+  // standard < technique (Django/Flask/Rails all do this):
+  //   JSON.stringify wraps the string in quotes and escapes " and \
+  //   Then we replace every < with < so the HTML parser never sees
+  //   </script> (it sees </script which is not an end-tag), while the
+  //   JavaScript engine correctly decodes < as the < character.
+  const safeJs = JSON.stringify(printDataJson).replace(/</g, '\\u003c');
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
-    `try{raw=document.body.getAttribute('data-kp');}catch(e){}`
+    `raw=${safeJs};`
   );
   return html;
 }
