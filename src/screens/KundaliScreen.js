@@ -99,7 +99,6 @@ footer,.site-footer{display:none!important;}
 section.k-wrap{display:none!important;}
 #moreServicesCard{display:none!important;}
 #ganeshabanner{display:none!important;}
-#_prmOv,#_cspOv{display:none!important;}
 .fab-wrap,.fab{display:none!important;}
 .kf-alt-actions{display:none!important;}
 #inputSection > div:first-child{display:none!important;}
@@ -345,53 +344,33 @@ function buildInjectedJS(css) {
       });
     }
 
-    /* 5 — Override downloadPDF: bypass payment in app, generate PDF directly */
+    /* 5 — Override _doPrint: use expo-print instead of window.open.
+           downloadPDF keeps its original ₹29 Razorpay payment flow intact.
+           _doPrint is called after payment (or promo) when the user clicks
+           "রিপোর্ট খুলুন" in the _pdfOpenOverlay. */
     (function(){
-      function _appGeneratePdf(){
-        var ra=document.getElementById('resultsArea');
-        if(!ra||ra.style.display==='none'){
-          if(typeof showToast==='function')showToast('প্রথমে কুষ্ঠি গণনা করুন।','error');
-          return;
-        }
+      window._doPrint=function(){
+        if(typeof _preparePayload==='function'){try{_preparePayload();}catch(e){}}
         var printData=null;
-        /* Method 1: use _preparePayload which sets window._kundaliPrintData */
-        if(typeof _preparePayload==='function'){
-          try{_preparePayload();}catch(e){}
-          try{printData=localStorage.getItem('kundali_print_data');}catch(e){}
-          if(!printData&&window._kundaliPrintData){
-            try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
-          }
+        try{printData=localStorage.getItem('kundali_print_data');}catch(e){}
+        if(!printData&&window._kundaliPrintData){
+          try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
         }
-        /* Method 2: build payload directly from DOM + _kResult */
         if(!printData){
-          try{
-            var nm='';
-            try{nm=(document.getElementById('printCoverName')||{}).textContent||(document.getElementById('userName')||{}).value||'';}catch(_e){}
-            var inf='';
-            try{inf=(document.getElementById('printCoverInfo')||{}).textContent||'';}catch(_e){}
-            var htmlStr='';
-            try{
-              var clone=ra.cloneNode(true);
-              clone.querySelectorAll('#printCoverPage,#navagrahaStotraPage').forEach(function(el){if(el.parentNode)el.parentNode.removeChild(el);});
-              htmlStr=clone.innerHTML;
-            }catch(_e){try{htmlStr=ra.innerHTML;}catch(__e){}}
-            var kr=window._kResult||{};
-            printData=JSON.stringify({
-              name:nm,info:inf,html:htmlStr,isPremium:false,
-              dashaData:kr.dashaData||null,lagna:kr.lagna||null,
-              nakshatra:kr.nakshatra||null,rashi:kr.rashi||null,
-              tithi:kr.tithi||'',yoga:kr.yoga||'',karana:kr.karana||'',
-              gana:kr.gana||'',vara:kr.vara||'',
-              gemRecs:kr.gemRecs||null,birthYear:kr.birthYear||0
-            });
-          }catch(e){}
+          if(typeof showToast==='function')showToast('কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।','error');
+          return;
         }
         if(window.ReactNativeWebView){
           window.ReactNativeWebView.postMessage(JSON.stringify({type:'generatePdf',printData:printData}));
         }
+      };
+
+      /* Load Razorpay checkout.js — absent from app bundle; needs network */
+      if(typeof Razorpay==='undefined'&&!document.querySelector('script[src*="checkout.razorpay"]')){
+        var s=document.createElement('script');
+        s.src='https://checkout.razorpay.com/v1/checkout.js';
+        document.head.appendChild(s);
       }
-      window.downloadPDF=_appGeneratePdf;
-      window._doPrint=_appGeneratePdf;
     })();
 
   },600);
