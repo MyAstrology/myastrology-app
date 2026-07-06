@@ -519,7 +519,7 @@ export function KundaliScreen() {
               if (m.type !== 'pdfStaticHtml') return;
               setPdfRenderState(null);
               pdfBusyRef.current = false;
-              const { uri } = await Print.printToFileAsync({ html: m.html, base64: false });
+              const { uri } = await Print.printToFileAsync({ html: m.html, base64: false, width: 595, height: 842 });
               Alert.alert(
                 'PDF তৈরি হয়েছে',
                 'কী করতে চান?',
