@@ -89,32 +89,29 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
 main{padding:0 0 80px!important;margin:0!important;height:auto!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
-/* ── Tab panels: ensure full height, scrollable ── */
-.tab-panel{height:auto!important;overflow:visible!important;min-height:0!important;display:block!important;}
-.tab-panel[style*="display:none"]{display:none!important;}
+/* ── Tab panels: height/overflow ONLY — never set display; JS owns show/hide ── */
+.tab-panel{height:auto!important;overflow:visible!important;min-height:0!important;}
 #mainKundaliSection{height:auto!important;overflow:visible!important;}
-#resultsArea{height:auto!important;overflow:visible!important;padding-top:50px!important;}
-/* ── Tab nav redesign ── */
+#resultsArea{height:auto!important;overflow:visible!important;padding-top:52px!important;}
+/* ── Tab nav: pill-button style ── */
 #tabNav{
-  background:linear-gradient(180deg,#8a3535 0%,#6b2222 100%)!important;
-  border-bottom:2px solid #c8a87a!important;
-  padding:0 4px!important;
-  gap:0!important;
+  background:#7a2e2e!important;
+  border-bottom:2px solid rgba(200,168,122,0.5)!important;
+  padding:8px 6px!important;
+  gap:5px!important;
   scrollbar-width:none!important;
-  box-shadow:0 3px 10px rgba(0,0,0,0.3)!important;
-  min-height:48px!important;
-  align-items:stretch!important;
+  box-shadow:0 2px 8px rgba(0,0,0,0.22)!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
 }
 #tabNav::-webkit-scrollbar{display:none!important;}
 .tab-btn{
-  background:transparent!important;
-  color:rgba(255,255,255,0.6)!important;
-  border:none!important;
-  border-bottom:3px solid transparent!important;
-  border-top:3px solid transparent!important;
-  padding:0 10px!important;
-  height:48px!important;
-  font-size:0.72rem!important;
+  background:rgba(255,255,255,0.13)!important;
+  color:rgba(255,255,255,0.8)!important;
+  border:1px solid rgba(255,255,255,0.22)!important;
+  padding:6px 10px!important;
+  height:auto!important;
+  font-size:0.71rem!important;
   font-weight:600!important;
   font-family:inherit!important;
   white-space:nowrap!important;
@@ -122,18 +119,24 @@ main{padding:0 0 80px!important;margin:0!important;height:auto!important;}
   display:inline-flex!important;
   align-items:center!important;
   gap:4px!important;
-  border-radius:0!important;
+  border-radius:16px!important;
   flex-shrink:0!important;
   outline:none!important;
   -webkit-appearance:none!important;
-  letter-spacing:0.02em!important;
+  letter-spacing:0.01em!important;
   box-sizing:border-box!important;
-  transition:color .15s,border-color .15s!important;
+  transition:background .15s,color .15s!important;
 }
-svg.tab-icon{stroke:rgba(255,255,255,0.45)!important;fill:none!important;width:14px!important;height:14px!important;flex-shrink:0!important;}
-.tab-btn[aria-selected="true"]{color:#fff!important;border-bottom-color:#ffd060!important;}
-.tab-btn[aria-selected="true"] svg.tab-icon{stroke:#ffd060!important;}
-/* ── Hide external-navigation tabs (যোটক, পঞ্জিকা, বর্ষফল, প্রশ্ন, রাশিফল etc.) ── */
+svg.tab-icon{stroke:rgba(255,255,255,0.55)!important;fill:none!important;width:13px!important;height:13px!important;flex-shrink:0!important;}
+.tab-btn[aria-selected="true"],.tab-btn.active{
+  background:rgba(255,255,255,0.93)!important;
+  color:#5a1e1e!important;
+  border-color:transparent!important;
+}
+.tab-btn[aria-selected="true"] svg.tab-icon,.tab-btn.active svg.tab-icon{
+  stroke:#5a1e1e!important;
+}
+/* ── Hide external-navigation tabs (যোটক, পঞ্জিকা, বর্ষফল, প্রশ্ন, রাশিফল) ── */
 .tab-btn[aria-label*="পেজে যান"],
 .tab-btn[onclick*="goToYotak"],
 .tab-btn[onclick*="goToVarshaphala"],
@@ -155,9 +158,23 @@ div.k-wrap#inputSection{padding:8px 12px 0!important;}
 .btn-loading{opacity:.75!important;}
 .spinner{display:inline-block!important;width:16px!important;height:16px!important;border:2px solid rgba(255,255,255,.4)!important;border-top-color:#fff!important;border-radius:50%!important;animation:kspin .7s linear infinite!important;flex-shrink:0!important;}
 @keyframes kspin{to{transform:rotate(360deg);}}
-/* ── Result section headings & icons ── */
+/* ── Result section headings ── */
 .section-title{font-size:1rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 12px!important;padding-bottom:8px!important;border-bottom:1.5px solid #ede0ce!important;display:flex!important;align-items:center!important;gap:7px!important;line-height:1.4!important;}
 svg.title-icon{stroke:#7a2e2e!important;fill:none!important;width:18px!important;height:18px!important;flex-shrink:0!important;}
+/* ── Panchang summary 2-column grid ── */
+.pg-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px 12px!important;margin:4px 0 8px!important;}
+.pg-item{display:flex!important;flex-direction:column!important;gap:2px!important;}
+.pg-item .lbl{font-size:0.72rem!important;color:#8a6a50!important;font-weight:500!important;line-height:1.2!important;}
+.pg-item .val{font-size:0.94rem!important;font-weight:700!important;color:#2c1a0e!important;line-height:1.3!important;}
+/* ── Planet table ── */
+.planet-table{width:100%!important;border-collapse:collapse!important;font-size:0.81rem!important;}
+.planet-table th{background:#7a2e2e!important;color:#fff!important;padding:7px 6px!important;text-align:left!important;font-weight:600!important;font-size:0.74rem!important;white-space:nowrap!important;}
+.planet-table td{padding:7px 6px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
+.planet-table tr:nth-child(even) td{background:#fdf8f3!important;}
+/* ── Kundali chart layout ── */
+.chart-section{display:flex!important;flex-wrap:wrap!important;gap:12px!important;justify-content:center!important;margin:8px 0!important;}
+.chart-box{flex:1 1 140px!important;min-width:140px!important;max-width:320px!important;}
+.chart-box svg{width:100%!important;height:auto!important;max-width:320px!important;}
 /* ── City search ── */
 .city-wrap{position:relative!important;}
 .suggestions{position:absolute!important;z-index:999!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;list-style:none!important;margin:2px 0 0!important;padding:0!important;width:100%!important;box-shadow:0 4px 14px rgba(0,0,0,.12)!important;max-height:220px!important;overflow-y:auto!important;}
@@ -183,10 +200,16 @@ function buildInjectedJS(css) {
     var ts=document.createElement('div');ts.id='toastStack';document.body.appendChild(ts);
   }
 
-  /* 3 — Fallbacks: run after page scripts, fill any gaps */
+  /* 3 — Disable premium/order popup triggers (app context) */
+  window.orderPremiumKundali=function(){};
+  window.orderCompleteSolution=function(){};
+  window._prmOpen=function(){};
+  window._cspOpen=function(){};
+
+  /* 4 — Fallbacks: run after page scripts, fill any gaps */
   setTimeout(function(){
 
-    /* 3a — Populate select dropdowns if the main script didn't */
+    /* 4a — Populate select dropdowns if the main script didn't */
     var d=document.getElementById('dobDay');
     if(d&&d.options.length<=1){for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;d.appendChild(o);}}
 
@@ -209,7 +232,7 @@ function buildInjectedJS(css) {
     var sc=document.getElementById('tobSec');
     if(sc&&sc.options.length<=1){for(var ss=0;ss<60;ss++){var o=document.createElement('option');o.value=ss;o.textContent=String(ss).padStart(2,'0');sc.appendChild(o);}}
 
-    /* 3b — GPS fallback */
+    /* 4b — GPS fallback */
     if(typeof getGPSLocation==='undefined'){
       window.getGPSLocation=function(){
         var msg=document.getElementById('gpsMsg');
@@ -228,7 +251,7 @@ function buildInjectedJS(css) {
       };
     }
 
-    /* 3c — City search fallback (guarded so original listener isn't doubled) */
+    /* 4c — City search fallback (guarded so original listener isn't doubled) */
     var inp=document.getElementById('citySearch');
     var sugg=document.getElementById('citySuggestions');
     if(inp&&sugg&&!inp.__csOk){
