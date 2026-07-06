@@ -19,16 +19,13 @@ const LOGO = require('../../assets/logo.png');
 
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
-  /* Inject data before the reading script so localStorage is pre-populated */
-  const escaped = printDataJson ? printDataJson.replace(/\\/g,'\\\\').replace(/`/g,'\\`') : '{}';
-  const dataScript = `<script>
-(function(){
-  var _pd=${printDataJson || '{}'};
-  try{localStorage.setItem('kundali_print_data',JSON.stringify(_pd));}catch(e){}
-  window._kundaliPrintData=_pd;
-})();
-<\/script>`;
-  html = html.replace('<script>', dataScript + '\n<script>');
+  /* Directly substitute the localStorage read with the actual JSON string.
+     expo-print's WebView may not have localStorage; this bypasses it entirely. */
+  const safeJson = JSON.stringify(printDataJson || '{}');
+  html = html.replace(
+    "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
+    `raw=${safeJson};`
+  );
   return html;
 }
 
@@ -184,7 +181,15 @@ svg.title-icon{stroke:#7a2e2e!important;fill:none!important;width:18px!important
 .pg-item{display:flex!important;flex-direction:column!important;gap:2px!important;}
 .pg-item .lbl{font-size:0.72rem!important;color:#8a6a50!important;font-weight:500!important;line-height:1.2!important;}
 .pg-item .val{font-size:0.94rem!important;font-weight:700!important;color:#2c1a0e!important;line-height:1.3!important;}
-/* ── Planet table ── */
+/* ── All tables: force correct display (fixes দশা & other tabs) ── */
+table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:0.82rem!important;}
+thead{display:table-header-group!important;}
+tbody{display:table-row-group!important;}
+tr{display:table-row!important;}
+th,td{display:table-cell!important;padding:6px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
+th{background:#7a2e2e!important;color:#fff!important;font-weight:600!important;font-size:0.74rem!important;text-align:center!important;}
+tr:nth-child(even) td{background:#fdf8f3!important;}
+/* ── Planet table (more specific — overrides generic above) ── */
 .planet-table{width:100%!important;border-collapse:collapse!important;font-size:0.81rem!important;}
 .planet-table th{background:#7a2e2e!important;color:#fff!important;padding:7px 6px!important;text-align:left!important;font-weight:600!important;font-size:0.74rem!important;white-space:nowrap!important;}
 .planet-table td{padding:7px 6px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
