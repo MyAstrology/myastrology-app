@@ -100,9 +100,9 @@ input[type=text],input[type=number]{
 /* ── Date/time grids ── */
 .mm-dt-grid-date,.mm-dt-grid-time{display:flex!important;gap:5px!important;}
 .mm-dt-grid-date .sel-ctrl,.mm-dt-grid-time .sel-ctrl{flex:1!important;}
-/* ── Coords grid ── */
-.coords{display:flex!important;flex-direction:column!important;gap:5px!important;}
-.coords>div{display:flex!important;flex-direction:column!important;gap:2px!important;}
+/* ── Coords grid — lat & lon side by side ── */
+.coords{display:flex!important;flex-direction:row!important;gap:8px!important;}
+.coords>div{flex:1!important;display:flex!important;flex-direction:column!important;gap:2px!important;}
 /* ── GPS button ── */
 .mm-gps-btn{
   background:#7a2e2e!important;border:none!important;border-radius:8px!important;
@@ -132,8 +132,8 @@ input[type=text],input[type=number]{
   font-size:.95rem!important;font-weight:700!important;font-family:inherit!important;
   cursor:pointer!important;margin-top:10px!important;display:block!important;
 }
-/* ── Results area ── */
-#resultsArea{padding:8px 0!important;}
+/* ── Results area — hidden until calculate ── */
+#resultsArea{display:none;padding:8px 0!important;}
 .score-hero{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
 .mm-shloka-box{margin-bottom:10px!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
@@ -169,7 +169,7 @@ function buildInjectedJS(css) {
     if(mmRes){
       var mmSync=function(){
         var v=mmRes.style.display==='block';
-        if(mmTabbar)mmTabbar.style.cssText=v?'':'display:none!important';
+        if(mmTabbar)mmTabbar.style.cssText=v?'display:flex!important':'display:none!important';
         if(mmInput)mmInput.style.cssText=v?'display:none!important':'';
         if(mmCalcBtn)mmCalcBtn.style.cssText=v?'display:none!important':'';
       };

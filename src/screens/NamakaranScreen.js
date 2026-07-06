@@ -21,6 +21,14 @@ footer,.site-footer{display:none!important;}
 #formSection > div:first-child{display:none!important;}
 #formSection .card p{display:none!important;}
 .city-wrap>label{display:none!important;}
+/* ── Initially hide result section (shown by website JS on calculate) ── */
+#resultSection{display:none;}
+/* ── Hide promo/cross-sell cards inside results ── */
+.card:has(#kundaliLink){display:none!important;}
+.card:has(.related-links){display:none!important;}
+.card:has(.share-row){display:none!important;}
+/* ── Hide SEO article & disclaimer ── */
+article.seo-article{display:none!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
 body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
@@ -53,10 +61,10 @@ main.p-wrap{max-width:100%!important;padding:6px 12px 20px!important;margin:0!im
 /* ── Gender radio ── */
 .gender-row{display:flex!important;gap:6px!important;margin-top:3px!important;}
 .gender-opt{
-  flex:1!important;display:flex!important;align-items:center!important;gap:5px!important;
+  flex:1!important;display:flex!important;align-items:center!important;gap:4px!important;
   background:#fefcf9!important;border:1.5px solid #e0cdbc!important;
-  border-radius:9px!important;padding:8px 10px!important;
-  cursor:pointer!important;font-size:.85rem!important;font-weight:500!important;
+  border-radius:9px!important;padding:5px 8px!important;
+  cursor:pointer!important;font-size:.8rem!important;font-weight:500!important;
   color:#3a2218!important;
 }
 .gender-opt.selected,.gender-opt:has(input:checked){
@@ -205,6 +213,11 @@ function buildInjectedJS(css) {
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
     }
+    /* Hide orphan elements outside formSection/resultSection */
+    var pw=document.querySelector('main.p-wrap');
+    if(pw){Array.from(pw.children).forEach(function(el){
+      if(el.id!=='formSection'&&el.id!=='resultSection')el.style.cssText='display:none!important';
+    });}
     /* Hide form when results appear */
     var nmForm=document.getElementById('formSection');
     var nmRes=document.getElementById('resultSection');
