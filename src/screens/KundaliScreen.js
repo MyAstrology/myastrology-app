@@ -62,10 +62,29 @@ html{scrollbar-width:none!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
 `;
 
-// Fallback: populate selects if page JS hasn't run (timing/file:// issue)
-const POPULATE_JS = `
-(function ensureSelects(){
-  function fill(){
+// Build the injected JS string at module level (no runtime cost)
+function buildInjectedJS(css) {
+  return `(function(){
+  /* 1 — CSS */
+  var st=document.getElementById('__kNative__');
+  if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
+  st.textContent=${JSON.stringify(css)};
+
+  /* 2 — Fix kundali.js HTML bug: JS code sits outside <script> tags as a text
+     node (premature </script> closure in navamsha block). eval() it so that
+     showToast, escapeHtml, loadCalcScripts and the dropdown-populate IIFE all
+     get defined, then clear the text so raw source doesn't render on screen. */
+  var mainEl=document.querySelector('main');
+  Array.from(document.body.childNodes).forEach(function(node){
+    if(node===mainEl)return;
+    if(node.nodeType===3&&node.textContent.trim().length>20){
+      try{(0,eval)(node.textContent);}catch(e){}
+      node.textContent='';
+    }
+  });
+
+  /* 3 — Fallback select populate (safety net if eval above still failed) */
+  setTimeout(function(){
     var d=document.getElementById('dobDay');
     if(d&&d.options.length<=1){for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;d.appendChild(o);}}
     var y=document.getElementById('dobYear');
@@ -74,19 +93,11 @@ const POPULATE_JS = `
     if(h&&h.options.length<=1){for(var hh=0;hh<24;hh++){var o=document.createElement('option');o.value=hh;o.textContent=String(hh).padStart(2,'0');h.appendChild(o);}}
     var m=document.getElementById('tobMin');
     if(m&&m.options.length<=1){for(var mm=0;mm<60;mm++){var o=document.createElement('option');o.value=mm;o.textContent=String(mm).padStart(2,'0');m.appendChild(o);}}
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fill);}
-  else{fill();}
-  setTimeout(fill,800);
-})();
-`;
-
-const INJECTED_JS = `(function(){
-  var st=document.getElementById('__kNative__');
-  if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
-  st.textContent=${JSON.stringify(APP_CSS)};
-  ${POPULATE_JS}
+  },300);
 })();true;`;
+}
+
+const INJECTED_JS = buildInjectedJS(APP_CSS);
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
