@@ -63,6 +63,11 @@ main{padding:0 0 80px 0!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 html{scrollbar-width:none!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
+/* ── Box-sizing: prevent card/inputs overflowing viewport ── */
+html,body{overflow-x:hidden!important;max-width:100vw!important;}
+div.k-wrap#inputSection,div.k-wrap#inputSection *{box-sizing:border-box!important;}
+.card{box-sizing:border-box!important;}
+input[type=number],input[type=text],input[type=search]{min-width:0!important;width:100%!important;box-sizing:border-box!important;}
 /* ── Design system classes (external stylesheet not loaded in file:// mode) ── */
 div.k-wrap#inputSection{padding:8px 12px 0!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:16px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:12px!important;}
@@ -125,10 +130,18 @@ function buildInjectedJS(css) {
     if(safeIdx<0)safeIdx=code.indexOf('if("requestIdleCallback"');
     if(safeIdx<0)safeIdx=code.indexOf('function escapeHtml');
     if(safeIdx>0){
+      /* <script> injection is more reliable than indirect eval for global-scoped
+         function definitions (calculateFullKundali etc.) in Android WebView */
       try{
-        (0,eval)(code.substring(safeIdx));
-        window.__orphanEvalDone=true;
-      }catch(e){console.error('[kundali orphan eval]',e);}
+        var scriptEl=document.createElement('script');
+        scriptEl.textContent=code.substring(safeIdx);
+        document.head.appendChild(scriptEl);
+      }catch(e){}
+      window.__orphanEvalDone=(typeof calculateFullKundali==='function');
+      if(!window.__orphanEvalDone){
+        /* Fallback: indirect eval if script injection failed */
+        try{(0,eval)(code.substring(safeIdx));window.__orphanEvalDone=(typeof calculateFullKundali==='function');}catch(e){}
+      }
     }
   }
 
