@@ -18,6 +18,7 @@ header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!import
 #eeatSection,#seoSection,#faqSection{display:none!important;}
 footer,.site-footer{display:none!important;}
 /* ── Hide extra form content ── */
+#formSection > div:first-child{display:none!important;}
 #formSection .card p{display:none!important;}
 .city-wrap>label{display:none!important;}
 /* ── Page base ── */

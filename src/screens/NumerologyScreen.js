@@ -88,6 +88,16 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
   font-family:inherit!important;
 }
 .chip:hover,.chip:active{background:#fdf1ec!important;border-color:#7a2e2e!important;color:#7a2e2e!important;}
+/* ── Hide promotional/SEO sections below form ── */
+.daily-box{display:none!important;}
+.stats{display:none!important;}
+.catsw{display:none!important;}
+section.how{display:none!important;}
+section.numsw{display:none!important;}
+section.planw{display:none!important;}
+section.seow{display:none!important;}
+section.faq{display:none!important;}
+section.ctaw{display:none!important;}
 /* ── Results area ── */
 #results,.results,.res-wrap{padding:0!important;}
 /* ── Number badge ── */
