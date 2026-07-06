@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 
 const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
 const _ready  = {};
 
-// Write htmlString to a local file once, return file:// URI
 async function ensureFile(name, htmlString) {
   if (_ready[name]) return _ready[name];
   await FileSystem.makeDirectoryAsync(WEB_DIR, { intermediates: true });
@@ -17,17 +17,85 @@ async function ensureFile(name, htmlString) {
   return dest;
 }
 
-export function LocalWebView({ name, html, style }) {
+// HTML page filename → React Navigation screen name
+const PAGE_TO_SCREEN = {
+  'kundali':      'Kundali',
+  'namakaran':    'Namakaran',
+  'match-making': 'MatchMaking',
+  'varshaphala':  'Varshaphala',
+  'prashna':      'Prashna',
+  'numerology':   'Numerology',
+};
+
+// Extracts the bare page name from a URL like "file://.../kundali.html?foo=bar"
+function parsePageName(url) {
+  const m = url && url.match(/([^/\\?#]+)\.html/);
+  return m ? m[1] : null;
+}
+
+// LocalWebView renders a bundled HTML page from a local file:// URI.
+// It bridges cross-page navigation and print requests back to React Native:
+//   - window.location.href = 'page.html' → navigates to the RN screen
+//   - window.open('page.html')           → navigates (or triggers onPrint)
+//   - Razorpay calls                     → replaced with toast (see bundle-web-assets.js)
+//
+// Props:
+//   name              — key used for the local file (must be unique per page)
+//   html              — bundled HTML string exported from web-html/*.js
+//   style             — additional style for the WebView
+//   onPrint(rawJson)  — called when the page requests PDF generation
+//   injectedJS        — extra JS to run after page finishes loading
+export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
   const [uri,   setUri]   = useState(null);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     let cancelled = false;
     ensureFile(name, html)
-      .then(u  => { if (!cancelled) setUri(u);         })
+      .then(u  => { if (!cancelled) setUri(u);          })
       .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; };
   }, [name, html]);
+
+  // Handles messages posted by the window.open interceptor in APP_CSS bridge script.
+  // Message shape: { __rn: 'open', url: string, raw: string }
+  const handleMessage = useCallback((event) => {
+    let msg;
+    try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
+    if (!msg || msg.__rn !== 'open') return;
+
+    const page = parsePageName(msg.url || '');
+    if (!page) return;
+
+    // PDF print request — delegate to parent screen
+    if (page === 'match-making-print' || page === 'kundali-print') {
+      onPrint && onPrint(msg.raw || '');
+      return;
+    }
+
+    // Cross-page navigation
+    const screen = PAGE_TO_SCREEN[page];
+    if (screen) navigation.navigate(screen);
+  }, [navigation, name, onPrint]);
+
+  // Intercepts window.location.href = 'page.html' navigations (e.g. _mmGoTo in match-making).
+  // Returns false to block the WebView from actually navigating away.
+  const handleNavRequest = useCallback((request) => {
+    const url = request.url || '';
+    if (!url.startsWith('file://')) return true;
+
+    const page = parsePageName(url);
+    // Allow the initial page load and anything we don't recognise
+    if (!page || page === name) return true;
+
+    const screen = PAGE_TO_SCREEN[page];
+    if (screen) {
+      navigation.navigate(screen);
+      return false;
+    }
+    return true;
+  }, [navigation, name]);
 
   if (error) {
     return (
@@ -57,8 +125,13 @@ export function LocalWebView({ name, html, style }) {
       mixedContentMode="always"
       javaScriptEnabled={true}
       domStorageEnabled={true}
+      geolocationEnabled={true}
+      setSupportMultipleWindows={false}
       cacheEnabled={false}
       startInLoadingState={true}
+      onMessage={handleMessage}
+      onShouldStartLoadWithRequest={handleNavRequest}
+      injectedJavaScript={injectedJS || ''}
       renderLoading={() => (
         <View style={s.center}>
           <ActivityIndicator size="large" color={colors.gold} />
