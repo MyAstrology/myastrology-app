@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, ActivityIndicator,
+  Image, ActivityIndicator, BackHandler,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -81,38 +81,89 @@ section.k-wrap{display:none!important;}
 .kf-alt-actions{display:none!important;}
 #inputSection > div:first-child{display:none!important;}
 #inputSection > p{display:none!important;}
-/* ── file:// mode: external CSS does not load, so manually hide print-only elements ── */
 #printCoverPage{display:none!important;}
 .premium-promo{display:none!important;}
-/* ── Page base ── */
-body{background:#FAF8F3!important;padding:0!important;margin:0!important;overscroll-behavior:contain;}
-main{padding:0 0 80px 0!important;margin:0!important;}
-/* ── Space for the fixed tabNav (≈48px tall) so content doesn't hide beneath it ── */
-#resultsArea{padding-top:52px!important;}
+/* ── Page base + scroll ── */
+html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
+body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-y:auto!important;overflow-x:hidden!important;max-width:100vw!important;}
+main{padding:0 0 80px!important;margin:0!important;height:auto!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
-html{scrollbar-width:none!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
-/* ── Box-sizing: prevent card/inputs overflowing viewport ── */
-html,body{overflow-x:hidden!important;max-width:100vw!important;}
+/* ── Tab panels: ensure full height, scrollable ── */
+.tab-panel{height:auto!important;overflow:visible!important;min-height:0!important;display:block!important;}
+.tab-panel[style*="display:none"]{display:none!important;}
+#mainKundaliSection{height:auto!important;overflow:visible!important;}
+#resultsArea{height:auto!important;overflow:visible!important;padding-top:50px!important;}
+/* ── Tab nav redesign ── */
+#tabNav{
+  background:linear-gradient(180deg,#8a3535 0%,#6b2222 100%)!important;
+  border-bottom:2px solid #c8a87a!important;
+  padding:0 4px!important;
+  gap:0!important;
+  scrollbar-width:none!important;
+  box-shadow:0 3px 10px rgba(0,0,0,0.3)!important;
+  min-height:48px!important;
+  align-items:stretch!important;
+}
+#tabNav::-webkit-scrollbar{display:none!important;}
+.tab-btn{
+  background:transparent!important;
+  color:rgba(255,255,255,0.6)!important;
+  border:none!important;
+  border-bottom:3px solid transparent!important;
+  border-top:3px solid transparent!important;
+  padding:0 10px!important;
+  height:48px!important;
+  font-size:0.72rem!important;
+  font-weight:600!important;
+  font-family:inherit!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  border-radius:0!important;
+  flex-shrink:0!important;
+  outline:none!important;
+  -webkit-appearance:none!important;
+  letter-spacing:0.02em!important;
+  box-sizing:border-box!important;
+  transition:color .15s,border-color .15s!important;
+}
+svg.tab-icon{stroke:rgba(255,255,255,0.45)!important;fill:none!important;width:14px!important;height:14px!important;flex-shrink:0!important;}
+.tab-btn[aria-selected="true"]{color:#fff!important;border-bottom-color:#ffd060!important;}
+.tab-btn[aria-selected="true"] svg.tab-icon{stroke:#ffd060!important;}
+/* ── Hide external-navigation tabs (যোটক, পঞ্জিকা, বর্ষফল, প্রশ্ন, রাশিফল etc.) ── */
+.tab-btn[aria-label*="পেজে যান"],
+.tab-btn[onclick*="goToYotak"],
+.tab-btn[onclick*="goToVarshaphala"],
+.tab-btn[onclick*="panjika.html"],
+.tab-btn[onclick*="prashna.html"],
+.tab-btn[onclick*="rashifal"]{display:none!important;}
+/* ── Box-sizing ── */
 div.k-wrap#inputSection,div.k-wrap#inputSection *{box-sizing:border-box!important;}
 .card{box-sizing:border-box!important;}
 input[type=number],input[type=text],input[type=search]{min-width:0!important;width:100%!important;box-sizing:border-box!important;}
-/* ── Design system classes (external stylesheet not loaded in file:// mode) ── */
+/* ── Form card & input styles ── */
 div.k-wrap#inputSection{padding:8px 12px 0!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:16px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:12px!important;}
 .ig{margin-bottom:10px!important;}
 .sel-ctrl{width:100%!important;padding:9px 10px!important;border:1.5px solid #e0cdbc!important;border-radius:9px!important;background:#fefcf9!important;font-size:.95rem!important;color:#3a2218!important;font-family:inherit!important;}
-/* #userName has no class — must target by ID */
 #userName{width:100%!important;padding:9px 10px!important;border:1.5px solid #e0cdbc!important;border-radius:9px!important;background:#fefcf9!important;font-size:.95rem!important;color:#3a2218!important;font-family:inherit!important;outline:none!important;}
 #userName:focus{border-color:#c8a87a!important;box-shadow:0 0 0 3px rgba(200,168,122,.15)!important;}
 .btn.btn-primary,.btn-primary{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;padding:14px 20px!important;background:#7a2e2e!important;color:#fff!important;border:none!important;border-radius:12px!important;font-size:1rem!important;font-weight:700!important;font-family:inherit!important;cursor:pointer!important;margin:12px 0 4px!important;}
 .btn-loading{opacity:.75!important;}
 .spinner{display:inline-block!important;width:16px!important;height:16px!important;border:2px solid rgba(255,255,255,.4)!important;border-top-color:#fff!important;border-radius:50%!important;animation:kspin .7s linear infinite!important;flex-shrink:0!important;}
 @keyframes kspin{to{transform:rotate(360deg);}}
+/* ── Result section headings & icons ── */
+.section-title{font-size:1rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 12px!important;padding-bottom:8px!important;border-bottom:1.5px solid #ede0ce!important;display:flex!important;align-items:center!important;gap:7px!important;line-height:1.4!important;}
+svg.title-icon{stroke:#7a2e2e!important;fill:none!important;width:18px!important;height:18px!important;flex-shrink:0!important;}
+/* ── City search ── */
 .city-wrap{position:relative!important;}
 .suggestions{position:absolute!important;z-index:999!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;list-style:none!important;margin:2px 0 0!important;padding:0!important;width:100%!important;box-shadow:0 4px 14px rgba(0,0,0,.12)!important;max-height:220px!important;overflow-y:auto!important;}
 .suggestions li{padding:10px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.9rem!important;color:#3a2218!important;}
 .suggestions li:last-child{border-bottom:none!important;}
+/* ── Toast ── */
 #toastStack{position:fixed!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:9999!important;pointer-events:none!important;}
 .toast{display:flex!important;align-items:flex-start!important;gap:8px!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;padding:10px 12px!important;margin-bottom:8px!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;font-size:.88rem!important;pointer-events:all!important;opacity:0!important;transition:opacity .25s!important;}
 .toast.show{opacity:1!important;}
@@ -218,11 +269,24 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export function KundaliScreen() {
-  const navigation = useNavigation();
-  const insets     = useSafeAreaInsets();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const navigation    = useNavigation();
+  const insets        = useSafeAreaInsets();
+  const [menuOpen, setMenuOpen]       = useState(false);
+  const [webCanGoBack, setWebCanGoBack] = useState(false);
+  const webViewRef = useRef(null);
 
   const kUri = useKUri();
+
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (webCanGoBack && webViewRef.current) {
+        webViewRef.current.goBack();
+        return true;
+      }
+      return false;
+    });
+    return () => handler.remove();
+  }, [webCanGoBack]);
 
   const MENU_ITEMS = [
     { tab: 'Home',        icon: 'home-variant',           label: 'হোম'            },
@@ -259,6 +323,7 @@ export function KundaliScreen() {
           </View>
         ) : (
           <WebView
+            ref={webViewRef}
             source={{ uri: kUri }}
             style={s.wv}
             originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
@@ -270,7 +335,9 @@ export function KundaliScreen() {
             domStorageEnabled={true}
             cacheEnabled={false}
             startInLoadingState={true}
+            scrollEnabled={true}
             injectedJavaScript={INJECTED_JS}
+            onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
             renderLoading={() => (
               <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.gold} />
