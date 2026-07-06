@@ -31,8 +31,6 @@ footer,.site-footer{display:none!important;}
 article.seo-article{display:none!important;}
 /* ── Hide booking/payment overlay (outside main) ── */
 #book-overlay,#book-modal{display:none!important;}
-/* ── Reduce form height: hide sub-labels & timezone ── */
-.form-sub-label{display:none!important;}
 .field:has(#tzOffset){display:none!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
@@ -78,10 +76,7 @@ main.p-wrap{max-width:100%!important;padding:6px 12px 20px!important;margin:0!im
 .gender-opt input[type=radio]{display:none!important;}
 /* ── Form dividers ── */
 .form-sep{border:none!important;border-top:1px solid #ede0ce!important;margin:8px 0!important;}
-.form-sub-label{
-  font-size:.8rem!important;font-weight:700!important;color:#5c3d2e!important;
-  margin-bottom:6px!important;display:flex!important;align-items:center!important;gap:5px!important;
-}
+.form-sub-label{display:none!important;}
 /* ── Date/time input rows ── */
 .input-row,.input-row2{display:flex!important;gap:5px!important;}
 .input-row .sel-ctrl,.input-row2 .sel-ctrl{flex:1!important;}
