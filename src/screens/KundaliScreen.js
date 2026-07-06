@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, ActivityIndicator, BackHandler,
+  Image, ActivityIndicator, BackHandler, Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,40 +11,25 @@ import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import KUNDALI_HTML from '../web-html/kundali';
+import KUNDALI_PRINT_HTML from '../web-html/kundali-print';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
 const LOGO = require('../../assets/logo.png');
 
-function buildPrintHtml(bodyHtml) {
-  return `<!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-body{font-family:'Hind Siliguri',sans-serif;padding:20px;background:#faf8f3;color:#2c1a0e;font-size:14px;line-height:1.6;}
-.tab-panel{display:block!important;margin-bottom:28px;}
-#tabNav,.kf-alt-actions,.fab-wrap{display:none!important;}
-.section-title{font-size:15px;font-weight:700;color:#3a2218;border-bottom:2px solid #ede0ce;padding-bottom:6px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
-svg.title-icon{width:16px;height:16px;stroke:#7a2e2e;fill:none;flex-shrink:0;}
-.pg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:4px 0 12px;}
-.pg-item{display:flex;flex-direction:column;gap:2px;}
-.pg-item .lbl{font-size:11px;color:#8a6a50;font-weight:500;}
-.pg-item .val{font-size:14px;font-weight:700;color:#2c1a0e;}
-.planet-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
-.planet-table th{background:#7a2e2e;color:#fff;padding:6px;text-align:left;font-weight:600;}
-.planet-table td{padding:6px;border-bottom:1px solid #f0e4d4;color:#2c1a0e;}
-.planet-table tr:nth-child(even) td{background:#fdf8f3;}
-.chart-section{display:flex;flex-direction:column;align-items:center;gap:16px;}
-.chart-box{width:100%;max-width:280px;}
-.chart-box svg{width:100%;height:auto;}
-</style>
-</head>
-<body>${bodyHtml}</body>
-</html>`;
+function injectDataIntoPrintHtml(printDataJson) {
+  let html = KUNDALI_PRINT_HTML;
+  /* Inject data before the reading script so localStorage is pre-populated */
+  const escaped = printDataJson ? printDataJson.replace(/\\/g,'\\\\').replace(/`/g,'\\`') : '{}';
+  const dataScript = `<script>
+(function(){
+  var _pd=${printDataJson || '{}'};
+  try{localStorage.setItem('kundali_print_data',JSON.stringify(_pd));}catch(e){}
+  window._kundaliPrintData=_pd;
+})();
+<\/script>`;
+  html = html.replace('<script>', dataScript + '\n<script>');
+  return html;
 }
 
 // ── File URI (written once per session) ──────────────────────────────────────
@@ -320,7 +305,7 @@ function buildInjectedJS(css) {
       });
     }
 
-    /* 5 — Override _doPrint: generate PDF via expo-print instead of window.open */
+    /* 5 — Override _doPrint: generate full PDF via kundali-print template */
     if(typeof window._doPrint==='function'){
       window._doPrint=function(){
         var ra=document.getElementById('resultsArea');
@@ -328,14 +313,15 @@ function buildInjectedJS(css) {
           if(typeof showToast==='function')showToast('প্রথমে কুষ্ঠি গণনা করুন।','error');
           return;
         }
-        /* Temporarily show all tab panels so PDF captures full kundali */
-        var panels=document.querySelectorAll('.tab-panel');
-        var saved=[];
-        panels.forEach(function(p,i){saved[i]=p.style.display;p.style.display='block';});
-        var bodyHtml=ra.innerHTML;
-        panels.forEach(function(p,i){p.style.display=saved[i];});
+        /* Prepare payload so _kundaliPrintData is populated */
+        if(typeof _preparePayload==='function')_preparePayload();
+        var printData=null;
+        try{printData=localStorage.getItem('kundali_print_data');}catch(e){}
+        if(!printData&&window._kundaliPrintData){
+          try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
+        }
         if(window.ReactNativeWebView){
-          window.ReactNativeWebView.postMessage(JSON.stringify({type:'generatePdf',html:bodyHtml}));
+          window.ReactNativeWebView.postMessage(JSON.stringify({type:'generatePdf',printData:printData}));
         }
       };
     }
@@ -425,15 +411,42 @@ export function KundaliScreen() {
               try {
                 const msg = JSON.parse(event.nativeEvent.data);
                 if (msg.type === 'generatePdf') {
-                  const { uri } = await Print.printToFileAsync({
-                    html: buildPrintHtml(msg.html),
-                    base64: false,
-                  });
-                  await Sharing.shareAsync(uri, {
-                    mimeType: 'application/pdf',
-                    dialogTitle: 'কুণ্ডলী PDF সেভ করুন',
-                    UTI: 'com.adobe.pdf',
-                  });
+                  const html = injectDataIntoPrintHtml(msg.printData);
+                  const { uri } = await Print.printToFileAsync({ html, base64: false });
+                  Alert.alert(
+                    'PDF তৈরি হয়েছে',
+                    'কী করতে চান?',
+                    [
+                      {
+                        text: 'সংরক্ষণ করুন',
+                        onPress: async () => {
+                          try {
+                            const { StorageAccessFramework } = FileSystem;
+                            const perm = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+                            if (perm.granted) {
+                              const destUri = await StorageAccessFramework.createFileAsync(
+                                perm.directoryUri, 'MyAstrology_kundali.pdf', 'application/pdf'
+                              );
+                              const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+                              await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
+                              Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
+                            }
+                          } catch (_) {
+                            await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+                          }
+                        },
+                      },
+                      {
+                        text: 'শেয়ার করুন',
+                        onPress: () => Sharing.shareAsync(uri, {
+                          mimeType: 'application/pdf',
+                          dialogTitle: 'কুণ্ডলী PDF শেয়ার করুন',
+                          UTI: 'com.adobe.pdf',
+                        }),
+                      },
+                      { text: 'বাতিল', style: 'cancel' },
+                    ]
+                  );
                 }
               } catch (_) {}
             }}
