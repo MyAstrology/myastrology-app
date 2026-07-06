@@ -56,6 +56,7 @@ section.k-wrap{display:none!important;}
 .kf-alt-actions{display:none!important;}
 button[onclick*="SaveProfile"],button[onclick*="saveProfile"]{display:none!important;}
 #inputSection > div:first-child{display:none!important;}
+#inputSection > p{display:none!important;}
 body{background:#FAF8F3!important;padding:0!important;margin:0!important;overscroll-behavior:contain;}
 main{padding:0 0 80px 0!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
@@ -71,35 +72,122 @@ function buildInjectedJS(css) {
   if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
 
-  /* 2 — Stub functions that live in the orphaned text block so calculation
-     code doesn't throw ReferenceError when results are shown. */
+  /* 2 — Stub functions from orphaned block so calculation doesn't throw */
   if(typeof escapeHtml==='undefined')window.escapeHtml=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
   if(typeof showToast==='undefined')window.showToast=function(){};
   if(typeof removeToast==='undefined')window.removeToast=function(){};
   if(typeof loadCalcScripts==='undefined'){window.CALC_SCRIPTS=[];window.loadCalcScripts=function(){return Promise.resolve();};}
 
-  /* 3 — kundali.js HTML bug: premature </script> in navamsha block leaves JS
-     code as text nodes after </main>. CSS cannot hide text nodes — move them
-     into a display:none container instead. */
+  /* 3 — Move everything after <main> into display:none — text nodes cannot be
+     hidden by CSS selectors; reparenting into a hidden element removes them. */
   var mainEl=document.querySelector('main');
   if(mainEl){
     var wrap=document.createElement('div');
     wrap.style.cssText='display:none!important;';
-    var s=mainEl.nextSibling;
-    while(s){var nx=s.nextSibling;wrap.appendChild(s);s=nx;}
+    var sib=mainEl.nextSibling;
+    while(sib){var nx=sib.nextSibling;wrap.appendChild(sib);sib=nx;}
     document.body.appendChild(wrap);
   }
 
-  /* 3 — Fallback select populate (safety net if eval above still failed) */
+  /* 4 — All interactive logic below was in the orphaned block and never ran.
+     Re-implement using the same DOM IDs the HTML expects. */
   setTimeout(function(){
+
+    /* 4a — Populate selects (orphaned IIFE never executed) */
     var d=document.getElementById('dobDay');
     if(d&&d.options.length<=1){for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;d.appendChild(o);}}
     var y=document.getElementById('dobYear');
     if(y&&y.options.length<=1){var cy=new Date().getFullYear();for(var yr=cy;yr>=1900;yr--){var o=document.createElement('option');o.value=yr;o.textContent=yr;y.appendChild(o);}}
     var h=document.getElementById('tobHour');
     if(h&&h.options.length<=1){for(var hh=0;hh<24;hh++){var o=document.createElement('option');o.value=hh;o.textContent=String(hh).padStart(2,'0');h.appendChild(o);}}
-    var m=document.getElementById('tobMin');
-    if(m&&m.options.length<=1){for(var mm=0;mm<60;mm++){var o=document.createElement('option');o.value=mm;o.textContent=String(mm).padStart(2,'0');m.appendChild(o);}}
+    var mn=document.getElementById('tobMin');
+    if(mn&&mn.options.length<=1){for(var mm=0;mm<60;mm++){var o=document.createElement('option');o.value=mm;o.textContent=String(mm).padStart(2,'0');mn.appendChild(o);}}
+    var sc=document.getElementById('tobSec');
+    if(sc&&sc.options.length<=1){for(var ss=0;ss<60;ss++){var o=document.createElement('option');o.value=ss;o.textContent=String(ss).padStart(2,'0');sc.appendChild(o);}}
+
+    /* 4b — validateForm: controls calcBtn opacity */
+    window.validateForm=function(){
+      var ok=
+        (document.getElementById('userName')||{value:''}).value.trim()&&
+        (document.getElementById('dobDay')||{value:''}).value&&
+        (document.getElementById('dobMonth')||{value:''}).value&&
+        (document.getElementById('dobYear')||{value:''}).value&&
+        (document.getElementById('tobHour')||{value:''}).value!==''&&
+        (document.getElementById('tobMin')||{value:''}).value!==''&&
+        (document.getElementById('lat')||{value:''}).value&&
+        (document.getElementById('lon')||{value:''}).value;
+      var btn=document.getElementById('calcBtn');
+      if(!btn)return;
+      btn.style.opacity=ok?'1':'0.65';
+      btn.style.background=ok?'':'#9e7b7b';
+    };
+    validateForm();
+
+    /* 4c — GPS location button */
+    window.getGPSLocation=function(){
+      var msg=document.getElementById('gpsMsg');
+      if(!navigator.geolocation){if(msg)msg.textContent='GPS সমর্থন নেই';return;}
+      if(msg)msg.textContent='লোকেশন অনুসন্ধান হচ্ছে...';
+      navigator.geolocation.getCurrentPosition(
+        function(pos){
+          document.getElementById('lat').value=pos.coords.latitude.toFixed(4);
+          document.getElementById('lon').value=pos.coords.longitude.toFixed(4);
+          if(msg)msg.textContent='লোকেশন পাওয়া গেছে';
+          validateForm();
+        },
+        function(){if(msg)msg.textContent='লোকেশন পাওয়া যায়নি';}
+      );
+    };
+
+    /* 4d — City search autocomplete (CITY_DB is set by the proper script block) */
+    var inp=document.getElementById('citySearch');
+    var sugg=document.getElementById('citySuggestions');
+    if(inp&&sugg){
+      var COUNTRY_TZ={'ভারত':5.5,'বাংলাদেশ':6.0,'নেপাল':5.75,'পাকিস্তান':5.0,
+        'শ্রীলঙ্কা':5.5,'মিয়ানমার':6.5,'থাইল্যান্ড':7.0,'ভিয়েতনাম':7.0,
+        'সিঙ্গাপুর':8.0,'মালয়েশিয়া':8.0,'চীন':8.0,'হংকং':8.0,'জাপান':9.0,'কোরিয়া':9.0,
+        'আরব আমিরাত':4.0,'ওমান':4.0,'সৌদি আরব':3.0,'কাতার':3.0,'কুয়েত':3.0,
+        'ইরান':3.5,'ইরাক':3.0,'তুরস্ক':3.0,'মিশর':2.0,
+        'যুক্তরাজ্য':0.0,'ফ্রান্স':1.0,'জার্মানি':1.0,'স্পেন':1.0,
+        'যুক্তরাষ্ট্র':-5.0,'কানাডা':-5.0,'অস্ট্রেলিয়া':10.0,'নিউজিল্যান্ড':12.0};
+      inp.addEventListener('input',function(){
+        var q=this.value.trim().toLowerCase();
+        sugg.innerHTML='';
+        if(q.length<3){sugg.style.display='none';return;}
+        var cd=(typeof CITY_DB!=='undefined')?CITY_DB:[];
+        var matches=cd.filter(function(c){return(c.n||'').toLowerCase().startsWith(q);}).slice(0,8);
+        if(!matches.length){sugg.style.display='none';return;}
+        matches.forEach(function(c){
+          var nm=c.n,la=c.lat,lo=c.lng,country=c.g||c.country||'';
+          var li=document.createElement('li');
+          li.textContent=nm+(country?' ('+country+')':'');
+          li.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8d8;font-size:.9rem;';
+          li.addEventListener('click',function(){
+            inp.value=nm;
+            document.getElementById('lat').value=parseFloat(la).toFixed(4);
+            document.getElementById('lon').value=parseFloat(lo).toFixed(4);
+            var tz=COUNTRY_TZ[country];
+            var tzSel=document.getElementById('tzOffset');
+            if(tzSel&&tz!==undefined){
+              var best=null,bestDiff=99;
+              Array.from(tzSel.options).forEach(function(op){
+                var diff=Math.abs(parseFloat(op.value)-tz);
+                if(diff<bestDiff){bestDiff=diff;best=op.value;}
+              });
+              if(best!==null)tzSel.value=best;
+            }
+            sugg.style.display='none';
+            validateForm();
+          });
+          sugg.appendChild(li);
+        });
+        sugg.style.cssText='display:block;position:absolute;z-index:999;background:#fff;border:1px solid #e0cdbc;border-radius:8px;list-style:none;margin:0;padding:0;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.12);max-height:240px;overflow-y:auto;';
+      });
+      document.addEventListener('click',function(e){
+        if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
+      });
+    }
+
   },300);
 })();true;`;
 }
