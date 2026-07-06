@@ -10,6 +10,8 @@ import { MoreScreen }        from '../screens/MoreScreen';
 import { NamakaranScreen }   from '../screens/NamakaranScreen';
 import { MatchMakingScreen } from '../screens/MatchMakingScreen';
 import { NumerologyScreen }  from '../screens/NumerologyScreen';
+import { VarshaphalaScreen } from '../screens/VarshaphalaScreen';
+import { PrashnaScreen }     from '../screens/PrashnaScreen';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -59,6 +61,16 @@ export function BottomTabs() {
       <Tab.Screen
         name="Numerology"
         component={NumerologyScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Varshaphala"
+        component={VarshaphalaScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Prashna"
+        component={PrashnaScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>
