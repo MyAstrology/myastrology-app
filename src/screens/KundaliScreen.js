@@ -45,6 +45,7 @@ function useKUri() {
 // Explicit selectors only — NO body>*:not(main) to avoid hiding script tags
 
 const APP_CSS = `
+/* ── Hide website chrome ── */
 header.site-header,nav.nav,#navMenu,.nav-overlay,#navOverlay,
 footer,.site-footer{display:none!important;}
 .author-byline{display:none!important;}
@@ -54,14 +55,32 @@ section.k-wrap{display:none!important;}
 #_prmOv,#_cspOv{display:none!important;}
 .fab-wrap,.fab{display:none!important;}
 .kf-alt-actions{display:none!important;}
-button[onclick*="SaveProfile"],button[onclick*="saveProfile"]{display:none!important;}
 #inputSection > div:first-child{display:none!important;}
 #inputSection > p{display:none!important;}
+/* ── Page base ── */
 body{background:#FAF8F3!important;padding:0!important;margin:0!important;overscroll-behavior:contain;}
 main{padding:0 0 80px 0!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 html{scrollbar-width:none!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
+/* ── Design system classes (external stylesheet not loaded in file:// mode) ── */
+div.k-wrap#inputSection{padding:8px 12px 0!important;}
+.card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:16px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:12px!important;}
+.ig{margin-bottom:10px!important;}
+.sel-ctrl{width:100%!important;padding:9px 10px!important;border:1.5px solid #e0cdbc!important;border-radius:9px!important;background:#fefcf9!important;font-size:.95rem!important;color:#3a2218!important;font-family:inherit!important;}
+.btn.btn-primary,.btn-primary{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;padding:14px 20px!important;background:#7a2e2e!important;color:#fff!important;border:none!important;border-radius:12px!important;font-size:1rem!important;font-weight:700!important;font-family:inherit!important;cursor:pointer!important;margin:12px 0 4px!important;}
+.btn-loading{opacity:.75!important;}
+.spinner{display:inline-block!important;width:16px!important;height:16px!important;border:2px solid rgba(255,255,255,.4)!important;border-top-color:#fff!important;border-radius:50%!important;animation:kspin .7s linear infinite!important;flex-shrink:0!important;}
+@keyframes kspin{to{transform:rotate(360deg);}}
+.city-wrap{position:relative!important;}
+.suggestions{position:absolute!important;z-index:999!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;list-style:none!important;margin:2px 0 0!important;padding:0!important;width:100%!important;box-shadow:0 4px 14px rgba(0,0,0,.12)!important;max-height:220px!important;overflow-y:auto!important;}
+.suggestions li{padding:10px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.9rem!important;color:#3a2218!important;}
+.suggestions li:last-child{border-bottom:none!important;}
+#toastStack{position:fixed!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:9999!important;pointer-events:none!important;}
+.toast{display:flex!important;align-items:flex-start!important;gap:8px!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;padding:10px 12px!important;margin-bottom:8px!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;font-size:.88rem!important;pointer-events:all!important;opacity:0!important;transition:opacity .25s!important;}
+.toast.show{opacity:1!important;}
+.toast-error{border-color:#e0a0a0!important;background:#fff9f9!important;}
+.toast-success{border-color:#a0c8a0!important;}
 `;
 
 // Build the injected JS string at module level (no runtime cost)
@@ -72,28 +91,51 @@ function buildInjectedJS(css) {
   if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
 
-  /* 2 — Stub functions from orphaned block so calculation doesn't throw */
-  if(typeof escapeHtml==='undefined')window.escapeHtml=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
-  if(typeof showToast==='undefined')window.showToast=function(){};
+  /* 2 — Create toastStack so showToast works (not in HTML, expected by JS) */
+  if(!document.getElementById('toastStack')){
+    var ts=document.createElement('div');ts.id='toastStack';document.body.appendChild(ts);
+  }
+
+  /* 3 — Safety stubs (overwritten by eval below; guard against eval failure) */
+  if(typeof showToast==='undefined')window.showToast=function(m){window.alert&&alert(m);};
   if(typeof removeToast==='undefined')window.removeToast=function(){};
   if(typeof loadCalcScripts==='undefined'){window.CALC_SCRIPTS=[];window.loadCalcScripts=function(){return Promise.resolve();};}
 
-  /* 3 — Move everything after <main> into display:none — text nodes cannot be
-     hidden by CSS selectors; reparenting into a hidden element removes them. */
+  /* 4 — kundali.js HTML bug: premature </script> in navamsha block leaves JS
+     code as text nodes after </main>. Move them into display:none so they
+     don't render, then eval the valid portion to restore ALL runtime functions
+     (calculateFullKundali, _doCalculate, city search, save profiles, etc.). */
   var mainEl=document.querySelector('main');
   if(mainEl){
     var wrap=document.createElement('div');
     wrap.style.cssText='display:none!important;';
+    var code='';
     var sib=mainEl.nextSibling;
-    while(sib){var nx=sib.nextSibling;wrap.appendChild(sib);sib=nx;}
+    while(sib){
+      var nx=sib.nextSibling;
+      if(sib.nodeType===3)code+=sib.textContent;
+      wrap.appendChild(sib);
+      sib=nx;
+    }
     document.body.appendChild(wrap);
+
+    /* The orphaned block opens with broken fragments (unmatched }) from the
+       premature </script> cut. Skip past them to the first valid statement. */
+    var safeIdx=code.indexOf("if('requestIdleCallback'");
+    if(safeIdx<0)safeIdx=code.indexOf('if("requestIdleCallback"');
+    if(safeIdx<0)safeIdx=code.indexOf('function escapeHtml');
+    if(safeIdx>0){
+      try{
+        (0,eval)(code.substring(safeIdx));
+        window.__orphanEvalDone=true;
+      }catch(e){console.error('[kundali orphan eval]',e);}
+    }
   }
 
-  /* 4 — All interactive logic below was in the orphaned block and never ran.
-     Re-implement using the same DOM IDs the HTML expects. */
+  /* 5 — Fallback: populate selects + minimal implementations if eval failed */
   setTimeout(function(){
 
-    /* 4a — Populate selects (orphaned IIFE never executed) */
+    /* 5a — Populate selects (orphaned IIFE populated them if eval succeeded) */
     var d=document.getElementById('dobDay');
     if(d&&d.options.length<=1){for(var i=1;i<=31;i++){var o=document.createElement('option');o.value=i;o.textContent=i;d.appendChild(o);}}
     var y=document.getElementById('dobYear');
@@ -105,7 +147,9 @@ function buildInjectedJS(css) {
     var sc=document.getElementById('tobSec');
     if(sc&&sc.options.length<=1){for(var ss=0;ss<60;ss++){var o=document.createElement('option');o.value=ss;o.textContent=String(ss).padStart(2,'0');sc.appendChild(o);}}
 
-    /* 4b — validateForm: controls calcBtn opacity */
+    /* 5b — If eval succeeded, all functions are already defined — skip fallbacks */
+    if(window.__orphanEvalDone)return;
+
     window.validateForm=function(){
       var ok=
         (document.getElementById('userName')||{value:''}).value.trim()&&
@@ -123,7 +167,6 @@ function buildInjectedJS(css) {
     };
     validateForm();
 
-    /* 4c — GPS location button */
     window.getGPSLocation=function(){
       var msg=document.getElementById('gpsMsg');
       if(!navigator.geolocation){if(msg)msg.textContent='GPS সমর্থন নেই';return;}
@@ -139,17 +182,13 @@ function buildInjectedJS(css) {
       );
     };
 
-    /* 4d — City search autocomplete (CITY_DB is set by the proper script block) */
     var inp=document.getElementById('citySearch');
     var sugg=document.getElementById('citySuggestions');
     if(inp&&sugg){
-      var COUNTRY_TZ={'ভারত':5.5,'বাংলাদেশ':6.0,'নেপাল':5.75,'পাকিস্তান':5.0,
-        'শ্রীলঙ্কা':5.5,'মিয়ানমার':6.5,'থাইল্যান্ড':7.0,'ভিয়েতনাম':7.0,
-        'সিঙ্গাপুর':8.0,'মালয়েশিয়া':8.0,'চীন':8.0,'হংকং':8.0,'জাপান':9.0,'কোরিয়া':9.0,
-        'আরব আমিরাত':4.0,'ওমান':4.0,'সৌদি আরব':3.0,'কাতার':3.0,'কুয়েত':3.0,
-        'ইরান':3.5,'ইরাক':3.0,'তুরস্ক':3.0,'মিশর':2.0,
-        'যুক্তরাজ্য':0.0,'ফ্রান্স':1.0,'জার্মানি':1.0,'স্পেন':1.0,
-        'যুক্তরাষ্ট্র':-5.0,'কানাডা':-5.0,'অস্ট্রেলিয়া':10.0,'নিউজিল্যান্ড':12.0};
+      var CTZ={'ভারত':5.5,'বাংলাদেশ':6.0,'নেপাল':5.75,'পাকিস্তান':5.0,'শ্রীলঙ্কা':5.5,
+        'মিয়ানমার':6.5,'থাইল্যান্ড':7.0,'সিঙ্গাপুর':8.0,'মালয়েশিয়া':8.0,'চীন':8.0,
+        'জাপান':9.0,'কোরিয়া':9.0,'আরব আমিরাত':4.0,'সৌদি আরব':3.0,
+        'যুক্তরাজ্য':0.0,'ফ্রান্স':1.0,'যুক্তরাষ্ট্র':-5.0,'অস্ট্রেলিয়া':10.0};
       inp.addEventListener('input',function(){
         var q=this.value.trim().toLowerCase();
         sugg.innerHTML='';
@@ -161,33 +200,24 @@ function buildInjectedJS(css) {
           var nm=c.n,la=c.lat,lo=c.lng,country=c.g||c.country||'';
           var li=document.createElement('li');
           li.textContent=nm+(country?' ('+country+')':'');
-          li.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8d8;font-size:.9rem;';
           li.addEventListener('click',function(){
             inp.value=nm;
             document.getElementById('lat').value=parseFloat(la).toFixed(4);
             document.getElementById('lon').value=parseFloat(lo).toFixed(4);
-            var tz=COUNTRY_TZ[country];
-            var tzSel=document.getElementById('tzOffset');
-            if(tzSel&&tz!==undefined){
-              var best=null,bestDiff=99;
-              Array.from(tzSel.options).forEach(function(op){
-                var diff=Math.abs(parseFloat(op.value)-tz);
-                if(diff<bestDiff){bestDiff=diff;best=op.value;}
-              });
-              if(best!==null)tzSel.value=best;
-            }
-            sugg.style.display='none';
-            validateForm();
+            var tz=CTZ[country];var tzSel=document.getElementById('tzOffset');
+            if(tzSel&&tz!==undefined){var best=null,bd=99;
+              Array.from(tzSel.options).forEach(function(op){var dif=Math.abs(parseFloat(op.value)-tz);if(dif<bd){bd=dif;best=op.value;}});
+              if(best!==null)tzSel.value=best;}
+            sugg.style.display='none';validateForm();
           });
           sugg.appendChild(li);
         });
-        sugg.style.cssText='display:block;position:absolute;z-index:999;background:#fff;border:1px solid #e0cdbc;border-radius:8px;list-style:none;margin:0;padding:0;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.12);max-height:240px;overflow-y:auto;';
+        sugg.style.display='block';
       });
       document.addEventListener('click',function(e){
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
     }
-
   },300);
 })();true;`;
 }
