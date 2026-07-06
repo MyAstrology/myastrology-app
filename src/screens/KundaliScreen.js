@@ -20,13 +20,27 @@ const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
 let _kUri = null;
 let _kPromise = null;
 
-// The main app script (calculateFullKundali, validateForm, etc.) is in the HTML
-// without a <script> opening tag — the developer forgot it. The closing </script>
-// already exists. We add only the missing opener before writing to disk.
+// The main app script is in the HTML without a <script> opener. Worse: the first
+// ~450 chars after the navamsha </script> are broken cut-off fragments (s.onerror,
+// })); etc.) that cause a SyntaxError, preventing the whole block from executing.
+// Fix: skip the broken prefix, inject <script> + clean stubs, then append the
+// valid code starting from if('requestIdleCallback'...) — verified SYNTAX OK.
 function fixKundaliHtml(html) {
-  return html.replace(
-    '</script>\nvar CALC_SCRIPTS=[];',
-    '</script>\n<script>\nvar CALC_SCRIPTS=[];'
+  const navamshaClose = html.indexOf('</script>\nvar CALC_SCRIPTS=[];');
+  if (navamshaClose < 0) return html;
+  const orphanEnd  = navamshaClose + 9; // end of </script>
+  const validStart = html.indexOf("if('requestIdleCallback' in window){", orphanEnd);
+  if (validStart < 0) return html;
+  return (
+    html.substring(0, orphanEnd) +
+    '\n<script>\n' +
+    'var CALC_SCRIPTS=[];\nvar _calcScriptsPromise=null;\n' +
+    'function loadCalcScripts(){' +
+      'if(_calcScriptsPromise)return _calcScriptsPromise;' +
+      '_calcScriptsPromise=Promise.resolve();' +
+      'return _calcScriptsPromise;' +
+    '}\n' +
+    html.substring(validStart)
   );
 }
 
