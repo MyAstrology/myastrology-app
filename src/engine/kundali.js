@@ -187,8 +187,13 @@ export function getKundali(dateStr, timeStr, lat = DEFAULT_LAT, lon = DEFAULT_LO
   });
 
   // জন্মকালীন পঞ্চাঙ্গ
-  const panchang   = v.getDailyPanchang(y, mo, d, lat, lon);
-  const weekdayNum = panchang.date.weekday;
+  const panchang = v.getDailyPanchang(y, mo, d, lat, lon);
+  // হিন্দু বার: সূর্যোদয়ের আগে জন্ম হলে আগের দিনের বার
+  let weekdayNum = panchang.date.weekday;
+  if (panchang.sunrise) {
+    const [srH, srM] = panchang.sunrise.split(':').map(Number);
+    if (h_ist < srH + (srM || 0) / 60) weekdayNum = (weekdayNum + 6) % 7;
+  }
   const tithiIdx   = panchang.tithi.index;
   const paksha     = tithiIdx < 15 ? 'শুক্লপক্ষ' : 'কৃষ্ণপক্ষ';
   const yogaIdx    = panchang.yoga.index;
