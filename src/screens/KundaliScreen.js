@@ -81,9 +81,14 @@ section.k-wrap{display:none!important;}
 .kf-alt-actions{display:none!important;}
 #inputSection > div:first-child{display:none!important;}
 #inputSection > p{display:none!important;}
+/* ── file:// mode: external CSS does not load, so manually hide print-only elements ── */
+#printCoverPage{display:none!important;}
+.premium-promo{display:none!important;}
 /* ── Page base ── */
 body{background:#FAF8F3!important;padding:0!important;margin:0!important;overscroll-behavior:contain;}
 main{padding:0 0 80px 0!important;margin:0!important;}
+/* ── Space for the fixed tabNav (≈48px tall) so content doesn't hide beneath it ── */
+#resultsArea{padding-top:52px!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 html{scrollbar-width:none!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
