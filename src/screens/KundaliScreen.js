@@ -20,9 +20,12 @@ const LOGO = require('../../assets/logo.png');
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
   // printDataJson is already a JSON string from the WebView postMessage.
-  // We embed it as a JS string literal so the print template can JSON.parse it.
-  // JSON.stringify of a string wraps it in quotes and escapes internal quotes correctly.
-  const safeJson = JSON.stringify(printDataJson);
+  // JSON.stringify wraps it in quotes and escapes internal quotes, BUT it does
+  // NOT escape </script>. When embedded inside a <script> tag the HTML parser
+  // will close the script block prematurely at any </script> in the payload,
+  // preventing root.innerHTML from ever being set → blank PDF.
+  let safeJson = JSON.stringify(printDataJson);
+  safeJson = safeJson.replace(/<\/script/gi, '<\\/script');
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
     `raw=${safeJson};`
