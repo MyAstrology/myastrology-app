@@ -134,10 +134,23 @@ input[type=text],input[type=number]{
 }
 /* ── Results area — hidden until calculate ── */
 #resultsArea{display:none;padding:8px 0!important;}
+/* ── Tab panels — only active panel visible ── */
+.mm-tab-panel{display:none!important;}
+.mm-tab-panel.active{display:block!important;}
 .score-hero{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
 .mm-shloka-box{margin-bottom:10px!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
 .section-title{font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 10px!important;padding-bottom:6px!important;border-bottom:1.5px solid #ede0ce!important;}
+/* ── জন্মতথ্য comparison card (mm-pc) ── */
+.mm-pc{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
+.mm-pc-title{font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 10px!important;padding-bottom:6px!important;border-bottom:1.5px solid #ede0ce!important;}
+.mm-pc table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
+.mm-pc th{background:#f5ede0!important;color:#7a2e2e!important;font-size:.78rem!important;font-weight:700!important;text-align:left!important;padding:7px 8px!important;}
+.mm-pc td{display:table-cell!important;padding:6px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
+.mm-pc tr:nth-child(even) td{background:#fdf8f3!important;}
+.mm-pc-hl-amber td{color:#b8860b!important;font-weight:600!important;}
+.mm-pc-hl-green td{color:#1a7a2e!important;font-weight:600!important;}
+.mm-pc-hl-blue td{color:#1565c0!important;font-weight:600!important;}
 /* ── Tables ── */
 table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
 thead{display:table-header-group!important;}tbody{display:table-row-group!important;}
