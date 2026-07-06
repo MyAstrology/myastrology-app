@@ -19,9 +19,10 @@ const LOGO = require('../../assets/logo.png');
 
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
-  /* Directly substitute the localStorage read with the actual JSON string.
-     expo-print's WebView may not have localStorage; this bypasses it entirely. */
-  const safeJson = JSON.stringify(printDataJson || '{}');
+  // printDataJson is already a JSON string from the WebView postMessage.
+  // We embed it as a JS string literal so the print template can JSON.parse it.
+  // JSON.stringify of a string wraps it in quotes and escapes internal quotes correctly.
+  const safeJson = JSON.stringify(printDataJson);
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
     `raw=${safeJson};`
@@ -181,14 +182,41 @@ svg.title-icon{stroke:#7a2e2e!important;fill:none!important;width:18px!important
 .pg-item{display:flex!important;flex-direction:column!important;gap:2px!important;}
 .pg-item .lbl{font-size:0.72rem!important;color:#8a6a50!important;font-weight:500!important;line-height:1.2!important;}
 .pg-item .val{font-size:0.94rem!important;font-weight:700!important;color:#2c1a0e!important;line-height:1.3!important;}
-/* ── All tables: force correct display (fixes দশা & other tabs) ── */
+/* ── All tables: force correct display ── */
 table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:0.82rem!important;}
 thead{display:table-header-group!important;}
 tbody{display:table-row-group!important;}
 tr{display:table-row!important;}
 th,td{display:table-cell!important;padding:6px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
-th{background:#7a2e2e!important;color:#fff!important;font-weight:600!important;font-size:0.74rem!important;text-align:center!important;}
+th{background:#7a2e2e!important;color:#fff!important;font-weight:600!important;font-size:0.74rem!important;text-align:left!important;}
 tr:nth-child(even) td{background:#fdf8f3!important;}
+/* ── দশা accordion: website CSS classes not loaded in file:// — inject all ── */
+.ds-md-tbl{width:100%!important;border-collapse:collapse!important;margin-bottom:14px!important;font-size:0.81rem!important;}
+.ds-md-tbl th{background:#7a2e2e!important;color:#fff!important;padding:7px 8px!important;text-align:left!important;font-size:0.74rem!important;}
+.ds-md-tbl td{padding:6px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;}
+tr.ds-cur-md>td{background:#fff8ee!important;font-weight:700!important;}
+.ds-sec-hdr{font-weight:700!important;color:#5a1e1e!important;font-size:0.87rem!important;margin:14px 0 7px!important;padding-bottom:4px!important;border-bottom:2px solid #e0cdbc!important;}
+.ds-ad-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:6px!important;margin-bottom:10px!important;}
+.ds-ad-box{border:1px solid #e0cdbc!important;border-radius:8px!important;overflow:hidden!important;background:#fff!important;}
+.ds-ad-box-hdr{background:#7a2e2e!important;color:#fff!important;padding:5px 7px!important;font-weight:700!important;font-size:0.7rem!important;text-align:center!important;}
+.ds-ad-row{display:flex!important;justify-content:space-between!important;align-items:center!important;padding:4px 6px!important;border-bottom:1px solid #f0e4d4!important;font-size:0.71rem!important;cursor:pointer!important;gap:2px!important;}
+.ds-ad-row:last-child{border-bottom:none!important;}
+.ds-ad-row>span:first-child{color:#2c1a0e!important;font-weight:500!important;flex-shrink:0!important;}
+.ds-ad-row>span:last-child{color:#8a6a50!important;font-size:0.67rem!important;white-space:nowrap!important;text-align:right!important;}
+.ds-cur-md-box{border-color:#c8a87a!important;box-shadow:0 0 0 2px rgba(122,46,46,0.18)!important;}
+.ds-cur-md-box>.ds-ad-box-hdr{background:#b84020!important;}
+.ds-ad-row.ds-cur-ad{background:#fff3e0!important;}
+.ds-ad-row.ds-sel{background:#f5e6d3!important;}
+.ds-pd-panel{background:#fdf8f3!important;border:1.5px solid #e0cdbc!important;border-radius:8px!important;padding:10px!important;margin:6px 0!important;}
+.ds-pd-panel-hdr{display:flex!important;justify-content:space-between!important;align-items:center!important;margin-bottom:8px!important;}
+.ds-pd-panel-title{font-weight:700!important;color:#5a1e1e!important;font-size:0.81rem!important;}
+.ds-pd-back-btn{background:none!important;border:1px solid #c8a87a!important;border-radius:5px!important;padding:3px 8px!important;font-size:0.71rem!important;color:#7a2e2e!important;cursor:pointer!important;}
+.ds-pd-tbl{width:100%!important;border-collapse:collapse!important;font-size:0.78rem!important;}
+.ds-pd-tbl th{background:#7a2e2e!important;color:#fff!important;padding:6px 8px!important;text-align:left!important;font-size:0.73rem!important;}
+.ds-pd-tbl td{padding:5px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;}
+tr.ds-cur-pd>td{background:#fff3e0!important;font-weight:700!important;}
+.dasha-info{margin-bottom:10px!important;font-size:0.83rem!important;color:#2c1a0e!important;line-height:1.6!important;}
+.dasha-info p{margin:3px 0!important;}
 /* ── Planet table (more specific — overrides generic above) ── */
 .planet-table{width:100%!important;border-collapse:collapse!important;font-size:0.81rem!important;}
 .planet-table th{background:#7a2e2e!important;color:#fff!important;padding:7px 6px!important;text-align:left!important;font-weight:600!important;font-size:0.74rem!important;white-space:nowrap!important;}
@@ -310,26 +338,54 @@ function buildInjectedJS(css) {
       });
     }
 
-    /* 5 — Override _doPrint: generate full PDF via kundali-print template */
-    if(typeof window._doPrint==='function'){
-      window._doPrint=function(){
+    /* 5 — Override downloadPDF: bypass payment in app, generate PDF directly */
+    (function(){
+      function _appGeneratePdf(){
         var ra=document.getElementById('resultsArea');
         if(!ra||ra.style.display==='none'){
           if(typeof showToast==='function')showToast('প্রথমে কুষ্ঠি গণনা করুন।','error');
           return;
         }
-        /* Prepare payload so _kundaliPrintData is populated */
-        if(typeof _preparePayload==='function')_preparePayload();
         var printData=null;
-        try{printData=localStorage.getItem('kundali_print_data');}catch(e){}
-        if(!printData&&window._kundaliPrintData){
-          try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
+        /* Method 1: use _preparePayload which sets window._kundaliPrintData */
+        if(typeof _preparePayload==='function'){
+          try{_preparePayload();}catch(e){}
+          try{printData=localStorage.getItem('kundali_print_data');}catch(e){}
+          if(!printData&&window._kundaliPrintData){
+            try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
+          }
+        }
+        /* Method 2: build payload directly from DOM + _kResult */
+        if(!printData){
+          try{
+            var nm='';
+            try{nm=(document.getElementById('printCoverName')||{}).textContent||(document.getElementById('userName')||{}).value||'';}catch(_e){}
+            var inf='';
+            try{inf=(document.getElementById('printCoverInfo')||{}).textContent||'';}catch(_e){}
+            var htmlStr='';
+            try{
+              var clone=ra.cloneNode(true);
+              clone.querySelectorAll('#printCoverPage,#navagrahaStotraPage').forEach(function(el){if(el.parentNode)el.parentNode.removeChild(el);});
+              htmlStr=clone.innerHTML;
+            }catch(_e){try{htmlStr=ra.innerHTML;}catch(__e){}}
+            var kr=window._kResult||{};
+            printData=JSON.stringify({
+              name:nm,info:inf,html:htmlStr,isPremium:false,
+              dashaData:kr.dashaData||null,lagna:kr.lagna||null,
+              nakshatra:kr.nakshatra||null,rashi:kr.rashi||null,
+              tithi:kr.tithi||'',yoga:kr.yoga||'',karana:kr.karana||'',
+              gana:kr.gana||'',vara:kr.vara||'',
+              gemRecs:kr.gemRecs||null,birthYear:kr.birthYear||0
+            });
+          }catch(e){}
         }
         if(window.ReactNativeWebView){
           window.ReactNativeWebView.postMessage(JSON.stringify({type:'generatePdf',printData:printData}));
         }
-      };
-    }
+      }
+      window.downloadPDF=_appGeneratePdf;
+      window._doPrint=_appGeneratePdf;
+    })();
 
   },600);
 })();true;`;
@@ -416,6 +472,10 @@ export function KundaliScreen() {
               try {
                 const msg = JSON.parse(event.nativeEvent.data);
                 if (msg.type === 'generatePdf') {
+                  if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
+                    Alert.alert('ত্রুটি', 'কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।');
+                    return;
+                  }
                   const html = injectDataIntoPrintHtml(msg.printData);
                   const { uri } = await Print.printToFileAsync({ html, base64: false });
                   Alert.alert(
