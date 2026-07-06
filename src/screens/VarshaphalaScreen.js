@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
+import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/varshaphala';
 import { colors } from '../theme/colors';
 
@@ -14,6 +15,7 @@ header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!import
 .whatsapp-cta{display:none!important;}
 .disclaimer{display:none!important;}
 #seoSection,#eeatSection,#faqSection{display:none!important;}
+footer,.site-footer{display:none!important;}
 /* ── Hide second card (info card "বর্ষফল কী?") ── */
 div.k-wrap#inputSection .card:last-child{display:none!important;}
 /* ── Page base ── */
@@ -22,53 +24,53 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
 /* ── Outer container ── */
-div.k-wrap{padding:8px 12px 20px!important;}
+div.k-wrap{padding:6px 12px 20px!important;}
 /* ── Form card ── */
 .card{
   background:#fff!important;border-radius:14px!important;
-  border:1.5px solid #e0cdbc!important;padding:16px!important;
-  box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:12px!important;
+  border:1.5px solid #e0cdbc!important;padding:12px!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:10px!important;
 }
 .section-title{
-  font-size:.95rem!important;font-weight:700!important;color:#3a2218!important;
-  margin:0 0 14px!important;padding-bottom:8px!important;
+  font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;
+  margin:0 0 10px!important;padding-bottom:6px!important;
   border-bottom:1.5px solid #ede0ce!important;
   display:flex!important;align-items:center!important;gap:6px!important;
 }
 /* ── Field groups ── */
-.ig{margin-bottom:10px!important;}
-label{font-size:.83rem!important;font-weight:600!important;color:#5c3d2e!important;display:block!important;margin-bottom:4px!important;}
+.ig{margin-bottom:8px!important;}
+label{font-size:.8rem!important;font-weight:600!important;color:#5c3d2e!important;display:block!important;margin-bottom:3px!important;}
 /* ── Name input ── */
 #userName{
-  width:100%!important;padding:10px 12px!important;
+  width:100%!important;padding:8px 10px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.95rem!important;
+  background:#fefcf9!important;font-size:.9rem!important;
   color:#3a2218!important;font-family:inherit!important;outline:none!important;
 }
 #userName:focus{border-color:#c8a87a!important;box-shadow:0 0 0 3px rgba(200,168,122,.15)!important;}
 /* ── Selects ── */
 .sel-ctrl,select{
-  width:100%!important;padding:9px 10px!important;
+  width:100%!important;padding:7px 8px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.9rem!important;
+  background:#fefcf9!important;font-size:.85rem!important;
   color:#3a2218!important;font-family:inherit!important;
 }
 /* ── Date/time/tz row ── */
-.dob-row,.tob-row{display:flex!important;gap:6px!important;}
+.dob-row,.tob-row{display:flex!important;gap:5px!important;}
 .dob-row .sel-ctrl,.tob-row .sel-ctrl{flex:1!important;}
 /* ── City search ── */
 .city-wrap{position:relative!important;}
-.city-wrap>div{display:flex!important;gap:6px!important;align-items:center!important;margin-bottom:4px!important;}
+.city-wrap>div{display:flex!important;gap:5px!important;align-items:center!important;margin-bottom:3px!important;}
 #citySearch{
-  flex:1!important;padding:9px 10px!important;
+  flex:1!important;padding:7px 8px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.9rem!important;
+  background:#fefcf9!important;font-size:.85rem!important;
   color:#3a2218!important;font-family:inherit!important;outline:none!important;
 }
 .city-wrap button{
   background:#7a2e2e!important;border:none!important;border-radius:9px!important;
-  padding:0 12px!important;cursor:pointer!important;flex-shrink:0!important;
-  min-width:44px!important;min-height:44px!important;font-size:1.1rem!important;
+  padding:0 10px!important;cursor:pointer!important;flex-shrink:0!important;
+  min-width:40px!important;min-height:40px!important;font-size:1rem!important;
   display:flex!important;align-items:center!important;justify-content:center!important;
 }
 .suggestions{
@@ -78,44 +80,52 @@ label{font-size:.83rem!important;font-weight:600!important;color:#5c3d2e!importa
   width:100%!important;box-shadow:0 4px 14px rgba(0,0,0,.12)!important;
   max-height:200px!important;overflow-y:auto!important;
 }
-.suggestions li{padding:10px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.88rem!important;color:#3a2218!important;}
+.suggestions li{padding:9px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.85rem!important;color:#3a2218!important;}
 /* ── Lat/lon inputs ── */
 #lat,#lon{
-  width:100%!important;padding:9px 10px!important;
+  width:100%!important;padding:7px 8px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.9rem!important;
+  background:#fefcf9!important;font-size:.85rem!important;
   color:#3a2218!important;font-family:inherit!important;
 }
-/* ── Year radio ── */
-.radio-row,.year-options,.radio-group{display:flex!important;flex-direction:column!important;gap:8px!important;margin-top:6px!important;}
+/* ── Year radio — horizontal row ── */
+.radio-row,.year-options,.radio-group{display:flex!important;flex-direction:row!important;gap:6px!important;margin-top:4px!important;}
 .radio-row>label,.year-options>label{
-  display:flex!important;align-items:center!important;gap:8px!important;
+  flex:1!important;display:flex!important;align-items:center!important;gap:6px!important;
   background:#fefcf9!important;border:1.5px solid #e0cdbc!important;
-  border-radius:10px!important;padding:10px 14px!important;
-  font-size:.9rem!important;font-weight:500!important;color:#3a2218!important;
+  border-radius:9px!important;padding:8px 10px!important;
+  font-size:.85rem!important;font-weight:500!important;color:#3a2218!important;
   cursor:pointer!important;
 }
+/* Override inline styles on year option labels */
+label:has(#year2026),label:has(#year2027){
+  flex:1!important;padding:8px 10px!important;font-size:.85rem!important;
+  border-radius:9px!important;border:1.5px solid #e0cdbc!important;
+}
+div:has(#year2026){
+  flex-direction:row!important;gap:6px!important;
+}
 /* ── Calculate button ── */
-.btn-row{margin-top:12px!important;}
+.btn-row{margin-top:10px!important;}
 .btn.btn-primary,#calcBtn{
-  width:100%!important;padding:14px 20px!important;background:#7a2e2e!important;
+  width:100%!important;padding:12px 20px!important;background:#7a2e2e!important;
   color:#fff!important;border:none!important;border-radius:12px!important;
-  font-size:1rem!important;font-weight:700!important;font-family:inherit!important;
+  font-size:.95rem!important;font-weight:700!important;font-family:inherit!important;
   cursor:pointer!important;display:flex!important;align-items:center!important;
   justify-content:center!important;gap:8px!important;
 }
 .btn.btn-primary:disabled,#calcBtn:disabled{background:#bbb!important;cursor:not-allowed!important;opacity:.7!important;}
 /* ── Results area ── */
 #resultsArea{padding:0!important;}
-.result-header{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:16px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
-.person-name{font-size:1.1rem!important;font-weight:700!important;color:#3a2218!important;}
-.year-badge{display:inline-flex!important;align-items:center!important;background:#7a2e2e!important;color:#ffd700!important;padding:4px 12px!important;border-radius:20px!important;font-weight:700!important;font-size:.88rem!important;margin-top:6px!important;}
+.result-header{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
+.person-name{font-size:1.05rem!important;font-weight:700!important;color:#3a2218!important;}
+.year-badge{display:inline-flex!important;align-items:center!important;background:#7a2e2e!important;color:#ffd700!important;padding:4px 12px!important;border-radius:20px!important;font-weight:700!important;font-size:.85rem!important;margin-top:6px!important;}
 /* ── Prediction box ── */
-.prediction-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.88rem!important;line-height:1.7!important;color:#3a2218!important;}
+.prediction-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.85rem!important;line-height:1.7!important;color:#3a2218!important;}
 /* ── Lord/muntha cards ── */
 .lord-card,.muntha-card{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;margin-bottom:10px!important;}
-.lord-planet,.muntha-rashi{font-size:1.1rem!important;font-weight:700!important;color:#7a2e2e!important;}
-.effect-badge{display:inline-flex!important;background:#7a2e2e!important;color:#fff!important;padding:2px 10px!important;border-radius:12px!important;font-size:.8rem!important;margin-left:8px!important;}
+.lord-planet,.muntha-rashi{font-size:1.05rem!important;font-weight:700!important;color:#7a2e2e!important;}
+.effect-badge{display:inline-flex!important;background:#7a2e2e!important;color:#fff!important;padding:2px 10px!important;border-radius:12px!important;font-size:.78rem!important;margin-left:8px!important;}
 /* ── Tables ── */
 table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
 thead{display:table-header-group!important;}tbody{display:table-row-group!important;}
@@ -196,6 +206,7 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 export function VarshaphalaScreen() {
   return (
     <View style={s.root}>
+      <AppHeader />
       <LocalWebView name="varshaphala" html={html} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );

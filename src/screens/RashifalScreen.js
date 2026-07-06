@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppHeader } from '../components/AppHeader';
 import { getTodayRashifal } from '../engine/rashifal';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -145,12 +146,7 @@ export function RashifalScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.topLine} />
-        <Text style={styles.brand}>MyAstrology</Text>
-        <Text style={styles.tagline}>✦ রাশিফল ✦</Text>
-        <View style={styles.bottomLine} />
-      </View>
+      <AppHeader />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.moonBar}>
@@ -175,13 +171,6 @@ export function RashifalScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    backgroundColor: colors.headerBg, paddingTop: 48, paddingBottom: 20, alignItems: 'center',
-  },
-  topLine:    { width: 60, height: 1.5, backgroundColor: colors.gold, marginBottom: 14, opacity: 0.7 },
-  brand:      { fontSize: 26, fontWeight: '700', color: colors.gold, letterSpacing: 3, textTransform: 'uppercase' },
-  tagline:    { fontSize: 13, color: colors.goldLight, marginTop: 4, letterSpacing: 2, opacity: 0.85 },
-  bottomLine: { width: 60, height: 1.5, backgroundColor: colors.gold, marginTop: 14, opacity: 0.7 },
   content:    { padding: spacing.md, paddingBottom: 40 },
   moonBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

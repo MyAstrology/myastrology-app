@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
+import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/prashna';
 import { colors } from '../theme/colors';
 
@@ -17,53 +18,53 @@ footer,.site-footer{display:none!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
 body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
-main.p-wrap{max-width:100%!important;padding:8px 12px 20px!important;margin:0!important;}
+main.p-wrap{max-width:100%!important;padding:6px 12px 20px!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
 /* ── Form card ── */
 .card{
   background:#fff!important;border-radius:14px!important;
-  border:1.5px solid #e0cdbc!important;padding:16px!important;
-  box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:12px!important;
+  border:1.5px solid #e0cdbc!important;padding:12px!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.06)!important;margin-bottom:10px!important;
 }
 .section-title,.card-title{
-  font-size:.95rem!important;font-weight:700!important;color:#3a2218!important;
-  margin:0 0 14px!important;padding-bottom:8px!important;
+  font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;
+  margin:0 0 10px!important;padding-bottom:6px!important;
   border-bottom:1.5px solid #ede0ce!important;
   display:flex!important;align-items:center!important;gap:6px!important;
 }
 /* ── Fields ── */
-.field{margin-bottom:12px!important;}
-.field>label,.field>.lbl{font-size:.83rem!important;font-weight:600!important;color:#5c3d2e!important;display:block!important;margin-bottom:4px!important;}
+.field{margin-bottom:10px!important;}
+.field>label,.field>.lbl{font-size:.8rem!important;font-weight:600!important;color:#5c3d2e!important;display:block!important;margin-bottom:3px!important;}
 /* ── Question input ── */
 .inp-ctrl,input[type=text]{
-  width:100%!important;padding:10px 12px!important;
+  width:100%!important;padding:8px 10px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.95rem!important;
+  background:#fefcf9!important;font-size:.9rem!important;
   color:#3a2218!important;font-family:inherit!important;outline:none!important;
 }
 .inp-ctrl:focus,input[type=text]:focus{border-color:#c8a87a!important;box-shadow:0 0 0 3px rgba(200,168,122,.15)!important;}
 /* ── Question type select ── */
 .sel-ctrl,select{
-  width:100%!important;padding:9px 10px!important;
+  width:100%!important;padding:7px 8px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.9rem!important;
+  background:#fefcf9!important;font-size:.88rem!important;
   color:#3a2218!important;font-family:inherit!important;
 }
 /* ── Form dividers ── */
-.form-sep{border:none!important;border-top:1px solid #ede0ce!important;margin:12px 0!important;}
+.form-sep{border:none!important;border-top:1px solid #ede0ce!important;margin:10px 0!important;}
 /* ── City search ── */
 .city-wrap{position:relative!important;}
-.city-row{display:flex!important;gap:6px!important;align-items:center!important;margin-bottom:4px!important;}
+.city-row{display:flex!important;gap:5px!important;align-items:center!important;margin-bottom:3px!important;}
 .city-row .inp-ctrl{flex:1!important;}
 .gps-btn{
   background:#7a2e2e!important;border:none!important;border-radius:9px!important;
-  padding:0 12px!important;cursor:pointer!important;flex-shrink:0!important;
-  min-width:44px!important;min-height:44px!important;font-size:1.1rem!important;
+  padding:0 10px!important;cursor:pointer!important;flex-shrink:0!important;
+  min-width:40px!important;min-height:40px!important;font-size:1rem!important;
   display:flex!important;align-items:center!important;justify-content:center!important;
   color:#fff!important;
 }
-.gps-msg{font-size:.78rem!important;color:#5c3d2e!important;display:block!important;min-height:1.2em!important;}
+.gps-msg{font-size:.75rem!important;color:#5c3d2e!important;display:block!important;min-height:1.1em!important;}
 .suggestions{
   position:absolute!important;z-index:999!important;background:#fff!important;
   border:1.5px solid #e0cdbc!important;border-radius:10px!important;
@@ -71,34 +72,34 @@ main.p-wrap{max-width:100%!important;padding:8px 12px 20px!important;margin:0!im
   width:100%!important;box-shadow:0 4px 14px rgba(0,0,0,.12)!important;
   max-height:200px!important;overflow-y:auto!important;
 }
-.suggestions li{padding:10px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.88rem!important;color:#3a2218!important;}
+.suggestions li{padding:9px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.85rem!important;color:#3a2218!important;}
 /* ── Lat/lon ── */
 .coord-row{display:flex!important;gap:8px!important;}
 .coord-row .field{flex:1!important;margin-bottom:0!important;}
 input[type=number]{
-  width:100%!important;padding:9px 10px!important;
+  width:100%!important;padding:7px 8px!important;
   border:1.5px solid #e0cdbc!important;border-radius:9px!important;
-  background:#fefcf9!important;font-size:.9rem!important;
+  background:#fefcf9!important;font-size:.88rem!important;
   color:#3a2218!important;font-family:inherit!important;
 }
 /* ── Button row ── */
-.btn-row{margin-top:14px!important;}
+.btn-row{margin-top:12px!important;}
 .btn.btn-primary,#askBtn{
-  width:100%!important;padding:14px 20px!important;background:#7a2e2e!important;
+  width:100%!important;padding:12px 20px!important;background:#7a2e2e!important;
   color:#fff!important;border:none!important;border-radius:12px!important;
-  font-size:1rem!important;font-weight:700!important;font-family:inherit!important;
+  font-size:.95rem!important;font-weight:700!important;font-family:inherit!important;
   cursor:pointer!important;display:flex!important;align-items:center!important;
   justify-content:center!important;gap:8px!important;
 }
 .btn.btn-primary:disabled,#askBtn:disabled{background:#bbb!important;cursor:not-allowed!important;}
 /* ── Results section ── */
 #resultsSection{margin-top:4px!important;}
-.timestamp{font-size:.78rem!important;color:#8a6a50!important;margin-bottom:8px!important;}
+.timestamp{font-size:.75rem!important;color:#8a6a50!important;margin-bottom:8px!important;}
 /* ── Verdict card ── */
 #verdictCard{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;overflow:hidden!important;}
-.verdict-card{padding:20px 16px!important;text-align:center!important;}
-.verdict-icon{font-size:2.5rem!important;margin-bottom:8px!important;}
-.verdict-text{font-size:1.2rem!important;font-weight:700!important;color:#3a2218!important;}
+.verdict-card{padding:18px 16px!important;text-align:center!important;}
+.verdict-icon{font-size:2.2rem!important;margin-bottom:6px!important;}
+.verdict-text{font-size:1.1rem!important;font-weight:700!important;color:#3a2218!important;}
 /* ── Score card ── */
 .score-section{text-align:center!important;}
 .score-label{margin-bottom:8px!important;}
@@ -107,9 +108,9 @@ input[type=number]{
 .score-bar-fill{height:100%!important;background:linear-gradient(90deg,#c8a87a,#7a2e2e)!important;border-radius:5px!important;transition:width .6s!important;}
 /* ── Detail & prediction cards ── */
 .detail-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
-.pred-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.88rem!important;line-height:1.7!important;color:#3a2218!important;}
+.pred-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.85rem!important;line-height:1.7!important;color:#3a2218!important;}
 .reasons-list{padding-left:0!important;list-style:none!important;}
-.reasons-list li{padding:6px 0!important;border-bottom:1px solid #f0e4d4!important;font-size:.88rem!important;color:#3a2218!important;}
+.reasons-list li{padding:5px 0!important;border-bottom:1px solid #f0e4d4!important;font-size:.85rem!important;color:#3a2218!important;}
 /* ── Reset button ── */
 .btn.btn-reset{
   width:100%!important;padding:12px 20px!important;background:#fff!important;
@@ -191,6 +192,7 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 export function PrashnaScreen() {
   return (
     <View style={s.root}>
+      <AppHeader />
       <LocalWebView name="prashna" html={html} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );
