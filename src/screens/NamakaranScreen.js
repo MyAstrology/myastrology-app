@@ -29,8 +29,8 @@ footer,.site-footer{display:none!important;}
 .card:has(.share-row){display:none!important;}
 /* ── Hide SEO article & disclaimer ── */
 article.seo-article{display:none!important;}
-/* ── Hide booking/payment overlay (outside main) ── */
-#book-overlay,#book-modal{display:none!important;}
+/* ── Hide booking/payment overlays (outside main) ── */
+#book-overlay,#book-modal,#rzp-success-overlay,#rzp-success-modal{display:none!important;}
 .field:has(#tzOffset){display:none!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
