@@ -29,6 +29,11 @@ footer,.site-footer{display:none!important;}
 .card:has(.share-row){display:none!important;}
 /* ── Hide SEO article & disclaimer ── */
 article.seo-article{display:none!important;}
+/* ── Hide booking/payment overlay (outside main) ── */
+#book-overlay,#book-modal{display:none!important;}
+/* ── Reduce form height: hide sub-labels & timezone ── */
+.form-sub-label{display:none!important;}
+.field:has(#tzOffset){display:none!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
 body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
