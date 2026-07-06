@@ -207,6 +207,19 @@ function buildInjectedJS(css) {
 
   /* 3 — Premium popups: keep originals active (CSS injected via APP_CSS above) */
 
+  /* 4 — Block window.open (PDF print / rashifal tab) — WebView has no multi-window support */
+  var _origOpen=window.open;
+  window.open=function(url,target,features){
+    if(typeof url==='string'&&url.indexOf('kundali-print.html')>-1){
+      if(typeof showToast==='function'){
+        showToast('PDF প্রিন্ট ব্রাউজারে সমর্থিত। ওয়েবসাইট ভিজিট করুন।','info');
+      }
+      return null;
+    }
+    /* rashifal opens a new tab — silently swallow */
+    return null;
+  };
+
   /* 4 — Fallbacks: run after page scripts, fill any gaps */
   setTimeout(function(){
 
@@ -362,6 +375,10 @@ export function KundaliScreen() {
             scrollEnabled={true}
             injectedJavaScript={INJECTED_JS}
             onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
+            onShouldStartLoadWithRequest={req => {
+              /* Allow the local file and about:blank only; block everything else */
+              return req.url.startsWith('file://') || req.url === 'about:blank';
+            }}
             renderLoading={() => (
               <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.gold} />
