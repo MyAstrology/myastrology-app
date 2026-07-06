@@ -171,10 +171,15 @@ svg.title-icon{stroke:#7a2e2e!important;fill:none!important;width:18px!important
 .planet-table th{background:#7a2e2e!important;color:#fff!important;padding:7px 6px!important;text-align:left!important;font-weight:600!important;font-size:0.74rem!important;white-space:nowrap!important;}
 .planet-table td{padding:7px 6px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
 .planet-table tr:nth-child(even) td{background:#fdf8f3!important;}
-/* ── Kundali chart layout ── */
-.chart-section{display:flex!important;flex-wrap:wrap!important;gap:12px!important;justify-content:center!important;margin:8px 0!important;}
-.chart-box{flex:1 1 140px!important;min-width:140px!important;max-width:320px!important;}
+/* ── Kundali chart layout — vertical stack ── */
+.chart-section{display:flex!important;flex-direction:column!important;align-items:center!important;gap:16px!important;margin:8px 0!important;}
+.chart-box{width:100%!important;max-width:320px!important;flex:none!important;}
 .chart-box svg{width:100%!important;height:auto!important;max-width:320px!important;}
+/* ── Premium popup classes (injected, since file:// can't load external CSS) ── */
+.info-row{display:flex!important;align-items:flex-start!important;gap:12px!important;margin-bottom:10px!important;}
+.icon-large{font-size:1.6rem!important;flex-shrink:0!important;line-height:1.2!important;width:28px!important;text-align:center!important;}
+.text-lavender{color:#d8b4fe!important;font-size:0.88rem!important;font-weight:600!important;margin-bottom:2px!important;display:block!important;}
+.text-dim{color:rgba(255,255,255,0.68)!important;font-size:0.78rem!important;line-height:1.5!important;display:block!important;}
 /* ── City search ── */
 .city-wrap{position:relative!important;}
 .suggestions{position:absolute!important;z-index:999!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;list-style:none!important;margin:2px 0 0!important;padding:0!important;width:100%!important;box-shadow:0 4px 14px rgba(0,0,0,.12)!important;max-height:220px!important;overflow-y:auto!important;}
@@ -200,11 +205,7 @@ function buildInjectedJS(css) {
     var ts=document.createElement('div');ts.id='toastStack';document.body.appendChild(ts);
   }
 
-  /* 3 — Disable premium/order popup triggers (app context) */
-  window.orderPremiumKundali=function(){};
-  window.orderCompleteSolution=function(){};
-  window._prmOpen=function(){};
-  window._cspOpen=function(){};
+  /* 3 — Premium popups: keep originals active (CSS injected via APP_CSS above) */
 
   /* 4 — Fallbacks: run after page scripts, fill any gaps */
   setTimeout(function(){
