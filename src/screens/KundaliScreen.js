@@ -19,24 +19,15 @@ const LOGO = require('../../assets/logo.png');
 
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
-  // expo-print renders in a sandboxed Chromium context where localStorage is
-  // unavailable (null origin). We must bypass it entirely.
-  //
-  // Two-layer defence:
-  // 1. Inject <script> at top of <head> that sets window.__kData BEFORE the
-  //    main rendering script runs. < in the payload is encoded as < so
-  //    the HTML parser never sees </script> inside the data; the JS engine
-  //    correctly decodes < back to <.
-  // 2. Replace the localStorage line so the main script reads window.__kData
-  //    instead of (dead) localStorage.
+  // Encode < as < so the HTML parser never sees </script> inside the JSON
+  // payload. The JS engine correctly decodes < back to <.
+  // We use function replacements (not string replacements) so that any $
+  // characters in the JSON payload are never misinterpreted as back-references.
   const safeJs = JSON.stringify(printDataJson).replace(/</g, '\\u003c');
-  html = html.replace(
-    '<head>',
-    `<head><script>window.__kData=${safeJs};</script>`
-  );
+  html = html.replace('<head>', () => `<head><script>window.__kData=${safeJs};<\/script>`);
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
-    `try{raw=window.__kData||null;}catch(e){}`
+    () => `try{raw=window.__kData||null;}catch(e){}`
   );
   return html;
 }
@@ -388,9 +379,12 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 export function KundaliScreen() {
   const navigation    = useNavigation();
   const insets        = useSafeAreaInsets();
-  const [menuOpen, setMenuOpen]       = useState(false);
-  const [webCanGoBack, setWebCanGoBack] = useState(false);
-  const webViewRef = useRef(null);
+  const [menuOpen, setMenuOpen]           = useState(false);
+  const [webCanGoBack, setWebCanGoBack]   = useState(false);
+  const [pdfRenderState, setPdfRenderState] = useState(null); // { printData: string }
+  const webViewRef    = useRef(null);
+  const pdfWebViewRef = useRef(null);
+  const pdfBusyRef    = useRef(false); // prevent double-tap
 
   const kUri = useKUri();
 
@@ -458,7 +452,7 @@ export function KundaliScreen() {
             onShouldStartLoadWithRequest={req => {
               return req.url.startsWith('file://') || req.url === 'about:blank';
             }}
-            onMessage={async (event) => {
+            onMessage={(event) => {
               try {
                 const msg = JSON.parse(event.nativeEvent.data);
                 if (msg.type === 'generatePdf') {
@@ -466,42 +460,12 @@ export function KundaliScreen() {
                     Alert.alert('ত্রুটি', 'কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।');
                     return;
                   }
-                  const html = injectDataIntoPrintHtml(msg.printData);
-                  const { uri } = await Print.printToFileAsync({ html, base64: false });
-                  Alert.alert(
-                    'PDF তৈরি হয়েছে',
-                    'কী করতে চান?',
-                    [
-                      {
-                        text: 'সংরক্ষণ করুন',
-                        onPress: async () => {
-                          try {
-                            const { StorageAccessFramework } = FileSystem;
-                            const perm = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-                            if (perm.granted) {
-                              const destUri = await StorageAccessFramework.createFileAsync(
-                                perm.directoryUri, 'MyAstrology_kundali.pdf', 'application/pdf'
-                              );
-                              const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-                              await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
-                              Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
-                            }
-                          } catch (_) {
-                            await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
-                          }
-                        },
-                      },
-                      {
-                        text: 'শেয়ার করুন',
-                        onPress: () => Sharing.shareAsync(uri, {
-                          mimeType: 'application/pdf',
-                          dialogTitle: 'কুণ্ডলী PDF শেয়ার করুন',
-                          UTI: 'com.adobe.pdf',
-                        }),
-                      },
-                      { text: 'বাতিল', style: 'cancel' },
-                    ]
-                  );
+                  if (pdfBusyRef.current) return;
+                  pdfBusyRef.current = true;
+                  // Trigger the hidden WebView to render kundali-print.html with
+                  // real JavaScript. After rendering we capture the static DOM and
+                  // hand it to expo-print — no scripts needed at print time.
+                  setPdfRenderState({ printData: msg.printData });
                 }
               } catch (_) {}
             }}
@@ -514,6 +478,89 @@ export function KundaliScreen() {
           />
         )}
       </View>
+
+      {/* ── Hidden PDF renderer ────────────────────────────────────────────────
+           Renders kundali-print.html in a real WebView (full JS execution).
+           After #printRoot is populated we strip scripts and capture the static
+           DOM, then hand that to expo-print so it only needs to render HTML+CSS.
+      ── */}
+      {pdfRenderState && (
+        <WebView
+          ref={pdfWebViewRef}
+          style={s.pdfRenderer}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          source={{ html: injectDataIntoPrintHtml(pdfRenderState.printData) }}
+          onLoadEnd={() => {
+            // kundali-print.js waits for document.fonts.ready then setTimeout(go, 600).
+            // Poll until #printRoot has children, then capture.
+            pdfWebViewRef.current?.injectJavaScript(`
+              (function poll() {
+                var root = document.getElementById('printRoot');
+                if (root && root.children.length > 0) {
+                  // Strip all <script> elements — content already in DOM
+                  [].slice.call(document.querySelectorAll('script')).forEach(function(s) {
+                    s.parentNode && s.parentNode.removeChild(s);
+                  });
+                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'pdfStaticHtml',
+                    html: document.documentElement.outerHTML
+                  }));
+                } else {
+                  setTimeout(poll, 400);
+                }
+              })();
+              true;
+            `);
+          }}
+          onMessage={async (e) => {
+            try {
+              const m = JSON.parse(e.nativeEvent.data);
+              if (m.type !== 'pdfStaticHtml') return;
+              setPdfRenderState(null);
+              pdfBusyRef.current = false;
+              const { uri } = await Print.printToFileAsync({ html: m.html, base64: false });
+              Alert.alert(
+                'PDF তৈরি হয়েছে',
+                'কী করতে চান?',
+                [
+                  {
+                    text: 'সংরক্ষণ করুন',
+                    onPress: async () => {
+                      try {
+                        const { StorageAccessFramework } = FileSystem;
+                        const perm = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+                        if (perm.granted) {
+                          const destUri = await StorageAccessFramework.createFileAsync(
+                            perm.directoryUri, 'MyAstrology_kundali.pdf', 'application/pdf'
+                          );
+                          const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+                          await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
+                          Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
+                        }
+                      } catch (_) {
+                        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+                      }
+                    },
+                  },
+                  {
+                    text: 'শেয়ার করুন',
+                    onPress: () => Sharing.shareAsync(uri, {
+                      mimeType: 'application/pdf',
+                      dialogTitle: 'কুণ্ডলী PDF শেয়ার করুন',
+                      UTI: 'com.adobe.pdf',
+                    }),
+                  },
+                  { text: 'বাতিল', style: 'cancel', onPress: () => { pdfBusyRef.current = false; } },
+                ]
+              );
+            } catch (_) {
+              setPdfRenderState(null);
+              pdfBusyRef.current = false;
+            }
+          }}
+        />
+      )}
 
       {/* ── Drawer ── */}
       {menuOpen && (
@@ -565,6 +612,8 @@ const s = StyleSheet.create({
   /* Content */
   content:   { flex: 1 },
   wv:        { flex: 1 },
+  /* Off-screen hidden WebView for PDF rendering — real JS execution */
+  pdfRenderer: { position: 'absolute', left: -9999, top: -9999, width: 1, height: 1, opacity: 0 },
   loadCenter: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.background,
