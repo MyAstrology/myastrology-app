@@ -19,16 +19,24 @@ const LOGO = require('../../assets/logo.png');
 
 function injectDataIntoPrintHtml(printDataJson) {
   let html = KUNDALI_PRINT_HTML;
-  // Embed the JSON payload directly in the script block using the industry-
-  // standard < technique (Django/Flask/Rails all do this):
-  //   JSON.stringify wraps the string in quotes and escapes " and \
-  //   Then we replace every < with < so the HTML parser never sees
-  //   </script> (it sees </script which is not an end-tag), while the
-  //   JavaScript engine correctly decodes < as the < character.
+  // expo-print renders in a sandboxed Chromium context where localStorage is
+  // unavailable (null origin). We must bypass it entirely.
+  //
+  // Two-layer defence:
+  // 1. Inject <script> at top of <head> that sets window.__kData BEFORE the
+  //    main rendering script runs. < in the payload is encoded as < so
+  //    the HTML parser never sees </script> inside the data; the JS engine
+  //    correctly decodes < back to <.
+  // 2. Replace the localStorage line so the main script reads window.__kData
+  //    instead of (dead) localStorage.
   const safeJs = JSON.stringify(printDataJson).replace(/</g, '\\u003c');
   html = html.replace(
+    '<head>',
+    `<head><script>window.__kData=${safeJs};</script>`
+  );
+  html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
-    `raw=${safeJs};`
+    `try{raw=window.__kData||null;}catch(e){}`
   );
   return html;
 }
