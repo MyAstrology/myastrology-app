@@ -205,6 +205,17 @@ function buildInjectedJS(css) {
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
     }
+    /* Hide form when results appear */
+    var nmForm=document.getElementById('formSection');
+    var nmRes=document.getElementById('resultSection');
+    if(nmRes){
+      var nmSync=function(){
+        var v=nmRes.style.display==='block';
+        if(nmForm)nmForm.style.cssText=v?'display:none!important':'';
+      };
+      nmSync();
+      new MutationObserver(nmSync).observe(nmRes,{attributes:true,attributeFilter:['style']});
+    }
   },500);
 })();true;`;
 }

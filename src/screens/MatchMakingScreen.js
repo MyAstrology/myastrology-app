@@ -161,6 +161,28 @@ function buildInjectedJS(css) {
     if(typeof window._doMatchPrint==='function'){
       window.downloadMatchPDF=function(){window._doMatchPrint();};
     }
+    /* Hide form/tabbar; show tab nav when results appear */
+    var mmTabbar=document.getElementById('mmTabbar');
+    var mmInput=document.getElementById('mmInputSection');
+    var mmCalcBtn=document.querySelector('.calc-btn');
+    var mmRes=document.getElementById('resultsArea');
+    if(mmRes){
+      var mmSync=function(){
+        var v=mmRes.style.display==='block';
+        if(mmTabbar)mmTabbar.style.cssText=v?'':'display:none!important';
+        if(mmInput)mmInput.style.cssText=v?'display:none!important':'';
+        if(mmCalcBtn)mmCalcBtn.style.cssText=v?'display:none!important':'';
+      };
+      mmSync();
+      new MutationObserver(mmSync).observe(mmRes,{attributes:true,attributeFilter:['style']});
+      var origSwitch=window._mmSwitchTab;
+      if(typeof origSwitch==='function'){
+        window._mmSwitchTab=function(tab){
+          origSwitch.call(this,tab);
+          if(tab==='form')mmRes.style.display='none';
+        };
+      }
+    }
   },400);
 })();true;`;
 }

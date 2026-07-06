@@ -183,6 +183,17 @@ function buildInjectedJS(css) {
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
     }
+    /* Hide form when results appear */
+    var prForm=document.getElementById('formSection');
+    var prRes=document.getElementById('resultsSection');
+    if(prRes){
+      var prSync=function(){
+        var v=prRes.style.display==='block';
+        if(prForm)prForm.style.cssText=v?'display:none!important':'';
+      };
+      prSync();
+      new MutationObserver(prSync).observe(prRes,{attributes:true,attributeFilter:['style']});
+    }
   },500);
 })();true;`;
 }

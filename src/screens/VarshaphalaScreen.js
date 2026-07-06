@@ -197,6 +197,17 @@ function buildInjectedJS(css) {
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
     }
+    /* Hide form when results appear */
+    var vpForm=document.getElementById('inputSection');
+    var vpRes=document.getElementById('resultsArea');
+    if(vpRes){
+      var vpSync=function(){
+        var v=vpRes.style.display==='block';
+        if(vpForm)vpForm.style.cssText=v?'display:none!important':'';
+      };
+      vpSync();
+      new MutationObserver(vpSync).observe(vpRes,{attributes:true,attributeFilter:['style']});
+    }
   },500);
 })();true;`;
 }

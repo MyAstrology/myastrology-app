@@ -132,6 +132,18 @@ function buildInjectedJS(css) {
   var st=document.getElementById('__nuNative__');
   if(!st){st=document.createElement('style');st.id='__nuNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
+  setTimeout(function(){
+    var nuHero=document.querySelector('.nhero');
+    var nuRes=document.getElementById('results');
+    if(nuHero&&nuRes){
+      var nuSync=function(){
+        var hasContent=nuRes.children.length>0;
+        nuHero.style.cssText=hasContent?'display:none!important':'';
+      };
+      nuSync();
+      new MutationObserver(nuSync).observe(nuRes,{childList:true,attributes:true,attributeFilter:['style']});
+    }
+  },500);
 })();true;`;
 }
 
