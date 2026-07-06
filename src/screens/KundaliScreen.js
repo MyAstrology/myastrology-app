@@ -55,6 +55,7 @@ section.k-wrap{display:none!important;}
 .fab-wrap,.fab{display:none!important;}
 .kf-alt-actions{display:none!important;}
 button[onclick*="SaveProfile"],button[onclick*="saveProfile"]{display:none!important;}
+#inputSection > div:first-child{display:none!important;}
 body{background:#FAF8F3!important;padding:0!important;margin:0!important;overscroll-behavior:contain;}
 main{padding:0 0 80px 0!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
@@ -70,18 +71,24 @@ function buildInjectedJS(css) {
   if(!st){st=document.createElement('style');st.id='__kNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
 
-  /* 2 — Fix kundali.js HTML bug: JS code sits outside <script> tags as a text
-     node (premature </script> closure in navamsha block). eval() it so that
-     showToast, escapeHtml, loadCalcScripts and the dropdown-populate IIFE all
-     get defined, then clear the text so raw source doesn't render on screen. */
+  /* 2 — Stub functions that live in the orphaned text block so calculation
+     code doesn't throw ReferenceError when results are shown. */
+  if(typeof escapeHtml==='undefined')window.escapeHtml=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+  if(typeof showToast==='undefined')window.showToast=function(){};
+  if(typeof removeToast==='undefined')window.removeToast=function(){};
+  if(typeof loadCalcScripts==='undefined'){window.CALC_SCRIPTS=[];window.loadCalcScripts=function(){return Promise.resolve();};}
+
+  /* 3 — kundali.js HTML bug: premature </script> in navamsha block leaves JS
+     code as text nodes after </main>. CSS cannot hide text nodes — move them
+     into a display:none container instead. */
   var mainEl=document.querySelector('main');
-  Array.from(document.body.childNodes).forEach(function(node){
-    if(node===mainEl)return;
-    if(node.nodeType===3&&node.textContent.trim().length>20){
-      try{(0,eval)(node.textContent);}catch(e){}
-      node.textContent='';
-    }
-  });
+  if(mainEl){
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:none!important;';
+    var s=mainEl.nextSibling;
+    while(s){var nx=s.nextSibling;wrap.appendChild(s);s=nx;}
+    document.body.appendChild(wrap);
+  }
 
   /* 3 — Fallback select populate (safety net if eval above still failed) */
   setTimeout(function(){
