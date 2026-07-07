@@ -219,31 +219,18 @@ export function HomeScreen() {
 
               <View style={s.cardDivider} />
 
-              <View style={s.pakshaRow}>
-                <MaterialCommunityIcons name="moon-waning-crescent" size={13} color={colors.primary} />
-                <Text style={s.pakshaText}>{data.paksha}</Text>
-              </View>
-
-              <View style={s.cardDivider} />
-
-              <View style={s.cellGrid}>
+              <View style={s.cellGrid4}>
                 <PanchangCell icon="moon-waning-crescent" label="তিথি"    value={data.tithi}
                   timeStart={data.tithiStart}     timeEnd={data.tithiEnd} />
-                <View style={s.cellVDiv} />
                 <PanchangCell icon="star-four-points"     label="নক্ষত্র" value={data.nakshatra}
                   timeStart={data.nakshatraStart} timeEnd={data.nakshatraEnd} />
-              </View>
-              <View style={s.cardDivider} />
-              <View style={s.cellGrid}>
                 <PanchangCell icon="infinity"        label="যোগ"      value={data.yoga}
                   timeStart={data.yogaStart} timeEnd={data.yogaEnd} />
-                <View style={s.cellVDiv} />
                 <PanchangCell icon="hexagon-outline" label="করণ"      value={data.karana} />
               </View>
               <View style={s.cardDivider} />
-              <View style={s.cellGrid}>
+              <View style={s.cellGrid2}>
                 <PanchangCell icon="weather-sunset-up"   label="সূর্যোদয়" value={data.sunrise} />
-                <View style={s.cellVDiv} />
                 <PanchangCell icon="weather-sunset-down" label="সূর্যাস্ত" value={data.sunset}  />
               </View>
             </View>
@@ -269,6 +256,21 @@ export function HomeScreen() {
               <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
             </Pressable>
           )}
+
+          {/* ── Quick Actions ── */}
+          <Text style={[s.sectionTitle, { marginHorizontal: spacing.md, marginTop: 6, marginBottom: 6 }]}>
+            দ্রুত অ্যাক্সেস
+          </Text>
+          <View style={s.quickGrid}>
+            {QUICK_ACCESS_ITEMS.map(q => (
+              <QuickTile
+                key={q.tab}
+                icon={q.icon}
+                label={q.label}
+                onPress={() => navigation.navigate(q.tab)}
+              />
+            ))}
+          </View>
 
           {/* ── আজকের শুভ-অশুভ সময় ── */}
           {muhurtaRows.length > 0 && (
@@ -330,21 +332,6 @@ export function HomeScreen() {
             </>
           )}
 
-          {/* ── Quick Actions ── */}
-          <Text style={[s.sectionTitle, { marginHorizontal: spacing.md, marginTop: 14, marginBottom: 8 }]}>
-            দ্রুত অ্যাক্সেস
-          </Text>
-          <View style={s.quickGrid}>
-            {QUICK_ACCESS_ITEMS.map(q => (
-              <QuickTile
-                key={q.tab}
-                icon={q.icon}
-                label={q.label}
-                onPress={() => navigation.navigate(q.tab)}
-              />
-            ))}
-          </View>
-
           <View style={s.infoStrip}>
             <MaterialCommunityIcons name="information-outline" size={13} color={colors.primary} />
             <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · Kolkata (IST)</Text>
@@ -368,43 +355,40 @@ const s = StyleSheet.create({
   /* Panchang hero */
   heroWash: { paddingTop: 4 },
   card: {
-    margin: spacing.md, backgroundColor: colors.card, borderRadius: radii.lg,
+    margin: spacing.md, marginBottom: 8, backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    paddingHorizontal: spacing.md, paddingVertical: 10,
+    paddingHorizontal: spacing.md, paddingVertical: 8,
     overflow: 'hidden',
     ...shadows.raised,
   },
   heroImgBand: {
-    marginHorizontal: -spacing.md, marginTop: -10,
-    paddingHorizontal: spacing.md, paddingTop: 14, paddingBottom: 10,
-    marginBottom: 4,
+    marginHorizontal: -spacing.md, marginTop: -8,
+    paddingHorizontal: spacing.md, paddingTop: 10, paddingBottom: 6,
+    marginBottom: 2,
   },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 6, gap: 8 },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4, gap: 8 },
   dot:           { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
   cardTitle:     { ...typography.sectionTitle, color: colors.primary },
 
-  bnDate:  { ...typography.heading, fontSize: 20, color: colors.text, textAlign: 'center', marginBottom: 3 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
+  bnDate:  { ...typography.heading, fontSize: 19, color: colors.text, textAlign: 'center', marginBottom: 2 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' },
   metaText:{ ...typography.label, color: colors.textSecondary, fontWeight: '500' },
   metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textSecondary, opacity: 0.5 },
 
   cardDivider: { height: 1, backgroundColor: colors.divider },
 
-  pakshaRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 5 },
-  pakshaText: { ...typography.value, fontSize: 12, color: colors.text },
-
-  cellGrid:   { flexDirection: 'row', alignItems: 'stretch' },
-  cell:       { flex: 1, paddingVertical: 6, paddingHorizontal: 4, alignItems: 'center' },
-  cellVDiv:   { width: 1, backgroundColor: colors.divider },
-  cellHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
+  cellGrid4:  { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 },
+  cellGrid2:  { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 },
+  cell:       { flex: 1, paddingVertical: 2, paddingHorizontal: 2, alignItems: 'center' },
+  cellHeader: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 2 },
   cellLabel:  { ...typography.caption, color: colors.textSecondary },
   cellValue:  { ...typography.value, textAlign: 'center' },
-  timeRange:  { fontSize: 10, color: colors.primary, textAlign: 'center', marginTop: 2, opacity: 0.85 },
+  timeRange:  { fontSize: 10, color: colors.primary, textAlign: 'center', marginTop: 1, opacity: 0.85 },
 
   /* Section row */
   sectionRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginHorizontal: spacing.md, marginTop: 4, marginBottom: 8,
+    marginHorizontal: spacing.md, marginTop: 2, marginBottom: 6,
   },
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
   sectionLink:  { ...typography.label, color: colors.gold },
@@ -412,10 +396,10 @@ const s = StyleSheet.create({
   /* আমার রাশি */
   rashiCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: spacing.md, marginBottom: 4,
+    marginHorizontal: spacing.md, marginBottom: 2,
     backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    paddingHorizontal: 12, paddingVertical: 12,
+    paddingHorizontal: 12, paddingVertical: 9,
     ...shadows.card,
   },
   rashiAvatar: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
@@ -430,10 +414,10 @@ const s = StyleSheet.create({
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: spacing.md, marginBottom: 4,
+    marginHorizontal: spacing.md, marginBottom: 2,
     backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder, borderStyle: 'dashed',
-    paddingHorizontal: 14, paddingVertical: 14,
+    paddingHorizontal: 14, paddingVertical: 10,
   },
   rashiPromptText: { ...typography.body, flex: 1, color: colors.textSecondary },
 
@@ -455,43 +439,43 @@ const s = StyleSheet.create({
   rashiChipLabel: { ...typography.body, fontSize: 13 },
 
   /* সাম্প্রতিক ব্লগ */
-  blogRow: { paddingHorizontal: spacing.md, gap: 10 },
+  blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
-    width: 148, backgroundColor: colors.card, borderRadius: radii.lg,
+    width: 132, backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder, overflow: 'hidden',
     ...shadows.card,
   },
-  blogImg:   { width: '100%', height: 84, backgroundColor: colors.goldWash },
-  blogTitle: { ...typography.value, fontSize: 12, lineHeight: 16, marginHorizontal: 8, marginTop: 8, height: 32 },
-  blogDate:  { ...typography.caption, color: colors.textSecondary, marginHorizontal: 8, marginTop: 4, marginBottom: 8 },
+  blogImg:   { width: '100%', height: 66, backgroundColor: colors.goldWash },
+  blogTitle: { ...typography.value, fontSize: 11, lineHeight: 14, marginHorizontal: 7, marginTop: 6, height: 28 },
+  blogDate:  { ...typography.caption, color: colors.textSecondary, marginHorizontal: 7, marginTop: 3, marginBottom: 6 },
 
   /* আজকের শুভ-অশুভ সময় */
   muhurtaCard: {
-    marginHorizontal: spacing.md, marginBottom: 4,
+    marginHorizontal: spacing.md, marginBottom: 2,
     backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
     paddingHorizontal: 14,
     ...shadows.card,
   },
-  muhurtaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  muhurtaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9 },
   muhurtaRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   muhurtaIconWrap: {
-    width: 34, height: 34, borderRadius: radii.md,
+    width: 30, height: 30, borderRadius: radii.md,
     alignItems: 'center', justifyContent: 'center',
   },
   muhurtaIconWrapBad:  { backgroundColor: '#FCE4EC' },
   muhurtaIconWrapGood: { backgroundColor: '#E8F5E9' },
   muhurtaTextWrap: { flex: 1 },
-  muhurtaLabel: { ...typography.value, fontSize: 14 },
+  muhurtaLabel: { ...typography.value, fontSize: 13 },
   muhurtaSub:   { ...typography.caption, fontWeight: '600', marginTop: 1 },
-  muhurtaTime:  { ...typography.value, fontSize: 13, color: colors.textSecondary },
+  muhurtaTime:  { ...typography.value, fontSize: 12, color: colors.textSecondary },
 
   /* Quick Grid */
-  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 10 },
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 8 },
   quickBtn: {
     width: CARD_W, backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    alignItems: 'center', paddingVertical: 12, paddingHorizontal: 4, gap: 6,
+    alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, gap: 4,
     ...shadows.card,
   },
   quickBtnPressed: {
@@ -502,17 +486,17 @@ const s = StyleSheet.create({
   /* আজকের বিশেষ দিন */
   festivalCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    marginHorizontal: spacing.md, marginBottom: 14,
+    marginHorizontal: spacing.md, marginBottom: 8,
     backgroundColor: '#FFF8E6', borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.goldBorder,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
     ...shadows.card,
   },
-  festivalImg: { width: 42, height: 42, borderRadius: radii.md },
+  festivalImg: { width: 38, height: 38, borderRadius: radii.md },
   festivalImgFallback: { backgroundColor: colors.goldWash, alignItems: 'center', justifyContent: 'center' },
   festivalTag:  { ...typography.caption, color: colors.goldLight, fontWeight: '700' },
   festivalName: { ...typography.value, fontSize: 14, marginTop: 1 },
 
-  infoStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: spacing.md, paddingVertical: 6 },
+  infoStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 6, paddingVertical: 4 },
   infoText:  { ...typography.label, color: colors.textSecondary },
 });
