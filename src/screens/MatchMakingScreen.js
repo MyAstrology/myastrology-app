@@ -163,6 +163,9 @@ tr:nth-child(even) td{background:#fdf8f3!important;}
 .mm-charts-grid{display:flex!important;flex-direction:column!important;gap:16px!important;}
 .chart-pair{display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;}
 svg{max-width:100%!important;}
+/* ── Wide tables (অষ্টকূট ছক ইত্যাদি) — scroll horizontally instead of getting cut off ── */
+.mm-tbl-scroll{width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
+.mm-tbl-scroll table{width:auto!important;min-width:100%!important;}
 `;
 
 function buildInjectedJS(css) {
@@ -170,6 +173,19 @@ function buildInjectedJS(css) {
   var st=document.getElementById('__mmNative__');
   if(!st){st=document.createElement('style');st.id='__mmNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
+  /* wrap wide tables so overflowing columns scroll instead of getting clipped */
+  function mmWrapTables(){
+    document.querySelectorAll('table').forEach(function(t){
+      var p=t.parentElement;
+      if(p&&p.classList.contains('mm-tbl-scroll'))return;
+      var w=document.createElement('div');
+      w.className='mm-tbl-scroll';
+      t.parentNode.insertBefore(w,t);
+      w.appendChild(t);
+    });
+  }
+  mmWrapTables();
+  new MutationObserver(mmWrapTables).observe(document.body,{childList:true,subtree:true});
   setTimeout(function(){
     if(typeof window._doMatchPrint==='function'){
       window.downloadMatchPDF=function(){window._doMatchPrint();};
