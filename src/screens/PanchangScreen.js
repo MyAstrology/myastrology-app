@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Image, ActivityIndicator, Alert,
@@ -67,12 +67,14 @@ function usePjUri() {
 
 const APP_CSS = `
 /* whitelist approach, but #acModalOverlay (শুভ দিনের তালিকা মডাল), #pdfPromoOverlay
-   ও #payOverlay (প্রমো/Razorpay পেমেন্ট মডাল), এবং #yearlyPanjikaView (পুরনো/
-   ভবিষ্যৎ বছরের পঞ্জিকা full view) — এই ৪টাই <main>-এর বাইরে <body>-এর সরাসরি
-   child হিসেবে বসানো, তাই ব্ল্যাঙ্কেট hide-rule থেকে বাদ না রাখলে ওয়েবসাইটের
-   নিজস্ব JS কখনোই এগুলো দেখাতে পারে না (inline style এর চেয়ে stylesheet
-   !important সবসময় জেতে) — PDF সংরক্ষণ বাটন কাজ না করার আসল কারণ ছিল এটাই। */
-body>*:not(main):not(#acModalOverlay):not(#yearlyPanjikaView):not(#pdfPromoOverlay):not(#payOverlay){display:none!important;}
+   ও #payOverlay (প্রমো/Razorpay পেমেন্ট মডাল), #yearlyPanjikaView (পুরনো/
+   ভবিষ্যৎ বছরের পঞ্জিকা full view), এবং #cityModal (শহর/দেশ-ভিত্তিক
+   টাইমজোন সিলেক্টর) — এই ৫টাই <main>-এর বাইরে <body>-এর সরাসরি child হিসেবে
+   বসানো, তাই ব্ল্যাঙ্কেট hide-rule থেকে বাদ না রাখলে ওয়েবসাইটের নিজস্ব JS
+   কখনোই এগুলো দেখাতে পারে না (inline style এর চেয়ে stylesheet !important
+   সবসময় জেতে) — PDF সংরক্ষণ বাটন কাজ না করার আসল কারণ ছিল এটাই, এবং শহর
+   সিলেক্টরও একই কারণে এতদিন দেখা যাচ্ছিল না। */
+body>*:not(main):not(#acModalOverlay):not(#yearlyPanjikaView):not(#pdfPromoOverlay):not(#payOverlay):not(#cityModal){display:none!important;}
 /* বান্ডেলের নিজস্ব __app_mode__ স্টাইলে #pdfPromoOverlay একটা আলাদা ব্ল্যাঙ্কেট
    display:none!important রুল দিয়ে চিরস্থায়ীভাবে হাইড করা আছে (সাধারণত অফলাইন
    বান্ডেলে জেনেরিক পেমেন্ট/আপসেল পপ-আপ ব্লক করার কনভেনশন) — এটা override করতে
@@ -257,7 +259,7 @@ const JS_OLD      = makeJS('pura', '', YEARLY_PDF_JS);
 
 // ── Shared WebView wrapper ────────────────────────────────────────────────────
 
-function PjWebView({ uri, injectedJavaScript, onMessage }) {
+const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage }, ref) {
   const navigation = useNavigation();
 
   const handleNavRequest = (request) => {
@@ -280,6 +282,7 @@ function PjWebView({ uri, injectedJavaScript, onMessage }) {
   }
   return (
     <WebView
+      ref={ref}
       source={{ uri }}
       style={s.wv}
       originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
@@ -302,7 +305,7 @@ function PjWebView({ uri, injectedJavaScript, onMessage }) {
       )}
     />
   );
-}
+});
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -312,8 +315,20 @@ export function PanchangScreen() {
   const [activeTab, setActiveTab] = useState('today');
   const [menuOpen,  setMenuOpen]  = useState(false);
   const pdfBusyRef = useRef(false); // prevent double-tap while a PDF is being generated
+  const webViewRef = useRef(null); // shared across tabs — only one PjWebView is mounted at a time
 
   const pjUri = usePjUri();
+
+  // পঞ্জিকা বান্ডেলের নিজস্ব শহর/দেশ-ভিত্তিক টাইমজোন সিলেক্টর (openCityModal) আছে,
+  // কিন্তু এটার ট্রিগার বাটন ওয়েবসাইটের নিজস্ব টপ-বারে থাকে যেটা আমাদের নেটিভ
+  // হেডারের সাথে ডুপ্লিকেট হওয়ায় CSS দিয়ে হাইড করা — তাই এখানে নেটিভ হেডারে
+  // একটা 📍 বাটন দিয়ে সরাসরি সেই একই ফাংশন কল করা হচ্ছে।
+  const openCitySelector = () => {
+    haptics.tap();
+    webViewRef.current?.injectJavaScript(
+      `(function(){if(typeof openCityModal==='function'){openCityModal();}})();true;`
+    );
+  };
 
   const handleOldTabMessage = async (event) => {
     let msg;
@@ -372,6 +387,9 @@ export function PanchangScreen() {
           <Text style={s.brand}>MYASTROLOGY</Text>
           <Text style={s.tagline}>জ্যোতিষ · পঞ্জিকা · কুণ্ডলী</Text>
         </View>
+        <TouchableOpacity style={s.hamBtn} onPress={openCitySelector} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="map-marker-outline" size={22} color={colors.gold} />
+        </TouchableOpacity>
         <TouchableOpacity style={s.hamBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
           <MaterialCommunityIcons name="menu" size={24} color={colors.gold} />
         </TouchableOpacity>
@@ -394,10 +412,10 @@ export function PanchangScreen() {
 
       {/* ── Content ── */}
       <View style={s.content}>
-        {activeTab === 'today'    && <PjWebView uri={pjUri} injectedJavaScript={JS_TODAY} />}
-        {activeTab === 'calendar' && <PjWebView uri={pjUri} injectedJavaScript={JS_CALENDAR} />}
-        {activeTab === 'events'   && <PjWebView uri={pjUri} injectedJavaScript={JS_EVENTS} />}
-        {activeTab === 'old'      && <PjWebView uri={pjUri} injectedJavaScript={JS_OLD} onMessage={handleOldTabMessage} />}
+        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY} />}
+        {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} />}
+        {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS} />}
+        {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD} onMessage={handleOldTabMessage} />}
       </View>
 
       {/* ── Drawer ── */}
