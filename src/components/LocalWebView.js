@@ -118,7 +118,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
     <WebView
       source={{ uri }}
       style={[s.wv, style]}
-      originWhitelist={['file://*', 'about:*']}
+      originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
       allowFileAccess={true}
       allowFileAccessFromFileURLs={true}
       allowUniversalAccessFromFileURLs={true}

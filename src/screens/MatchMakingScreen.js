@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { WebView } from 'react-native-webview';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { LocalWebView } from '../components/LocalWebView';
@@ -186,10 +187,16 @@ function buildInjectedJS(css) {
   }
   mmWrapTables();
   new MutationObserver(mmWrapTables).observe(document.body,{childList:true,subtree:true});
+  /* Load Razorpay checkout.js — absent from the offline app bundle, needs network.
+     downloadMatchPDF() itself instantiates "new Razorpay(...)" directly (not via
+     the blocked openRzp/proceedToRazorpay helpers above), so once this script is
+     present the real ₹৫১ payment flow works exactly like the website. */
+  if(typeof Razorpay==='undefined'&&!document.querySelector('script[src*="checkout.razorpay"]')){
+    var rzpScript=document.createElement('script');
+    rzpScript.src='https://checkout.razorpay.com/v1/checkout.js';
+    document.head.appendChild(rzpScript);
+  }
   setTimeout(function(){
-    if(typeof window._doMatchPrint==='function'){
-      window.downloadMatchPDF=function(){window._doMatchPrint();};
-    }
     /* Hide form/tabbar; show tab nav when results appear */
     var mmTabbar=document.getElementById('mmTabbar');
     var mmInput=document.getElementById('mmInputSection');
@@ -218,20 +225,48 @@ function buildInjectedJS(css) {
 
 const INJECTED_JS = buildInjectedJS(MM_CSS);
 
+// Polls the hidden pre-render WebView until match-making-print.js has finished
+// building #printRoot (it waits on document.fonts.ready + a setTimeout before
+// calling window.print()), then strips <script> tags and hands back static
+// HTML. expo-print's internal renderer doesn't reliably run page JS before
+// snapshotting, so printing the *unrendered* template (with only data
+// injected) produces a blank/loading PDF — this mirrors the working
+// KundaliScreen approach of pre-rendering in a real WebView first.
+const CAPTURE_JS = `(function poll(){
+  var root=document.getElementById('printRoot');
+  if(root&&root.children.length>0){
+    [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
+    window.ReactNativeWebView.postMessage(JSON.stringify({type:'mmPdfStaticHtml',html:document.documentElement.outerHTML}));
+  } else {
+    setTimeout(poll,400);
+  }
+})();true;`;
+
 export function MatchMakingScreen() {
   const [generating, setGenerating] = useState(false);
+  const [pdfRenderHtml, setPdfRenderHtml] = useState(null);
+  const pdfWebViewRef = useRef(null);
+  const pdfBusyRef = useRef(false);
 
-  const handlePrint = useCallback(async (rawJson) => {
-    if (generating) return;
+  const handlePrint = useCallback((rawJson) => {
+    if (pdfBusyRef.current) return;
     if (!rawJson) {
       Alert.alert('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে কুষ্ঠি মিলন গণনা করুন।');
       return;
     }
+    pdfBusyRef.current = true;
     setGenerating(true);
+    setPdfRenderHtml(buildPrintHtml(rawJson));
+  }, []);
+
+  const handlePdfRendered = useCallback(async (e) => {
+    let m;
+    try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
+    if (m.type !== 'mmPdfStaticHtml') return;
+    setPdfRenderHtml(null);
     try {
-      const printHtml = buildPrintHtml(rawJson);
       const { uri } = await Print.printToFileAsync({
-        html: printHtml,
+        html: m.html,
         base64: false,
         width: 595,
         height: 842,
@@ -243,12 +278,13 @@ export function MatchMakingScreen() {
           UTI: 'com.adobe.pdf',
         });
       }
-    } catch (e) {
+    } catch (e2) {
       Alert.alert('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
+      pdfBusyRef.current = false;
       setGenerating(false);
     }
-  }, [generating]);
+  }, []);
 
   return (
     <View style={s.root}>
@@ -260,11 +296,37 @@ export function MatchMakingScreen() {
         onPrint={handlePrint}
         injectedJS={INJECTED_JS}
       />
+      {generating && (
+        <View style={s.pdfOverlay} pointerEvents="none">
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={s.pdfOverlayText}>PDF তৈরি হচ্ছে…</Text>
+        </View>
+      )}
+      {pdfRenderHtml != null && (
+        <WebView
+          ref={pdfWebViewRef}
+          style={s.pdfRenderer}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          source={{ html: pdfRenderHtml }}
+          onLoadEnd={() => {
+            pdfWebViewRef.current?.injectJavaScript(CAPTURE_JS);
+          }}
+          onMessage={handlePdfRendered}
+        />
+      )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  pdfRenderer: { position: 'absolute', left: -9999, top: -9999, width: 1, height: 1, opacity: 0 },
+  pdfOverlay: {
+    position: 'absolute', left: 0, right: 0, top: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(10,25,47,0.55)',
+  },
+  pdfOverlayText: { marginTop: 10, color: '#fff', fontSize: 13, fontWeight: '600' },
   wv:   { flex: 1 },
 });
