@@ -15,6 +15,10 @@ header.site-header,nav.nav,#nm,#no,.nav-ov,#navOverlay,.nav-overlay{display:none
 #seoSection,.seo-section{display:none!important;}
 #eeatSection,.eeat-sec{display:none!important;}
 footer,.site-footer,.fb{display:none!important;}
+/* ── Hide external "আমাদের পরিষেবা" service-scroll strip — links to other
+   website pages (palmistry/vastu/gemstone) that aren't screens in this app.
+   Left unstyled/unhidden before, it rendered as overlapping broken text. ── */
+.svc-scroll-sect{display:none!important;}
 /* ── Fix hero layout: hide images, show only the form ── */
 .wheel-bg{display:none!important;}
 .nc-left,.nc-wheel-wrap,.nc-wheel-img{display:none!important;}

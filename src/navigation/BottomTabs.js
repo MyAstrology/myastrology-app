@@ -10,6 +10,7 @@ import { MoreScreen }        from '../screens/MoreScreen';
 import { NamakaranScreen }   from '../screens/NamakaranScreen';
 import { MatchMakingScreen } from '../screens/MatchMakingScreen';
 import { NumerologyScreen }  from '../screens/NumerologyScreen';
+import { NumerologyResultScreen } from '../screens/NumerologyResultScreen';
 import { VarshaphalaScreen } from '../screens/VarshaphalaScreen';
 import { PrashnaScreen }     from '../screens/PrashnaScreen';
 import { colors } from '../theme/colors';
@@ -61,6 +62,11 @@ export function BottomTabs() {
       <Tab.Screen
         name="Numerology"
         component={NumerologyScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="NumerologyResult"
+        component={NumerologyResultScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
       <Tab.Screen

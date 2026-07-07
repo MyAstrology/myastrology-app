@@ -36,6 +36,7 @@ const PAGE_TO_SCREEN = {
   'varshaphala':  'Varshaphala',
   'prashna':      'Prashna',
   'numerology':   'Numerology',
+  'result':       'NumerologyResult',
 };
 
 // Extracts the bare page name from a URL like "file://.../kundali.html?foo=bar"
@@ -81,7 +82,10 @@ const RESULTS_TRACKER_JS = `(function(){
 //   style             — additional style for the WebView
 //   onPrint(rawJson)  — called when the page requests PDF generation
 //   injectedJS        — extra JS to run after page finishes loading
-export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
+//   queryString       — optional "a=1&b=2" appended to the file:// uri, so the
+//                       page's own location.search-based prefill logic (e.g.
+//                       result.html reading ?q=...) picks it up on load
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString }) {
   const [uri,   setUri]   = useState(null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
@@ -174,7 +178,11 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
 
     const screen = PAGE_TO_SCREEN[page];
     if (screen) {
-      navigation.navigate(screen);
+      // Forward the query string (e.g. numerology.html → result.html?q=...)
+      // so the target screen can pick up on it — mirrors handleMessage below.
+      const qIdx = url.indexOf('?');
+      const prefillQuery = qIdx >= 0 ? url.slice(qIdx + 1) : '';
+      navigation.navigate(screen, prefillQuery ? { prefillQuery } : undefined);
       return false;
     }
     return true;
@@ -200,7 +208,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
   return (
     <WebView
       ref={webViewRef}
-      source={{ uri }}
+      source={{ uri: queryString ? uri + '?' + queryString : uri }}
       style={[s.wv, style]}
       originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
       allowFileAccess={true}
