@@ -17,6 +17,7 @@ const SECTIONS = [
       { label: 'সংখ্যাতত্ত্ব',  icon: 'numeric',                screen: 'Numerology'  },
       { label: 'বর্ষফল',         icon: 'chart-timeline-variant', screen: 'Varshaphala' },
       { label: 'প্রশ্ন জ্যোতিষ', icon: 'help-circle-outline',   screen: 'Prashna'     },
+      { label: 'ব্লগ',           icon: 'post-outline',           screen: 'Blog'        },
       { label: 'গোচর',          icon: 'orbit',                  url: 'https://www.myastrology.in/gochar.html' },
     ],
   },
