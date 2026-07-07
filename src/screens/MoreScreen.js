@@ -12,19 +12,24 @@ const SECTIONS = [
   {
     title: 'জ্যোতিষ সেবা',
     items: [
+      { label: 'জ্যোতিষ শাস্ত্র', icon: 'star-four-points-outline', screen: 'VedicAstrology' },
+      { label: 'হস্তরেখা বিচার', icon: 'hand-back-right-outline', screen: 'Palmistry'  },
       { label: 'নামকরণ',        icon: 'baby-face-outline',      screen: 'Namakaran'   },
       { label: 'বিবাহ মিলাপ',   icon: 'heart-multiple-outline', screen: 'MatchMaking' },
       { label: 'সংখ্যাতত্ত্ব',  icon: 'numeric',                screen: 'Numerology'  },
       { label: 'বর্ষফল',         icon: 'chart-timeline-variant', screen: 'Varshaphala' },
       { label: 'প্রশ্ন জ্যোতিষ', icon: 'help-circle-outline',   screen: 'Prashna'     },
+      { label: 'গোচর',          icon: 'orbit',                  screen: 'Kundali'     },
+      { label: 'রত্নপাথর পরামর্শ', icon: 'diamond-stone',        screen: 'Gemstone'    },
+      { label: 'বাস্তু শাস্ত্র', icon: 'home-city-outline',      screen: 'Vastu'       },
       { label: 'ব্লগ',           icon: 'post-outline',           screen: 'Blog'        },
-      { label: 'গোচর',          icon: 'orbit',                  url: 'https://www.myastrology.in/gochar.html' },
+      { label: 'ভিডিও',          icon: 'youtube',                screen: 'Video'       },
     ],
   },
   {
     title: 'AI ও পরামর্শ',
     items: [
-      { label: 'AI জ্যোতিষী',   icon: 'robot-outline',         url: 'https://www.myastrology.in/ai-jyotishi.html' },
+      { label: 'AI জ্যোতিষী',   icon: 'robot-outline',         url: 'https://www.myastrology.in' },
       { label: 'পরামর্শ বুকিং', icon: 'phone-in-talk-outline', screen: 'Booking' },
     ],
   },

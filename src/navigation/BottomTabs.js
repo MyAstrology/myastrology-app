@@ -16,6 +16,11 @@ import { VarshaphalaScreen } from '../screens/VarshaphalaScreen';
 import { PrashnaScreen }     from '../screens/PrashnaScreen';
 import { BlogScreen }        from '../screens/BlogScreen';
 import { BookingScreen }     from '../screens/BookingScreen';
+import { PalmistryScreen }   from '../screens/PalmistryScreen';
+import { VastuScreen }       from '../screens/VastuScreen';
+import { VedicAstrologyScreen } from '../screens/VedicAstrologyScreen';
+import { GemstoneScreen }    from '../screens/GemstoneScreen';
+import { VideoScreen }       from '../screens/VideoScreen';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -95,6 +100,31 @@ export function BottomTabs() {
       <Tab.Screen
         name="Booking"
         component={BookingScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Palmistry"
+        component={PalmistryScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Vastu"
+        component={VastuScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="VedicAstrology"
+        component={VedicAstrologyScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Gemstone"
+        component={GemstoneScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Video"
+        component={VideoScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>
