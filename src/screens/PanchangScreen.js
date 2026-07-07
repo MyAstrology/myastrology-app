@@ -84,13 +84,16 @@ body>*:not(main):not(#acModalOverlay):not(#yearlyPanjikaView):not(#pdfPromoOverl
 body{
   background:#FAF8F3!important;
   padding:0!important;margin:0!important;
-  overscroll-behavior:contain;
   -webkit-tap-highlight-color:transparent!important;
   height:auto!important;min-height:100vh!important;
   overflow-y:auto!important;overflow-x:hidden!important;
   -webkit-overflow-scrolling:touch!important;
 }
-main{padding:0 0 80px 0!important;margin:0!important;}
+main{
+  padding:0 0 80px 0!important;margin:0!important;
+  height:auto!important;overflow-y:visible!important;
+  -webkit-overflow-scrolling:touch!important;
+}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 html{
   scrollbar-width:none!important;height:auto!important;

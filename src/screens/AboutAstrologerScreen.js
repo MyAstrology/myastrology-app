@@ -102,6 +102,13 @@ export function AboutAstrologerScreen() {
               sub={PHONE}
               onPress={() => Linking.openURL(`tel:${PHONE}`).catch(() => {})}
             />
+            <InfoRow
+              icon="whatsapp"
+              label="WhatsApp-এ যোগাযোগ করুন"
+              onPress={() => Linking.openURL(
+                `https://wa.me/${PHONE.replace('+', '')}?text=${encodeURIComponent('নমস্কার, আমি MyAstrology অ্যাপ থেকে যোগাযোগ করছি। ')}`
+              ).catch(() => {})}
+            />
             {SOCIALS.map((soc, i) => (
               <InfoRow
                 key={soc.label}

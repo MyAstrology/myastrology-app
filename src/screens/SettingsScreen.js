@@ -188,9 +188,18 @@ export function SettingsScreen({ navigation }) {
             <View style={s.divider} />
             <Row
               icon="phone-outline"
-              label="আমাদের সাথে যোগাযোগ করুন"
+              label="ফোন করুন"
               sub={SUPPORT_PHONE}
               onPress={() => Linking.openURL(`tel:${SUPPORT_PHONE}`).catch(() => {})}
+            />
+            <View style={s.divider} />
+            <Row
+              icon="whatsapp"
+              label="WhatsApp-এ যোগাযোগ করুন"
+              sub="দ্রুত উত্তর পান"
+              onPress={() => Linking.openURL(
+                `https://wa.me/${SUPPORT_PHONE.replace('+', '')}?text=${encodeURIComponent('নমস্কার, আমি MyAstrology অ্যাপ থেকে যোগাযোগ করছি। ')}`
+              ).catch(() => {})}
             />
           </View>
         </View>
