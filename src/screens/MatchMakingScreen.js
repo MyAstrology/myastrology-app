@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
+import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { LocalWebView } from '../components/LocalWebView';
@@ -141,7 +142,12 @@ input[type=text],input[type=number]{
 /* ── Tab panels — only active panel visible ── */
 .mm-tab-panel{display:none!important;}
 .mm-tab-panel.active{display:block!important;}
-.score-hero{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
+.score-hero{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:18px 14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;text-align:center!important;}
+.score-number{font-size:2.6rem!important;font-weight:900!important;line-height:1!important;}
+.score-label{font-size:.85rem!important;color:#666!important;margin-top:6px!important;}
+.score-bar{height:12px!important;border-radius:6px!important;background:#f0e6d8!important;margin:14px auto!important;max-width:320px!important;overflow:hidden!important;}
+.score-fill{height:100%!important;border-radius:6px!important;}
+.verdict{font-size:1.05rem!important;font-weight:700!important;margin-top:8px!important;}
 .mm-shloka-box{margin-bottom:10px!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
 .section-title{font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 10px!important;padding-bottom:6px!important;border-bottom:1.5px solid #ede0ce!important;}
@@ -367,13 +373,40 @@ export function MatchMakingScreen() {
         width: 595,
         height: 842,
       });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'কুষ্ঠি মিলন রিপোর্ট সংরক্ষণ করুন',
-          UTI: 'com.adobe.pdf',
-        });
-      }
+      Alert.alert(
+        'PDF তৈরি হয়েছে',
+        'কী করতে চান?',
+        [
+          {
+            text: 'সংরক্ষণ করুন',
+            onPress: async () => {
+              try {
+                const { StorageAccessFramework } = FileSystem;
+                const perm = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+                if (perm.granted) {
+                  const destUri = await StorageAccessFramework.createFileAsync(
+                    perm.directoryUri, 'MyAstrology_match_making.pdf', 'application/pdf'
+                  );
+                  const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+                  await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
+                  Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
+                }
+              } catch (_) {
+                await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+              }
+            },
+          },
+          {
+            text: 'শেয়ার করুন',
+            onPress: () => Sharing.shareAsync(uri, {
+              mimeType: 'application/pdf',
+              dialogTitle: 'কুষ্ঠি মিলন রিপোর্ট শেয়ার করুন',
+              UTI: 'com.adobe.pdf',
+            }),
+          },
+          { text: 'বাতিল', style: 'cancel' },
+        ]
+      );
     } catch (e2) {
       Alert.alert('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {

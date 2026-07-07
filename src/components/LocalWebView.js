@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, Linking } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, ActivityIndicator, StyleSheet, Text, Linking, BackHandler } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
@@ -60,6 +60,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
   const [uri,   setUri]   = useState(null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
+  const webViewRef = useRef(null);
+  const canGoBackRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +70,21 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
       .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; };
   }, [name, html]);
+
+  // If the WebView ever has real navigation history (e.g. an in-page link that
+  // wasn't caught by handleNavRequest), let the hardware back button step
+  // through that first instead of immediately falling through to React
+  // Navigation and exiting the screen.
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (canGoBackRef.current && webViewRef.current) {
+        webViewRef.current.goBack();
+        return true;
+      }
+      return false;
+    });
+    return () => handler.remove();
+  }, []);
 
   // Handles messages posted by the window.open interceptor in APP_CSS bridge script.
   // Message shape: { __rn: 'open', url: string, raw: string }
@@ -85,9 +102,15 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
       return;
     }
 
-    // Cross-page navigation
+    // Cross-page navigation — forward the query string (name/dob/tob/lat/lon/…)
+    // so the target screen can prefill and auto-calculate, e.g. "কুষ্ঠি দেখুন"
+    // from match-making should open that person's chart directly, not a blank form.
     const screen = PAGE_TO_SCREEN[page];
-    if (screen) navigation.navigate(screen);
+    if (screen) {
+      const qIdx = (msg.url || '').indexOf('?');
+      const prefillQuery = qIdx >= 0 ? msg.url.slice(qIdx + 1) : '';
+      navigation.navigate(screen, prefillQuery ? { prefillQuery } : undefined);
+    }
   }, [navigation, name, onPrint]);
 
   // Intercepts window.location.href = 'page.html' navigations (e.g. _mmGoTo in match-making).
@@ -131,6 +154,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
 
   return (
     <WebView
+      ref={webViewRef}
       source={{ uri }}
       style={[s.wv, style]}
       originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
@@ -144,6 +168,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
       setSupportMultipleWindows={false}
       cacheEnabled={false}
       startInLoadingState={true}
+      onNavigationStateChange={(state) => { canGoBackRef.current = state.canGoBack; }}
       onMessage={handleMessage}
       onShouldStartLoadWithRequest={handleNavRequest}
       injectedJavaScript={injectedJS || ''}

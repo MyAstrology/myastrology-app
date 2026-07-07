@@ -6,7 +6,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -378,6 +378,7 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 
 export function KundaliScreen() {
   const navigation    = useNavigation();
+  const route         = useRoute();
   const insets        = useSafeAreaInsets();
   const [menuOpen, setMenuOpen]           = useState(false);
   const [webCanGoBack, setWebCanGoBack]   = useState(false);
@@ -385,8 +386,25 @@ export function KundaliScreen() {
   const webViewRef    = useRef(null);
   const pdfWebViewRef = useRef(null);
   const pdfBusyRef    = useRef(false); // prevent double-tap
+  const lastPrefillRef = useRef(null);
 
   const kUri = useKUri();
+  const [sourceUri, setSourceUri] = useState(null);
+
+  // Coming from another screen (e.g. "কুষ্ঠি দেখুন" in match-making) with birth
+  // details in route.params — load kundali.html with those as a query string so
+  // its own prefillFromURL()+auto-calc (auto=1) shows that person's chart
+  // directly, instead of landing on a blank form.
+  useEffect(() => {
+    if (!kUri) return;
+    const prefillQuery = route.params?.prefillQuery;
+    if (prefillQuery && prefillQuery !== lastPrefillRef.current) {
+      lastPrefillRef.current = prefillQuery;
+      setSourceUri(kUri + '?' + prefillQuery);
+    } else if (!sourceUri) {
+      setSourceUri(kUri);
+    }
+  }, [kUri, route.params?.prefillQuery]);
 
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -427,7 +445,7 @@ export function KundaliScreen() {
 
       {/* ── WebView ── */}
       <View style={s.content}>
-        {!kUri ? (
+        {!sourceUri ? (
           <View style={s.loadCenter}>
             <ActivityIndicator size="large" color={colors.gold} />
             <Text style={s.loadMsg}>লোড হচ্ছে…</Text>
@@ -435,7 +453,7 @@ export function KundaliScreen() {
         ) : (
           <WebView
             ref={webViewRef}
-            source={{ uri: kUri }}
+            source={{ uri: sourceUri }}
             style={s.wv}
             originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
             allowFileAccess={true}
