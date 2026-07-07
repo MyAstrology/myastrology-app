@@ -19,18 +19,51 @@ footer,.site-footer,.fb{display:none!important;}
    website pages (palmistry/vastu/gemstone) that aren't screens in this app.
    Left unstyled/unhidden before, it rendered as overlapping broken text. ── */
 .svc-scroll-sect{display:none!important;}
-/* ── Fix hero layout: hide images, show only the form ── */
-.wheel-bg{display:none!important;}
-.nc-left,.nc-wheel-wrap,.nc-wheel-img{display:none!important;}
+/* ── Hero — restyled for a single-column mobile layout instead of hidden.
+   The website lays the wheel image + title as an absolute-positioned overlay
+   inside .nc-left (38%-wide column on desktop); stacked here with the wheel
+   as a centered circular backdrop behind the title/subtitle/badges. ── */
+.wheel-bg{display:none!important;} /* the big whole-hero background wheel — skip, keep only the card's own wheel for a cleaner mobile look */
 .nhero{
-  background:#FAF8F3!important;border:none!important;padding:6px 12px!important;
+  background:linear-gradient(135deg,#fffaf0 0%,#fff5e0 40%,#fffbf0 100%)!important;
+  padding:14px 12px 18px!important;border-top:4px solid #c9922a!important;
+  border-bottom:2px solid rgba(201,146,42,.2)!important;position:relative!important;overflow:hidden!important;
 }
-.nhero::before,.nhero::after{display:none!important;}
+.nhero::after{display:none!important;}
 .nc{
-  display:block!important;background:transparent!important;border:none!important;
-  box-shadow:none!important;padding:0!important;border-radius:0!important;
-  animation:none!important;
+  display:flex!important;flex-direction:column!important;gap:12px!important;
+  max-width:100%!important;margin:0!important;background:#fff!important;
+  border-radius:18px!important;padding:16px 12px!important;
+  border:1.5px solid rgba(201,146,42,.3)!important;
+  box-shadow:0 6px 24px rgba(0,0,0,.08)!important;position:relative!important;
+  overflow:hidden!important;animation:none!important;
 }
+.nc-left{
+  position:relative!important;flex:none!important;width:100%!important;
+  display:flex!important;padding-top:0!important;
+  min-height:200px!important;align-items:center!important;justify-content:center!important;
+}
+.nc-wheel-wrap{
+  position:absolute!important;top:50%!important;left:50%!important;
+  transform:translate(-50%,-50%)!important;width:200px!important;height:200px!important;
+  pointer-events:none!important;z-index:0!important;
+}
+.nc-wheel-img{width:100%!important;height:100%!important;opacity:.4!important;border-radius:50%!important;display:block!important;}
+.nc-left-inner{
+  display:flex!important;flex-direction:column!important;gap:6px!important;
+  position:relative!important;z-index:1!important;
+  background:radial-gradient(ellipse 95% 85% at 50% 50%,rgba(255,255,255,.72) 0%,rgba(255,255,255,.32) 55%,rgba(255,255,255,0) 100%)!important;
+  padding:14px 10px!important;align-items:center!important;text-align:center!important;width:100%!important;
+}
+.nc-kicker{font-size:.66rem!important;font-weight:800!important;letter-spacing:.16em!important;color:#a06010!important;text-transform:uppercase!important;margin-bottom:2px!important;}
+.nc-title{display:flex!important;flex-direction:column!important;gap:2px!important;line-height:1.1!important;text-align:center!important;margin-bottom:0!important;}
+.nc-title span{color:#c9922a!important;}
+.nc-t1{font-size:1.1rem!important;font-weight:700!important;color:#1a1232!important;display:block!important;}
+.nc-t2{font-size:1.9rem!important;font-weight:800!important;display:block!important;background:linear-gradient(135deg,#7a4200 0%,#c9922a 30%,#f5c340 55%,#c9922a 78%,#7a4200 100%)!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;background-clip:text!important;}
+.nc-divider{width:36px!important;height:3px!important;background:linear-gradient(90deg,#c9922a,#e8a820)!important;border-radius:2px!important;margin:2px auto!important;}
+.nc-sub{font-size:.78rem!important;line-height:1.6!important;max-width:280px!important;color:#2a2040!important;text-align:center!important;margin:0 auto!important;}
+.nc-badges{display:flex!important;flex-wrap:wrap!important;gap:6px!important;margin-top:6px!important;justify-content:center!important;}
+.nc-badge{background:rgba(255,255,255,.9)!important;border:1px solid rgba(201,146,42,.4)!important;color:#8a5a10!important;font-size:.66rem!important;font-weight:700!important;padding:4px 10px!important;border-radius:50px!important;}
 .nc-right{width:100%!important;min-width:0!important;flex:1!important;}
 /* ── Page base ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
@@ -92,8 +125,10 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
   font-family:inherit!important;
 }
 .chip:hover,.chip:active{background:#fdf1ec!important;border-color:#7a2e2e!important;color:#7a2e2e!important;}
-/* ── Hide author byline ── */
-.num-author{display:none!important;}
+/* ── Hide the SEO article (contains .num-faq and .num-author nested) — this
+   was leaking through unhidden as a full educational article below the form,
+   since it's a distinct block from the already-hidden section.seow/.faq. ── */
+.num-seo{display:none!important;}
 /* ── Hide promotional/SEO sections below form ── */
 .daily-box{display:none!important;}
 .stats{display:none!important;}
@@ -136,6 +171,13 @@ function buildInjectedJS(css) {
   var st=document.getElementById('__nuNative__');
   if(!st){st=document.createElement('style');st.id='__nuNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
+  /* The disclaimer note ("দ্রষ্টব্য: জ্যোতিষশাস্ত্র একটি ঐতিহ্যবাহী...") has no
+     class/id to target with CSS — it's the plain <div> right before .num-seo. */
+  (function(){
+    var seo=document.querySelector('.num-seo');
+    var prev=seo&&seo.previousElementSibling;
+    if(prev&&!prev.className)prev.style.cssText='display:none!important';
+  })();
   setTimeout(function(){
     var nuHero=document.querySelector('.nhero');
     var nuRes=document.getElementById('results');
