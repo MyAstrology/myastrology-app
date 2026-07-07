@@ -15,8 +15,15 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
+import { RASHI_SIGNS } from '../data/rashifalSigns';
 
 const LOGO = require('../../assets/logo.png');
+
+// panjika.html-এর "আজকের রাশিফল" গ্রিড ও অন্যান্য জায়গায় /rashifal/<slug>.html
+// (root-relative) লিংক আছে — bundled file:// পেজে এগুলো ERR_FILE_NOT_FOUND
+// দেয়, তাই এই ম্যাপ দিয়ে ধরে সরাসরি অ্যাপের RashifalDetail স্ক্রিনে পাঠানো হয়।
+const RASHIFAL_SLUG_TO_INDEX = {};
+RASHI_SIGNS.forEach((sign, i) => { RASHIFAL_SLUG_TO_INDEX[sign.dailySlug] = i; });
 
 // ── Inner tabs ────────────────────────────────────────────────────────────────
 
@@ -59,12 +66,19 @@ function usePjUri() {
 // padding-bottom on panels prevents last rows from being obscured.
 
 const APP_CSS = `
-/* whitelist approach, but #acModalOverlay (শুভ দিনের তালিকা মডাল) ও
-   #yearlyPanjikaView (পুরনো/ভবিষ্যৎ বছরের পঞ্জিকা full view) — দুটোই
-   <main>-এর বাইরে <body>-এর সরাসরি child হিসেবে বসানো, তাই ব্ল্যাঙ্কেট
-   hide-rule থেকে বাদ না রাখলে ওয়েবসাইটের নিজস্ব JS কখনোই এগুলো দেখাতে
-   পারে না (inline style এর চেয়ে stylesheet !important সবসময় জেতে) */
-body>*:not(main):not(#acModalOverlay):not(#yearlyPanjikaView){display:none!important;}
+/* whitelist approach, but #acModalOverlay (শুভ দিনের তালিকা মডাল), #pdfPromoOverlay
+   ও #payOverlay (প্রমো/Razorpay পেমেন্ট মডাল), এবং #yearlyPanjikaView (পুরনো/
+   ভবিষ্যৎ বছরের পঞ্জিকা full view) — এই ৪টাই <main>-এর বাইরে <body>-এর সরাসরি
+   child হিসেবে বসানো, তাই ব্ল্যাঙ্কেট hide-rule থেকে বাদ না রাখলে ওয়েবসাইটের
+   নিজস্ব JS কখনোই এগুলো দেখাতে পারে না (inline style এর চেয়ে stylesheet
+   !important সবসময় জেতে) — PDF সংরক্ষণ বাটন কাজ না করার আসল কারণ ছিল এটাই। */
+body>*:not(main):not(#acModalOverlay):not(#yearlyPanjikaView):not(#pdfPromoOverlay):not(#payOverlay){display:none!important;}
+/* বান্ডেলের নিজস্ব __app_mode__ স্টাইলে #pdfPromoOverlay একটা আলাদা ব্ল্যাঙ্কেট
+   display:none!important রুল দিয়ে চিরস্থায়ীভাবে হাইড করা আছে (সাধারণত অফলাইন
+   বান্ডেলে জেনেরিক পেমেন্ট/আপসেল পপ-আপ ব্লক করার কনভেনশন) — এটা override করতে
+   .open ক্লাস-সহ higher-specificity সিলেক্টর লাগবে, নাহলে PDF সংরক্ষণ বাটনের
+   প্রমো-কোড/পেমেন্ট মডাল কখনোই দেখা যাবে না। */
+#pdfPromoOverlay.open{display:flex!important;}
 #pjTabs,.pj-tabs,.pj-tools-wrap{display:none!important;}
 .author-byline{display:none!important;}
 body{
@@ -72,10 +86,17 @@ body{
   padding:0!important;margin:0!important;
   overscroll-behavior:contain;
   -webkit-tap-highlight-color:transparent!important;
+  height:auto!important;min-height:100vh!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
 }
 main{padding:0 0 80px 0!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
-html{scrollbar-width:none!important;}
+html{
+  scrollbar-width:none!important;height:auto!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+}
 *{-webkit-tap-highlight-color:transparent!important;}
 .pj-tab-panel{animation:none!important;}
 .tban{border-radius:14px!important;}
@@ -234,6 +255,18 @@ const JS_OLD      = makeJS('pura', '', YEARLY_PDF_JS);
 // ── Shared WebView wrapper ────────────────────────────────────────────────────
 
 function PjWebView({ uri, injectedJavaScript, onMessage }) {
+  const navigation = useNavigation();
+
+  const handleNavRequest = (request) => {
+    const url = request.url || '';
+    const m = url.match(/\/rashifal\/([a-z]+)\.html/);
+    if (m && RASHIFAL_SLUG_TO_INDEX[m[1]] !== undefined) {
+      navigation.navigate('RashifalDetail', { rashiIndex: RASHIFAL_SLUG_TO_INDEX[m[1]] });
+      return false;
+    }
+    return true;
+  };
+
   if (!uri) {
     return (
       <View style={s.loadCenter}>
@@ -257,6 +290,7 @@ function PjWebView({ uri, injectedJavaScript, onMessage }) {
       startInLoadingState={true}
       injectedJavaScript={injectedJavaScript}
       onMessage={onMessage}
+      onShouldStartLoadWithRequest={handleNavRequest}
       renderLoading={() => (
         <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
           <ActivityIndicator size="large" color={colors.gold} />
