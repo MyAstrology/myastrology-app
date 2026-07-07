@@ -37,11 +37,15 @@ function buildInjectedJS(css) {
 
 const INJECTED_JS = buildInjectedJS(APP_CSS);
 
-export function BlogScreen() {
+export function BlogScreen({ route }) {
+  const slug = route?.params?.slug;
+  const url = slug
+    ? `https://myastrology.in/blog/${slug}.html`
+    : 'https://myastrology.in/blog-list.html';
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="blog-list" remoteUrl="https://myastrology.in/blog-list.html" style={s.wv} injectedJS={INJECTED_JS} />
+      <LocalWebView name="blog-list" remoteUrl={url} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );
 }

@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image,
+  View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image, Modal,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,6 +10,7 @@ import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
 import { getFestivalsForMonth } from '../engine/bengali_festivals';
 import PANJIKA_IMAGES from '../engine/panjika-images';
+import { useUser, RashiLucky, RASHI_NAMES } from '../context/UserContext';
 import { QUICK_ACCESS_ITEMS } from '../navigation/menuItems';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -21,6 +22,16 @@ import { haptics } from '../utils/haptics';
 const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
 const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const ZODIAC_ICONS = [
+  'zodiac-aries', 'zodiac-taurus', 'zodiac-gemini', 'zodiac-cancer',
+  'zodiac-leo', 'zodiac-virgo', 'zodiac-libra', 'zodiac-scorpio',
+  'zodiac-sagittarius', 'zodiac-capricorn', 'zodiac-aquarius', 'zodiac-pisces',
+];
+const BLOG_LIST_URL = 'https://myastrology.in/src/content/blog/list.json';
+const formatBlogDate = (iso) => {
+  const [y, m, d] = (iso || '').split('-').map(Number);
+  return (y && m && d) ? `${d} ${EN_MONTHS[m - 1]} ${y}` : '';
+};
 
 function PanchangCell({ icon, label, value, timeStart, timeEnd }) {
   const timeStr = (timeStart && timeEnd)
@@ -54,6 +65,60 @@ function MuhurtaRow({ icon, label, sub, time, tone, isLast }) {
   );
 }
 
+function RashiLuckyCard({ rashiIdx, onChangePress, onRashifalPress }) {
+  const lucky = RashiLucky[rashiIdx];
+  return (
+    <View style={s.rashiCard}>
+      <Pressable onPress={onChangePress} style={[s.rashiAvatar, { backgroundColor: lucky.color }]}>
+        <MaterialCommunityIcons name={ZODIAC_ICONS[rashiIdx]} size={22} color={colors.white} />
+      </Pressable>
+      <View style={{ flex: 1 }}>
+        <Text style={s.rashiName}>{RASHI_NAMES[rashiIdx]} রাশি</Text>
+        <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
+        <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
+      </View>
+      <Pressable onPress={onRashifalPress} style={s.rashiCta}>
+        <Text style={s.rashiCtaText} numberOfLines={1}>আজকের রাশিফল</Text>
+        <MaterialCommunityIcons name="chevron-right" size={14} color={colors.primary} />
+      </Pressable>
+    </View>
+  );
+}
+
+function RashiSelectorModal({ visible, onSelect, onClose }) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={s.modalOverlay} onPress={onClose}>
+        <Pressable style={s.rashiModal} onPress={() => {}}>
+          <Text style={s.rashiModalTitle}>আপনার জন্মরাশি বেছে নিন</Text>
+          <View style={s.rashiGrid}>
+            {RASHI_NAMES.map((name, idx) => (
+              <Pressable
+                key={idx}
+                style={[s.rashiChip, { borderColor: RashiLucky[idx].color + '99' }]}
+                onPress={() => onSelect(idx)}
+              >
+                <View style={[s.rashiChipDot, { backgroundColor: RashiLucky[idx].color }]} />
+                <Text style={s.rashiChipLabel}>{name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function BlogCard({ post, onPress }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [s.blogCard, pressed && { opacity: 0.85 }]}>
+      <Image source={{ uri: post.image }} style={s.blogImg} />
+      <Text style={s.blogTitle} numberOfLines={2}>{post.title}</Text>
+      <Text style={s.blogDate}>{formatBlogDate(post.date)}</Text>
+    </Pressable>
+  );
+}
+
 function QuickTile({ icon, label, onPress }) {
   return (
     <Pressable
@@ -69,6 +134,21 @@ function QuickTile({ icon, label, onPress }) {
 export function HomeScreen() {
   const navigation = useNavigation();
   const insets     = useSafeAreaInsets();
+  const { user, saveUser } = useUser();
+  const [rashiModal, setRashiModal] = useState(false);
+  const [blogPosts, setBlogPosts]   = useState([]);
+  const userRashi = user?.rashi ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(BLOG_LIST_URL)
+      .then(r => r.json())
+      .then(posts => { if (!cancelled && Array.isArray(posts)) setBlogPosts(posts.slice(0, 6)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  function selectRashi(idx) { haptics.tap(); saveUser({ rashi: idx }); setRashiModal(false); }
 
   const today = useMemo(() => new Date(), []);
   const iso   = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
@@ -109,6 +189,7 @@ export function HomeScreen() {
   ].filter(Boolean);
 
   return (
+    <>
     <View style={s.container}>
       <AppHeader />
       <ScrollView
@@ -171,6 +252,27 @@ export function HomeScreen() {
             </View>
           </LinearGradient>
 
+          {/* ── আমার রাশি ── */}
+          <View style={s.sectionRow}>
+            <Text style={s.sectionTitle}>আমার রাশি</Text>
+            <Pressable onPress={() => setRashiModal(true)}>
+              <Text style={s.sectionLink}>পরিবর্তন করুন</Text>
+            </Pressable>
+          </View>
+          {userRashi !== null ? (
+            <RashiLuckyCard
+              rashiIdx={userRashi}
+              onChangePress={() => setRashiModal(true)}
+              onRashifalPress={() => { haptics.tap(); navigation.navigate('RashifalDetail', { rashiIndex: userRashi }); }}
+            />
+          ) : (
+            <Pressable style={s.rashiPrompt} onPress={() => setRashiModal(true)}>
+              <MaterialCommunityIcons name="zodiac-aries" size={20} color={colors.gold} />
+              <Text style={s.rashiPromptText}>আপনার জন্মরাশি নির্বাচন করুন</Text>
+              <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
+            </Pressable>
+          )}
+
           {/* ── আজকের শুভ-অশুভ সময় ── */}
           {muhurtaRows.length > 0 && (
             <>
@@ -206,6 +308,31 @@ export function HomeScreen() {
             </Pressable>
           )}
 
+          {/* ── সাম্প্রতিক ব্লগ ── */}
+          {blogPosts.length > 0 && (
+            <>
+              <View style={s.sectionRow}>
+                <Text style={s.sectionTitle}>সাম্প্রতিক ব্লগ</Text>
+                <Pressable onPress={() => navigation.navigate('Blog')}>
+                  <Text style={s.sectionLink}>সব দেখুন</Text>
+                </Pressable>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.blogRow}
+              >
+                {blogPosts.map(post => (
+                  <BlogCard
+                    key={post.slug}
+                    post={post}
+                    onPress={() => { haptics.tap(); navigation.navigate('Blog', { slug: post.slug }); }}
+                  />
+                ))}
+              </ScrollView>
+            </>
+          )}
+
           {/* ── Quick Actions ── */}
           <Text style={[s.sectionTitle, { marginHorizontal: spacing.md, marginTop: 14, marginBottom: 8 }]}>
             দ্রুত অ্যাক্সেস
@@ -227,6 +354,12 @@ export function HomeScreen() {
           </View>
         </ScrollView>
     </View>
+    <RashiSelectorModal
+      visible={rashiModal}
+      onSelect={selectRashi}
+      onClose={() => setRashiModal(false)}
+    />
+    </>
   );
 }
 
@@ -271,6 +404,63 @@ const s = StyleSheet.create({
     marginHorizontal: spacing.md, marginTop: 4, marginBottom: 8,
   },
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
+  sectionLink:  { ...typography.label, color: colors.gold },
+
+  /* আমার রাশি */
+  rashiCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    marginHorizontal: spacing.md, marginBottom: 4,
+    backgroundColor: colors.card, borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.cardBorder,
+    paddingHorizontal: 12, paddingVertical: 12,
+    ...shadows.card,
+  },
+  rashiAvatar: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  rashiName:   { ...typography.value, fontSize: 14, marginBottom: 3 },
+  rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
+  rashiCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    backgroundColor: colors.goldWash, borderRadius: radii.pill,
+    paddingHorizontal: 10, paddingVertical: 7, maxWidth: 96,
+  },
+  rashiCtaText: { ...typography.label, fontSize: 10, color: colors.primary, fontWeight: '700' },
+
+  rashiPrompt: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    marginHorizontal: spacing.md, marginBottom: 4,
+    backgroundColor: colors.card, borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.cardBorder, borderStyle: 'dashed',
+    paddingHorizontal: 14, paddingVertical: 14,
+  },
+  rashiPromptText: { ...typography.body, flex: 1, color: colors.textSecondary },
+
+  modalOverlay: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
+  rashiModal: {
+    backgroundColor: colors.card, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
+    paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32,
+    borderTopWidth: 1, borderTopColor: colors.cardBorder,
+  },
+  rashiModalTitle: { ...typography.heading, fontSize: 15, textAlign: 'center', marginBottom: 16 },
+  rashiGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  rashiChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 9,
+    borderRadius: radii.pill, borderWidth: 1.5,
+    backgroundColor: colors.background,
+  },
+  rashiChipDot:   { width: 10, height: 10, borderRadius: 5 },
+  rashiChipLabel: { ...typography.body, fontSize: 13 },
+
+  /* সাম্প্রতিক ব্লগ */
+  blogRow: { paddingHorizontal: spacing.md, gap: 10 },
+  blogCard: {
+    width: 148, backgroundColor: colors.card, borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.cardBorder, overflow: 'hidden',
+    ...shadows.card,
+  },
+  blogImg:   { width: '100%', height: 84, backgroundColor: colors.goldWash },
+  blogTitle: { ...typography.value, fontSize: 12, lineHeight: 16, marginHorizontal: 8, marginTop: 8, height: 32 },
+  blogDate:  { ...typography.caption, color: colors.textSecondary, marginHorizontal: 8, marginTop: 4, marginBottom: 8 },
 
   /* আজকের শুভ-অশুভ সময় */
   muhurtaCard: {
