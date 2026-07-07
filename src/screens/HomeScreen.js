@@ -1,9 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image, Modal,
+  View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image, Modal, ImageBackground,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader } from '../components/AppHeader';
@@ -27,6 +26,7 @@ const ZODIAC_ICONS = [
   'zodiac-leo', 'zodiac-virgo', 'zodiac-libra', 'zodiac-scorpio',
   'zodiac-sagittarius', 'zodiac-capricorn', 'zodiac-aquarius', 'zodiac-pisces',
 ];
+const HERO_BG = require('../../assets/panchang-hero-bg.webp');
 const BLOG_LIST_URL = 'https://myastrology.in/src/content/blog/list.json';
 const formatBlogDate = (iso) => {
   const [y, m, d] = (iso || '').split('-').map(Number);
@@ -197,28 +197,25 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Panchang Hero Card ── */}
-        <LinearGradient
-          colors={['#FCEDC7', '#FAF8F3']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={s.heroWash}
-        >
+        <View style={s.heroWash}>
             <View style={s.card}>
-              <View style={s.cardHeaderRow}>
-                <View style={s.dot} />
-                <Text style={s.cardTitle}>আজকের পঞ্জিকা</Text>
-                <View style={s.dot} />
-              </View>
+              <ImageBackground source={HERO_BG} resizeMode="cover" style={s.heroImgBand}>
+                <View style={s.cardHeaderRow}>
+                  <View style={s.dot} />
+                  <Text style={s.cardTitle}>আজকের পঞ্জিকা</Text>
+                  <View style={s.dot} />
+                </View>
 
-              <Text style={s.bnDate}>{bnDateStr}</Text>
+                <Text style={s.bnDate}>{bnDateStr}</Text>
 
-              <View style={s.metaRow}>
-                <Text style={s.metaText}>{enDateStr}</Text>
-                <View style={s.metaDot} />
-                <Text style={s.metaText}>{data.weekday}</Text>
-                <View style={s.metaDot} />
-                <Text style={s.metaText}>{data.ritu}</Text>
-              </View>
+                <View style={s.metaRow}>
+                  <Text style={s.metaText}>{enDateStr}</Text>
+                  <View style={s.metaDot} />
+                  <Text style={s.metaText}>{data.weekday}</Text>
+                  <View style={s.metaDot} />
+                  <Text style={s.metaText}>{data.ritu}</Text>
+                </View>
+              </ImageBackground>
 
               <View style={s.cardDivider} />
 
@@ -250,7 +247,7 @@ export function HomeScreen() {
                 <PanchangCell icon="weather-sunset-down" label="সূর্যাস্ত" value={data.sunset}  />
               </View>
             </View>
-          </LinearGradient>
+        </View>
 
           {/* ── আমার রাশি ── */}
           <View style={s.sectionRow}>
@@ -374,7 +371,13 @@ const s = StyleSheet.create({
     margin: spacing.md, backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
     paddingHorizontal: spacing.md, paddingVertical: 10,
+    overflow: 'hidden',
     ...shadows.raised,
+  },
+  heroImgBand: {
+    marginHorizontal: -spacing.md, marginTop: -10,
+    paddingHorizontal: spacing.md, paddingTop: 14, paddingBottom: 10,
+    marginBottom: 4,
   },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 6, gap: 8 },
   dot:           { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
