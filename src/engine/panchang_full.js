@@ -62,10 +62,18 @@ const PADA_NAMES    = ['প্রথম','দ্বিতীয়','তৃত�
 const DEF_LAT = 22.5726;
 const DEF_LON = 88.3639;
 
-// Rahu Kala / Gulika / Yamagnda slot (1-indexed) by weekday (0=Sun…6=Sat)
+// Rahu Kala / Gulika / Yamagnda slot (1-indexed) by weekday (0=Sun…6=Sat).
+// GULIKA_SLOT and YAMAGNDA_SLOT were previously off by one weekday (rotated —
+// each day showed the next day's correct window). Cross-checked GULIKA_SLOT
+// against src/panjika-ephemeris.js's own computeGulikakal (the live
+// website's reference implementation) for all 7 weekdays: [7,6,5,4,3,2,1]
+// is what it actually returns. RAHU_SLOT already matched that reference for
+// 6 of 7 days (its own Sunday value looks separately bugged, not ours).
+// YAMAGNDA_SLOT isn't exposed by that reference engine, so it's corrected
+// to match the standard descending-table pattern shared with Gulika.
 const RAHU_SLOT     = [8, 2, 7, 5, 6, 4, 3];
-const GULIKA_SLOT   = [6, 5, 4, 3, 2, 1, 7];
-const YAMAGNDA_SLOT = [4, 3, 2, 1, 8, 7, 6];
+const GULIKA_SLOT   = [7, 6, 5, 4, 3, 2, 1];
+const YAMAGNDA_SLOT = [5, 4, 3, 2, 1, 7, 6];
 
 // IST string "HH:MM:SS" → Julian Day
 function istStrToJD(y, m, d, istStr) {

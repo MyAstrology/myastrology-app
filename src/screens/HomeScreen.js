@@ -21,10 +21,21 @@ import { haptics } from '../utils/haptics';
 const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
 const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const ZODIAC_ICONS = [
-  'zodiac-aries', 'zodiac-taurus', 'zodiac-gemini', 'zodiac-cancer',
-  'zodiac-leo', 'zodiac-virgo', 'zodiac-libra', 'zodiac-scorpio',
-  'zodiac-sagittarius', 'zodiac-capricorn', 'zodiac-aquarius', 'zodiac-pisces',
+// রাশিফল গ্রিড কার্ডের (RashifalScreen.js) একই ইমেজ সেট — সেখানকার
+// RASHI_IMAGES-এর ক্রমের সাথে মিল রেখে (মেষ→মীন)
+const RASHI_IMAGES = [
+  require('../assets/rashi/aries.png'),
+  require('../assets/rashi/taurus.png'),
+  require('../assets/rashi/gemini.png'),
+  require('../assets/rashi/cancer.png'),
+  require('../assets/rashi/leo.png'),
+  require('../assets/rashi/virgo.png'),
+  require('../assets/rashi/libra.png'),
+  require('../assets/rashi/scorpio.png'),
+  require('../assets/rashi/sagittarius.png'),
+  require('../assets/rashi/capricorn.png'),
+  require('../assets/rashi/aquarius.png'),
+  require('../assets/rashi/pisces.png'),
 ];
 const HERO_BG = require('../../assets/panchang-hero-bg.webp');
 const BLOG_LIST_URL = 'https://myastrology.in/src/content/blog/list.json';
@@ -54,7 +65,7 @@ function MuhurtaRow({ icon, label, sub, time, tone, isLast }) {
   return (
     <View style={[s.muhurtaRow, !isLast && s.muhurtaRowDivider]}>
       <View style={[s.muhurtaIconWrap, bad ? s.muhurtaIconWrapBad : s.muhurtaIconWrapGood]}>
-        <MaterialCommunityIcons name={icon} size={16} color={bad ? '#B71C1C' : '#2E7D32'} />
+        <MaterialCommunityIcons name={icon} size={13} color={bad ? '#B71C1C' : '#2E7D32'} />
       </View>
       <View style={s.muhurtaTextWrap}>
         <Text style={s.muhurtaLabel}>{label}</Text>
@@ -69,8 +80,8 @@ function RashiLuckyCard({ rashiIdx, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
     <View style={s.rashiCard}>
-      <Pressable onPress={onChangePress} style={[s.rashiAvatar, { backgroundColor: lucky.color }]}>
-        <MaterialCommunityIcons name={ZODIAC_ICONS[rashiIdx]} size={22} color={colors.white} />
+      <Pressable onPress={onChangePress} style={[s.rashiAvatar, { backgroundColor: lucky.color + '22' }]}>
+        <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiAvatarImg} resizeMode="contain" />
       </Pressable>
       <View style={{ flex: 1 }}>
         <Text style={s.rashiName}>{RASHI_NAMES[rashiIdx]} রাশি</Text>
@@ -403,6 +414,7 @@ const s = StyleSheet.create({
     ...shadows.card,
   },
   rashiAvatar: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  rashiAvatarImg: { width: 28, height: 28 },
   rashiName:   { ...typography.value, fontSize: 14, marginBottom: 3 },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
   rashiCta: {
@@ -457,18 +469,18 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     ...shadows.card,
   },
-  muhurtaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9 },
+  muhurtaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   muhurtaRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   muhurtaIconWrap: {
-    width: 30, height: 30, borderRadius: radii.md,
+    width: 24, height: 24, borderRadius: radii.sm,
     alignItems: 'center', justifyContent: 'center',
   },
   muhurtaIconWrapBad:  { backgroundColor: '#FCE4EC' },
   muhurtaIconWrapGood: { backgroundColor: '#E8F5E9' },
   muhurtaTextWrap: { flex: 1 },
-  muhurtaLabel: { ...typography.value, fontSize: 13 },
-  muhurtaSub:   { ...typography.caption, fontWeight: '600', marginTop: 1 },
-  muhurtaTime:  { ...typography.value, fontSize: 12, color: colors.textSecondary },
+  muhurtaLabel: { ...typography.value, fontSize: 12 },
+  muhurtaSub:   { ...typography.caption, fontSize: 10, fontWeight: '600' },
+  muhurtaTime:  { ...typography.value, fontSize: 11, color: colors.textSecondary },
 
   /* Quick Grid */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 8 },
