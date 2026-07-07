@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FEFAF2"
-    },
     "assetBundlePatterns": ["assets/web/**", "assets/fonts/**", "assets/panjika/**"],
     "android": {
       "package": "in.myastrology.app",
@@ -24,7 +19,13 @@
       "bundleIdentifier": "in.myastrology.app"
     },
     "plugins": [
-      ["onesignal-expo-plugin", { "mode": "development" }]
+      ["onesignal-expo-plugin", { "mode": "development" }],
+      ["expo-splash-screen", {
+        "image": "./assets/splash.png",
+        "imageWidth": 220,
+        "resizeMode": "contain",
+        "backgroundColor": "#FEFAF2"
+      }]
     ]
   }
 }
