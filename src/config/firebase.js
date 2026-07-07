@@ -11,12 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // is controlled by Firestore/Auth security rules, not by hiding these
 // strings.
 const firebaseConfig = {
-  apiKey:           'REPLACE_ME',
-  authDomain:       'REPLACE_ME.firebaseapp.com',
-  projectId:        'REPLACE_ME',
-  storageBucket:    'REPLACE_ME.appspot.com',
-  messagingSenderId:'REPLACE_ME',
-  appId:            'REPLACE_ME',
+  apiKey:            'AIzaSyDKG5yYBjgB_dXwfOOn7R1962ZtfTaLMEo',
+  authDomain:        'myastrology-addd3.firebaseapp.com',
+  projectId:         'myastrology-addd3',
+  storageBucket:     'myastrology-addd3.firebasestorage.app',
+  messagingSenderId: '455926974196',
+  appId:             '1:455926974196:web:9879e1fc7dfb842e39c0a1',
 };
 
 // Firebase console → Authentication → Sign-in method → enable "Google" auto-
