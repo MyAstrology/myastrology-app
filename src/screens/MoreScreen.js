@@ -39,9 +39,9 @@ const SECTIONS = [
   {
     title: 'অন্যান্য',
     items: [
-      { label: 'সেটিংস',           icon: 'cog-outline',         screen: 'Settings' },
-      { label: 'ওয়েবসাইট',        icon: 'web',                url: 'https://www.myastrology.in' },
-      { label: 'আমাদের সম্পর্কে', icon: 'information-outline', url: 'https://www.myastrology.in' },
+      { label: 'সেটিংস',           icon: 'cog-outline',            screen: 'Settings' },
+      { label: 'ওয়েবসাইট',        icon: 'web',                   url: 'https://www.myastrology.in' },
+      { label: 'জ্যোতিষী সম্পর্কে', icon: 'account-star-outline', screen: 'AboutAstrologer' },
     ],
   },
 ];

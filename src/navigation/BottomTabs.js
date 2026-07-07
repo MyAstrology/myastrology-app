@@ -23,6 +23,7 @@ import { GemstoneScreen }    from '../screens/GemstoneScreen';
 import { VideoScreen }       from '../screens/VideoScreen';
 import { SettingsScreen }    from '../screens/SettingsScreen';
 import { AdminScreen }       from '../screens/AdminScreen';
+import { AboutAstrologerScreen } from '../screens/AboutAstrologerScreen';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -138,6 +139,11 @@ export function BottomTabs() {
       <Tab.Screen
         name="Admin"
         component={AdminScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="AboutAstrologer"
+        component={AboutAstrologerScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>
