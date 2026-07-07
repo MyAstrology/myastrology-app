@@ -206,6 +206,12 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     );
   }
 
+  // injectedJavaScript only reliably fires on the WebView's first load — a page
+  // that navigates in-place to another page on the same site (e.g. remoteUrl
+  // pages following an in-content link) won't get it re-applied on its own, so
+  // onLoadEnd below re-injects it after every navigation, not just the first.
+  const fullInjectedJS = (injectedJS || '') + '\n' + RESULTS_TRACKER_JS;
+
   return (
     <WebView
       ref={webViewRef}
@@ -225,7 +231,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       onNavigationStateChange={(state) => { canGoBackRef.current = state.canGoBack; }}
       onMessage={handleMessage}
       onShouldStartLoadWithRequest={handleNavRequest}
-      injectedJavaScript={(injectedJS || '') + '\n' + RESULTS_TRACKER_JS}
+      injectedJavaScript={fullInjectedJS}
+      onLoadEnd={() => { webViewRef.current?.injectJavaScript(fullInjectedJS); }}
       renderLoading={() => (
         <View style={s.center}>
           <ActivityIndicator size="large" color={colors.gold} />
