@@ -19,6 +19,9 @@
         "backgroundColor": "#E8DFCB"
       }
     },
+    "ios": {
+      "bundleIdentifier": "in.myastrology.app"
+    },
     "plugins": [
       ["onesignal-expo-plugin", { "mode": "development" }]
     ]
