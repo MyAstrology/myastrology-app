@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, ScrollView, Linking, Switch, Alert,
+  View, Text, Pressable, StyleSheet, ScrollView, Linking, Switch, Alert, Share,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
@@ -18,6 +18,8 @@ import { ADMIN_EMAILS } from '../config/adminEmails';
 
 const WEB_CACHE_DIR = FileSystem.documentDirectory + 'myastro/';
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=in.myastrology.app';
+const SUPPORT_PHONE = '+919333122768';
 
 function Row({ icon, label, sub, onPress, right, danger }) {
   return (
@@ -75,6 +77,15 @@ export function SettingsScreen({ navigation }) {
       Alert.alert('ত্রুটি', 'সাইন-ইন করা যায়নি। আবার চেষ্টা করুন।');
     }
   }, [user, signInWithGoogle, signOut]);
+
+  const shareApp = useCallback(async () => {
+    haptics.tap();
+    try {
+      await Share.share({
+        message: `MyAstrology অ্যাপ ব্যবহার করুন — জ্যোতিষ, পঞ্জিকা, কুণ্ডলী সব এক জায়গায়!\n${PLAY_STORE_URL}`,
+      });
+    } catch (_) {}
+  }, []);
 
   const clearCache = useCallback(() => {
     Alert.alert(
@@ -155,6 +166,31 @@ export function SettingsScreen({ navigation }) {
                   thumbColor={colors.white}
                 />
               }
+            />
+          </View>
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>সাহায্য ও শেয়ার</Text>
+          <View style={s.card}>
+            <Row
+              icon="share-variant-outline"
+              label="অ্যাপ শেয়ার করুন"
+              sub="বন্ধুদের সাথে শেয়ার করুন"
+              onPress={shareApp}
+            />
+            <View style={s.divider} />
+            <Row
+              icon="star-outline"
+              label="প্লে স্টোরে রেট করুন"
+              onPress={() => Linking.openURL(PLAY_STORE_URL).catch(() => {})}
+            />
+            <View style={s.divider} />
+            <Row
+              icon="phone-outline"
+              label="আমাদের সাথে যোগাযোগ করুন"
+              sub={SUPPORT_PHONE}
+              onPress={() => Linking.openURL(`tel:${SUPPORT_PHONE}`).catch(() => {})}
             />
           </View>
         </View>
