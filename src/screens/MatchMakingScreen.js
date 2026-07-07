@@ -145,23 +145,41 @@ input[type=text],input[type=number]{
 .mm-shloka-box{margin-bottom:10px!important;}
 .card{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
 .section-title{font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 10px!important;padding-bottom:6px!important;border-bottom:1.5px solid #ede0ce!important;}
-/* ── জন্মতথ্য comparison card (mm-pc) ── */
-.mm-pc{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
-.mm-pc-title{font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 10px!important;padding-bottom:6px!important;border-bottom:1.5px solid #ede0ce!important;}
-.mm-pc table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.74rem!important;table-layout:fixed!important;}
-.mm-pc th{background:#f5ede0!important;color:#7a2e2e!important;font-size:.74rem!important;font-weight:700!important;text-align:left!important;padding:7px 4px!important;word-break:break-word!important;}
-.mm-pc td{display:table-cell!important;padding:7px 4px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;word-break:break-word!important;}
-.mm-pc tr:nth-child(even) td{background:#fdf8f3!important;}
-.mm-pc-hl-amber td{color:#b8860b!important;font-weight:600!important;}
-.mm-pc-hl-green td{color:#1a7a2e!important;font-weight:600!important;}
-.mm-pc-hl-blue td{color:#1565c0!important;font-weight:600!important;}
-/* ── Tables ── */
-table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.74rem!important;table-layout:fixed!important;}
+/* ── জন্মতথ্য / অষ্টকূট comparison card (mm-pc) — mirrors the website's own
+   gold-bordered .mm-pc styling (was falling back to the generic tan card
+   look, and forced !important colors were stomping the score color-coding
+   inline styles / .pts classes the page's own JS sets). ── */
+.mm-pc{background:#fff!important;border-radius:10px!important;border:2px solid #B45309!important;padding:0!important;margin-bottom:14px!important;box-shadow:0 3px 12px rgba(180,83,9,.08)!important;overflow:hidden!important;}
+.mm-pc-title{background:#FDF8E7!important;color:#78350F!important;font-weight:800!important;font-size:.92rem!important;padding:12px 14px!important;border-bottom:2px solid #B45309!important;margin:0!important;}
+.mm-pc table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.74rem!important;}
+.mm-pc th{background:#FFFDF9!important;color:#92400E!important;font-size:.72rem!important;font-weight:800!important;text-align:center!important;padding:8px 4px!important;border:1px solid #EFE7C8!important;word-break:break-word!important;}
+.mm-pc td{display:table-cell!important;padding:8px 4px!important;border-bottom:1px solid #EFE7C8!important;vertical-align:middle!important;text-align:center!important;word-break:break-word!important;}
+.mm-pc td:first-child{text-align:left!important;font-weight:700!important;color:#B45309!important;background:#FFFDF9!important;padding-left:8px!important;}
+.mm-pc tr.mm-pc-hl-green td{background:#F0FDF4!important;}
+.mm-pc tr.mm-pc-hl-green td:nth-child(2),.mm-pc tr.mm-pc-hl-green td:nth-child(3){color:#047857!important;font-weight:800!important;}
+.mm-pc tr.mm-pc-hl-blue td{background:#EFF6FF!important;}
+.mm-pc tr.mm-pc-hl-blue td:nth-child(2),.mm-pc tr.mm-pc-hl-blue td:nth-child(3){color:#1D4ED8!important;font-weight:800!important;}
+.mm-pc tr.mm-pc-hl-amber td:nth-child(2),.mm-pc tr.mm-pc-hl-amber td:nth-child(3){color:#D97706!important;font-weight:800!important;}
+/* ── সর্বমোট স্কোর ব্যানার ও মঙ্গল দোষ/সিদ্ধান্ত সেকশন — website-এ আছে,
+   বান্ডেলড কপিতে এই CSS-ই ছিল না, তাই সাদামাটা লেখা হিসেবে দেখাচ্ছিল ── */
+.mm-pc-score-banner{background:linear-gradient(135deg,#047857,#059669)!important;color:#fff!important;display:flex!important;justify-content:space-between!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;padding:14px 16px!important;margin:14px!important;border-radius:8px!important;border:1px solid #B45309!important;}
+.mm-pc-score-banner .mm-pc-score-val{font-size:1.3rem!important;font-weight:900!important;color:#FDE047!important;}
+.mm-pc-section{margin:0 14px 14px!important;}
+.mm-pc-section-head{background:#FDF8E7!important;border:1px solid #B45309!important;color:#78350F!important;font-weight:800!important;padding:8px 12px!important;font-size:.86rem!important;border-radius:6px 6px 0 0!important;}
+.mm-pc-section-body{border:1px solid #EFE7C8!important;border-top:none!important;padding:12px!important;border-radius:0 0 6px 6px!important;font-size:.85rem!important;color:#374151!important;background:#fff!important;}
+.mm-pc-section-body.mm-pc-conclusion{background:#F0FDF4!important;border-color:#A7F3D0!important;font-weight:700!important;color:#045F46!important;font-size:.92rem!important;}
+/* ── প্রাপ্ত পয়েন্ট রঙ (শুভ/মধ্যম/অশুভ) — JS class দিয়ে সেট করে ── */
+.pts{font-weight:700!important;font-size:1rem!important;}
+.pts.good{color:#2e7d32!important;}
+.pts.avg{color:#f57c00!important;}
+.pts.bad{color:#c62828!important;}
+/* ── Tables (generic — plain অষ্টকূট বিবরণ, planet tables ইত্যাদি) ── */
+table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.74rem!important;}
 thead{display:table-header-group!important;}tbody{display:table-row-group!important;}
 tr{display:table-row!important;}
 th,td{display:table-cell!important;padding:6px 4px!important;vertical-align:middle!important;word-break:break-word!important;}
 th{background:#7a2e2e!important;color:#fff!important;font-size:.74rem!important;text-align:left!important;font-weight:600!important;}
-td{border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;}
+td{border-bottom:1px solid #f0e4d4!important;}
 tr:nth-child(even) td{background:#fdf8f3!important;}
 /* ── Charts ── */
 .mm-charts-grid{display:flex!important;flex-direction:column!important;gap:16px!important;}
