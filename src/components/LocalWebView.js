@@ -44,6 +44,31 @@ function parsePageName(url) {
   return m ? m[1] : null;
 }
 
+// Every form+results screen (match-making, namakaran, varshaphala, numerology,
+// prashna) uses one of these two ids for its results container, hidden until
+// "calculate" is pressed. Watch it generically (independent of each screen's
+// own show/hide JS) and report visibility to RN, so the hardware back button
+// can undo "show results" (go back to the form) before falling through to
+// React Navigation's tab history — which otherwise exits straight to whatever
+// tab was open before this screen (e.g. Home), skipping over the in-screen
+// form/results distinction the user actually expects "back" to respect.
+const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection'];
+const RESULTS_TRACKER_JS = `(function(){
+  var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
+  function findEl(){for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)return el;}return null;}
+  function report(el){
+    var visible=getComputedStyle(el).display!=='none';
+    window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'resultsVisible',visible:visible}));
+  }
+  function start(){
+    var el=findEl();
+    if(!el){setTimeout(start,400);return;}
+    report(el);
+    new MutationObserver(function(){report(el);}).observe(el,{attributes:true,attributeFilter:['style','class']});
+  }
+  start();
+})();true;`;
+
 // LocalWebView renders a bundled HTML page from a local file:// URI.
 // It bridges cross-page navigation and print requests back to React Native:
 //   - window.location.href = 'page.html' → navigates to the RN screen
@@ -62,6 +87,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
   const navigation = useNavigation();
   const webViewRef = useRef(null);
   const canGoBackRef = useRef(false);
+  const resultsVisibleRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,12 +97,25 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
     return () => { cancelled = true; };
   }, [name, html]);
 
-  // If the WebView ever has real navigation history (e.g. an in-page link that
-  // wasn't caught by handleNavRequest), let the hardware back button step
-  // through that first instead of immediately falling through to React
-  // Navigation and exiting the screen.
+  // Hardware back priority: (1) if results are showing, hide them and go back
+  // to the form — mirrors what a user expects "back" to do after "calculate"
+  // (undo the last action, don't leave the screen); (2) if the WebView has
+  // real navigation history, step back through that; (3) otherwise let React
+  // Navigation handle it (its default tab history behavior).
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (resultsVisibleRef.current && webViewRef.current) {
+        const hideJs = `(function(){
+          var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
+          for(var i=0;i<ids.length;i++){
+            var el=document.getElementById(ids[i]);
+            if(el&&getComputedStyle(el).display!=='none'){el.style.setProperty('display','none','important');break;}
+          }
+        })();true;`;
+        webViewRef.current.injectJavaScript(hideJs);
+        resultsVisibleRef.current = false;
+        return true;
+      }
       if (canGoBackRef.current && webViewRef.current) {
         webViewRef.current.goBack();
         return true;
@@ -86,12 +125,18 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
     return () => handler.remove();
   }, []);
 
-  // Handles messages posted by the window.open interceptor in APP_CSS bridge script.
-  // Message shape: { __rn: 'open', url: string, raw: string }
+  // Handles messages posted by the window.open interceptor in APP_CSS bridge
+  // script, and by RESULTS_TRACKER_JS.
   const handleMessage = useCallback((event) => {
     let msg;
     try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
-    if (!msg || msg.__rn !== 'open') return;
+    if (!msg) return;
+
+    if (msg.__rn === 'resultsVisible') {
+      resultsVisibleRef.current = !!msg.visible;
+      return;
+    }
+    if (msg.__rn !== 'open') return;
 
     const page = parsePageName(msg.url || '');
     if (!page) return;
@@ -171,7 +216,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
       onNavigationStateChange={(state) => { canGoBackRef.current = state.canGoBack; }}
       onMessage={handleMessage}
       onShouldStartLoadWithRequest={handleNavRequest}
-      injectedJavaScript={injectedJS || ''}
+      injectedJavaScript={(injectedJS || '') + '\n' + RESULTS_TRACKER_JS}
       renderLoading={() => (
         <View style={s.center}>
           <ActivityIndicator size="large" color={colors.gold} />
