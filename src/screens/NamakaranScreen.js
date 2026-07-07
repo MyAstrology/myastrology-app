@@ -9,8 +9,39 @@ const APP_CSS = `
 /* ── Hide website chrome ── */
 header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!important;}
 .fab-wrap,.fab-bubble,#fabWrap,.wa-float,#btt{display:none!important;}
-/* ── Hide hero & extras ── */
-.hero{display:none!important;}
+/* ── Hero banner — was hidden entirely; restyled+shown instead so the screen
+   opens with the same "premium" gold/navy banner the website has ── */
+.hero{
+  display:block!important;
+  text-align:center!important;padding:1rem 1rem .9rem!important;
+  background:linear-gradient(168deg,#080e1e 0%,#0f1e3a 30%,#1e0830 65%,#2c0808 100%)!important;
+  border-radius:16px!important;margin-bottom:10px!important;
+  box-shadow:0 6px 28px rgba(0,0,0,.45)!important;position:relative!important;overflow:hidden!important;
+  border:1px solid rgba(212,175,55,.18)!important;
+}
+.hero-stars{font-size:.6rem!important;color:rgba(255,215,0,.35)!important;letter-spacing:.5em!important;margin-bottom:.35rem!important;display:block!important;}
+.hero-om{font-size:1.25rem!important;color:rgba(255,215,0,.55)!important;line-height:1!important;margin-bottom:.05rem!important;}
+.hero-mantra{font-size:.58rem!important;color:rgba(255,200,130,.4)!important;letter-spacing:.16em!important;margin-bottom:.4rem!important;}
+.hero h1{font-size:1.35rem!important;color:#ffd700!important;line-height:1.2!important;margin-bottom:.35rem!important;}
+.hero-baby-wrap{margin:.1rem auto .35rem!important;position:relative!important;display:inline-block!important;}
+.hero-baby-img{width:64px!important;height:64px!important;border-radius:50%!important;object-fit:cover!important;object-position:center 15%!important;border:3px solid rgba(255,215,0,.6)!important;box-shadow:0 0 0 4px rgba(255,215,0,.1),0 0 18px rgba(255,215,0,.22)!important;display:block!important;}
+.hero-baby-wrap::after{content:'✦'!important;position:absolute!important;bottom:-2px!important;right:-2px!important;width:18px!important;height:18px!important;background:rgba(255,215,0,.9)!important;border-radius:50%!important;font-size:.42rem!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#5c3000!important;font-weight:900!important;}
+.hero-rule{display:flex!important;align-items:center!important;gap:.5rem!important;justify-content:center!important;margin:.3rem 0 .45rem!important;}
+.hero-rule::before,.hero-rule::after{content:''!important;flex:1!important;max-width:55px!important;height:1px!important;background:linear-gradient(90deg,transparent,rgba(212,175,55,.45))!important;}
+.hero-rule::after{background:linear-gradient(90deg,rgba(212,175,55,.45),transparent)!important;}
+.hero-rule span{color:rgba(212,175,55,.55)!important;font-size:.55rem!important;letter-spacing:.2em!important;}
+.hero .subtitle{font-size:.8rem!important;color:#8fabc8!important;line-height:1.65!important;margin-bottom:.55rem!important;}
+.hero-eyebrow{font-size:.62rem!important;color:rgba(140,160,190,.45)!important;letter-spacing:.1em!important;text-transform:uppercase!important;}
+/* ── গণেশ প্রণাম কার্ড — এটাও অস্টাইল করা ছিল, সাদামাটা লেখা দেখাচ্ছিল ── */
+.ganesh-card{display:flex!important;align-items:center!important;background:#FFFCF8!important;border:1.5px solid #D4AF37!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 2px 16px rgba(180,140,30,.22)!important;margin-bottom:10px!important;position:relative!important;}
+.gc-left{background:linear-gradient(160deg,#FEF9F0,#FDF0DE)!important;padding:.9rem .8rem!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:.25rem!important;min-width:70px!important;flex-shrink:0!important;border-right:1px dashed #D4AF37!important;}
+.gc-om{font-size:1.8rem!important;color:#7B241C!important;line-height:1!important;}
+.gc-lotus{width:34px!important;height:34px!important;border-radius:50%!important;background:radial-gradient(circle,#fff8ee,#f5cba7)!important;border:1.5px solid #D4AF37!important;display:flex!important;align-items:center!important;justify-content:center!important;margin-top:.2rem!important;}
+.gc-right{padding:.8rem 1rem!important;flex:1!important;min-width:0!important;}
+.gc-title{font-size:.95rem!important;font-weight:700!important;color:#7B241C!important;margin-bottom:.18rem!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.gc-sub{font-size:.78rem!important;font-weight:700!important;color:#B9770E!important;margin-bottom:.18rem!important;}
+.gc-attr{font-size:.72rem!important;color:#6E2C00!important;line-height:1.4!important;margin-bottom:.25rem!important;}
+.gc-sans{font-size:.8rem!important;color:#9C640C!important;font-weight:700!important;letter-spacing:.12em!important;}
 .related-links{display:none!important;}
 .cta-box{display:none!important;}
 .disclaimer{display:none!important;}
@@ -250,10 +281,10 @@ function buildInjectedJS(css) {
         if(!inp.contains(e.target)&&!sugg.contains(e.target))sugg.style.display='none';
       });
     }
-    /* Hide orphan elements outside formSection/resultSection */
+    /* Hide orphan elements outside hero/formSection/resultSection */
     var pw=document.querySelector('main.p-wrap');
     if(pw){Array.from(pw.children).forEach(function(el){
-      if(el.id!=='formSection'&&el.id!=='resultSection')el.style.cssText='display:none!important';
+      if(el.id!=='formSection'&&el.id!=='resultSection'&&!el.classList.contains('hero'))el.style.cssText='display:none!important';
     });}
     /* Hide form when results appear */
     var nmForm=document.getElementById('formSection');
