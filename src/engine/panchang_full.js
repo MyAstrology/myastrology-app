@@ -1,4 +1,5 @@
 import v from '../vsop87-planets';
+import PEph from './panjika-ephemeris';
 
 const BN_MONTH_NAMES = ['বৈশাখ','জ্যৈষ্ঠ','আষাঢ়','শ্রাবণ','ভাদ্র','আশ্বিন','কার্তিক','অগ্রহায়ণ','পৌষ','মাঘ','ফাল্গুন','চৈত্র'];
 const BN_RITU        = ['গ্রীষ্মকাল','গ্রীষ্মকাল','বর্ষাকাল','বর্ষাকাল','শরৎকাল','শরৎকাল','হেমন্তকাল','হেমন্তকাল','শীতকাল','শীতকাল','বসন্তকাল','বসন্তকাল'];
@@ -140,8 +141,8 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   const riseH = parseHMS(p.sunrise);
   const setH  = parseHMS(p.sunset);
 
-  const rahuKala  = (riseH && setH) ? getSlotTime(riseH, setH, RAHU_SLOT[wd])     : null;
-  const gulika    = (riseH && setH) ? getSlotTime(riseH, setH, GULIKA_SLOT[wd])    : null;
+  let rahuKala  = (riseH && setH) ? getSlotTime(riseH, setH, RAHU_SLOT[wd])     : null;
+  let gulika    = (riseH && setH) ? getSlotTime(riseH, setH, GULIKA_SLOT[wd])    : null;
   const yamagnda  = (riseH && setH) ? getSlotTime(riseH, setH, YAMAGNDA_SLOT[wd])  : null;
 
   const brahmaM = riseH ? { start: decToHM(riseH - 96/60), end: decToHM(riseH - 48/60) } : null;
@@ -158,6 +159,24 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     const tH = parseHMS(p.transit);
     abhijit = { start: decToHM(tH - 0.2), end: decToHM(tH + 0.2) };
   }
+
+  // রাহুকাল/গুলিক কাল/অভিজিৎ মুহূর্ত — ওয়েবসাইটের নিজস্ব লাইভ পঞ্জিকা ইঞ্জিন
+  // (panjika-ephemeris.js, panjika.html-এ ব্যবহৃত, অর্থাৎ "আমার পঞ্জিকা")
+  // দিয়ে পুনরায় গণনা করে override করা — এই ফাইলের sunrise/sunset আসে ভিন্ন
+  // জ্যোতির্বিজ্ঞান ইঞ্জিন (vsop87-planets) থেকে, যার ফলে ২-৩ মিনিট পার্থক্য
+  // থাকতে পারত। ব্যর্থ হলে (কোনো তারিখে) উপরের হিসাবই থেকে যায়, ক্র্যাশ করে না।
+  try {
+    const peSunrise = PEph.getSunrise(dateStr);
+    const peSunset  = PEph.getSunset(dateStr);
+    if (peSunrise && peSunset) {
+      const peR = PEph.computeRahukal(peSunrise, peSunset, wd);
+      const peG = PEph.computeGulikakal(peSunrise, peSunset, wd);
+      const peA = PEph.computeAbhijit(peSunrise, peSunset);
+      if (peR) rahuKala = { start: peR.startStr, end: peR.endStr };
+      if (peG) gulika   = { start: peG.startStr, end: peG.endStr };
+      if (peA) abhijit  = { start: peA.startStr, end: peA.endStr };
+    }
+  } catch (_) { /* keep the vsop87-based fallback computed above */ }
 
   const tIdx  = p.tithi.index;
   const paksha = tIdx < 15 ? 'শুক্লপক্ষ' : 'কৃষ্ণপক্ষ';

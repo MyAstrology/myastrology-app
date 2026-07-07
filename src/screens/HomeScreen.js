@@ -389,7 +389,7 @@ const s = StyleSheet.create({
   cardDivider: { height: 1, backgroundColor: colors.divider },
 
   cellGrid4:  { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 },
-  cellGrid2:  { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 },
+  cellGrid2:  { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 2 },
   cell:       { flex: 1, paddingVertical: 2, paddingHorizontal: 2, alignItems: 'center' },
   cellHeader: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 2 },
   cellLabel:  { ...typography.caption, color: colors.textSecondary },
