@@ -18,6 +18,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8DFCB"
       }
-    }
+    },
+    "plugins": [
+      ["onesignal-expo-plugin", { "mode": "development" }]
+    ]
   }
 }

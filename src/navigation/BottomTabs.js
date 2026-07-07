@@ -21,6 +21,8 @@ import { VastuScreen }       from '../screens/VastuScreen';
 import { VedicAstrologyScreen } from '../screens/VedicAstrologyScreen';
 import { GemstoneScreen }    from '../screens/GemstoneScreen';
 import { VideoScreen }       from '../screens/VideoScreen';
+import { SettingsScreen }    from '../screens/SettingsScreen';
+import { AdminScreen }       from '../screens/AdminScreen';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -126,6 +128,16 @@ export function BottomTabs() {
       <Tab.Screen
         name="Video"
         component={VideoScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Admin"
+        component={AdminScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>

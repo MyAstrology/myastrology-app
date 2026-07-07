@@ -24,6 +24,7 @@ export const MENU_ITEMS = [
   { tab: 'Blog',           icon: 'post-outline',            label: 'ব্লগ'            },
   { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           },
   { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   },
+  { tab: 'Settings',       icon: 'cog-outline',             label: 'সেটিংস'          },
   { tab: 'More',           icon: 'dots-horizontal-circle',  label: 'আরও'             },
 ];
 
