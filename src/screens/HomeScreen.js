@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Pressable, StyleSheet,
-  Modal, Dimensions,
+  View, Text, ScrollView, Pressable, StyleSheet, Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
-import { useUser, RashiLucky, RASHI_NAMES } from '../context/UserContext';
 import { QUICK_ACCESS_ITEMS } from '../navigation/menuItems';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -38,47 +36,19 @@ function PanchangCell({ icon, label, value, timeStart, timeEnd }) {
   );
 }
 
-function RashiLuckyCard({ rashiIdx, onPress }) {
-  const lucky = RashiLucky[rashiIdx];
+function MuhurtaRow({ icon, label, sub, time, tone, isLast }) {
+  const bad = tone === 'bad';
   return (
-    <TouchableOpacity style={s.luckyCard} onPress={onPress} activeOpacity={0.8}>
-      <View style={[s.luckyColorDot, { backgroundColor: lucky.color }]} />
-      <View style={s.luckyInfo}>
-        <Text style={s.luckyRashi}>{RASHI_NAMES[rashiIdx]} রাশি</Text>
-        <Text style={s.luckyDetail}>
-          শুভ রং: {lucky.colorName}  ·  রত্ন: {lucky.gem}
-        </Text>
-        <Text style={s.luckyDetail}>
-          শুভ সংখ্যা: {lucky.number}  ·  দিক: {lucky.dir}
-        </Text>
+    <View style={[s.muhurtaRow, !isLast && s.muhurtaRowDivider]}>
+      <View style={[s.muhurtaIconWrap, bad ? s.muhurtaIconWrapBad : s.muhurtaIconWrapGood]}>
+        <MaterialCommunityIcons name={icon} size={16} color={bad ? '#B71C1C' : '#2E7D32'} />
       </View>
-      <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
-    </TouchableOpacity>
-  );
-}
-
-function RashiSelectorModal({ visible, onSelect, onClose }) {
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={s.modalOverlay} onPress={onClose}>
-        <Pressable style={s.rashiModal} onPress={() => {}}>
-          <Text style={s.rashiModalTitle}>আপনার জন্মরাশি বেছে নিন</Text>
-          <View style={s.rashiGrid}>
-            {RASHI_NAMES.map((name, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[s.rashiChip, { borderColor: RashiLucky[idx].color + '99' }]}
-                onPress={() => onSelect(idx)}
-                activeOpacity={0.7}
-              >
-                <View style={[s.rashiChipDot, { backgroundColor: RashiLucky[idx].color }]} />
-                <Text style={s.rashiChipLabel}>{name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
+      <View style={s.muhurtaTextWrap}>
+        <Text style={s.muhurtaLabel}>{label}</Text>
+        <Text style={[s.muhurtaSub, { color: bad ? '#B71C1C' : '#2E7D32' }]}>{sub}</Text>
+      </View>
+      <Text style={s.muhurtaTime}>{time}</Text>
+    </View>
   );
 }
 
@@ -97,8 +67,6 @@ function QuickTile({ icon, label, onPress }) {
 export function HomeScreen() {
   const navigation = useNavigation();
   const insets     = useSafeAreaInsets();
-  const [rashiModal, setRashiModal] = useState(false);
-  const { user, saveUser } = useUser();
 
   const data = useMemo(() => {
     try {
@@ -118,24 +86,29 @@ export function HomeScreen() {
     ? `${toBN(data.bengaliDay)} ${data.bengaliMonth} ${toBN(data.bengaliYear)} বঙ্গাব্দ`
     : '—';
 
-  function selectRashi(idx) { saveUser({ rashi: idx }); setRashiModal(false); }
-
   const tabBarH = 58 + insets.bottom;
-  const userRashi = user?.rashi ?? null;
+
+  const fmt = (slot) => `${slot.start} – ${slot.end}`;
+  const muhurtaRows = [
+    data.rahuKala && { label: 'রাহুকাল',        sub: 'এড়িয়ে চলুন', icon: 'alert-octagon-outline', time: fmt(data.rahuKala), tone: 'bad'  },
+    data.gulika   && { label: 'গুলিক কাল',      sub: 'এড়িয়ে চলুন', icon: 'alert-outline',         time: fmt(data.gulika),   tone: 'bad'  },
+    data.abhijit  && { label: 'অভিজিৎ মুহূর্ত', sub: 'শুভ সময়',    icon: 'white-balance-sunny',   time: fmt(data.abhijit),  tone: 'good' },
+  ].filter(Boolean);
 
   return (
-    <>
-      <View style={s.container}>
-        <AppHeader />
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: tabBarH + 16 }}
-          showsVerticalScrollIndicator={false}
+    <View style={s.container}>
+      <AppHeader />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: tabBarH + 16 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Panchang Hero Card ── */}
+        <LinearGradient
+          colors={['#FCEDC7', '#FAF8F3']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={s.heroWash}
         >
-          {/* ── Panchang Hero Card ── */}
-          <LinearGradient
-            colors={[colors.goldWash, 'transparent']}
-            style={s.heroWash}
-          >
             <View style={s.card}>
               <View style={s.cardHeaderRow}>
                 <View style={s.dot} />
@@ -185,21 +158,18 @@ export function HomeScreen() {
             </View>
           </LinearGradient>
 
-          {/* ── Rashi Lucky Card ── */}
-          <View style={s.sectionRow}>
-            <Text style={s.sectionTitle}>আমার রাশি</Text>
-            <TouchableOpacity onPress={() => setRashiModal(true)}>
-              <Text style={s.sectionLink}>পরিবর্তন করুন</Text>
-            </TouchableOpacity>
-          </View>
-          {userRashi !== null ? (
-            <RashiLuckyCard rashiIdx={userRashi} onPress={() => setRashiModal(true)} />
-          ) : (
-            <TouchableOpacity style={s.rashiPrompt} onPress={() => setRashiModal(true)} activeOpacity={0.8}>
-              <MaterialCommunityIcons name="zodiac-aries" size={20} color={colors.gold} />
-              <Text style={s.rashiPromptText}>আপনার জন্মরাশি নির্বাচন করুন</Text>
-              <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
+          {/* ── আজকের শুভ-অশুভ সময় ── */}
+          {muhurtaRows.length > 0 && (
+            <>
+              <View style={s.sectionRow}>
+                <Text style={s.sectionTitle}>আজকের শুভ-অশুভ সময়</Text>
+              </View>
+              <View style={s.muhurtaCard}>
+                {muhurtaRows.map((row, i) => (
+                  <MuhurtaRow key={row.label} {...row} isLast={i === muhurtaRows.length - 1} />
+                ))}
+              </View>
+            </>
           )}
 
           {/* ── Quick Actions ── */}
@@ -222,15 +192,7 @@ export function HomeScreen() {
             <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · Kolkata (IST)</Text>
           </View>
         </ScrollView>
-      </View>
-
-      {/* ── Rashi Selector ── */}
-      <RashiSelectorModal
-        visible={rashiModal}
-        onSelect={selectRashi}
-        onClose={() => setRashiModal(false)}
-      />
-    </>
+    </View>
   );
 }
 
@@ -251,7 +213,7 @@ const s = StyleSheet.create({
   dot:           { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
   cardTitle:     { ...typography.sectionTitle, color: colors.primary },
 
-  bnDate:  { ...typography.heading, fontSize: 17, color: colors.text, textAlign: 'center', marginBottom: 3 },
+  bnDate:  { ...typography.heading, fontSize: 20, color: colors.text, textAlign: 'center', marginBottom: 3 },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
   metaText:{ ...typography.label, color: colors.textSecondary, fontWeight: '500' },
   metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textSecondary, opacity: 0.5 },
@@ -275,30 +237,27 @@ const s = StyleSheet.create({
     marginHorizontal: spacing.md, marginTop: 4, marginBottom: 8,
   },
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
-  sectionLink:  { ...typography.label, color: colors.gold },
 
-  /* Rashi Lucky Card */
-  luckyCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+  /* আজকের শুভ-অশুভ সময় */
+  muhurtaCard: {
     marginHorizontal: spacing.md, marginBottom: 4,
     backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    paddingHorizontal: 14, paddingVertical: 12,
+    paddingHorizontal: 14,
     ...shadows.card,
   },
-  luckyColorDot: { width: 36, height: 36, borderRadius: radii.pill },
-  luckyInfo:     { flex: 1 },
-  luckyRashi:    { ...typography.value, fontSize: 14, marginBottom: 3 },
-  luckyDetail:   { ...typography.label, color: colors.textSecondary, lineHeight: 17 },
-
-  rashiPrompt: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: spacing.md, marginBottom: 4,
-    backgroundColor: colors.card, borderRadius: radii.lg,
-    borderWidth: 1, borderColor: colors.cardBorder, borderStyle: 'dashed',
-    paddingHorizontal: 14, paddingVertical: 14,
+  muhurtaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  muhurtaRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.divider },
+  muhurtaIconWrap: {
+    width: 34, height: 34, borderRadius: radii.md,
+    alignItems: 'center', justifyContent: 'center',
   },
-  rashiPromptText: { ...typography.body, flex: 1, color: colors.textSecondary },
+  muhurtaIconWrapBad:  { backgroundColor: '#FCE4EC' },
+  muhurtaIconWrapGood: { backgroundColor: '#E8F5E9' },
+  muhurtaTextWrap: { flex: 1 },
+  muhurtaLabel: { ...typography.value, fontSize: 14 },
+  muhurtaSub:   { ...typography.caption, fontWeight: '600', marginTop: 1 },
+  muhurtaTime:  { ...typography.value, fontSize: 13, color: colors.textSecondary },
 
   /* Quick Grid */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 10 },
@@ -315,22 +274,4 @@ const s = StyleSheet.create({
 
   infoStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: spacing.md, paddingVertical: 6 },
   infoText:  { ...typography.label, color: colors.textSecondary },
-
-  /* Rashi Selector Modal */
-  modalOverlay: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
-  rashiModal: {
-    backgroundColor: colors.card, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
-    paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32,
-    borderTopWidth: 1, borderTopColor: colors.cardBorder,
-  },
-  rashiModalTitle: { ...typography.heading, fontSize: 15, textAlign: 'center', marginBottom: 16 },
-  rashiGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  rashiChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 9,
-    borderRadius: radii.pill, borderWidth: 1.5,
-    backgroundColor: colors.background,
-  },
-  rashiChipDot:  { width: 10, height: 10, borderRadius: 5 },
-  rashiChipLabel: { ...typography.body, fontSize: 13 },
 });
