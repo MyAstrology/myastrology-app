@@ -259,8 +259,8 @@ function buildInjectedJS(css) {
   }
   function mmWaitForRazorpay(cb){
     if(typeof Razorpay!=='undefined'){cb();return;}
-    var toast=mmToast('⏳ পেমেন্ট গেটওয়ে লোড হচ্ছে, একটু অপেক্ষা করুন…');
-    var triesLeft=40; // ~20s on a slow connection
+    var toast=mmToast('⏳ পেমেন্ট গেটওয়ে লোড হচ্ছে, ধীর ইন্টারনেটে কিছুটা সময় লাগতে পারে…');
+    var triesLeft=150; // ~90s — checkout.js can be very slow on a weak connection
     (function poll(){
       if(typeof Razorpay!=='undefined'){
         if(toast.parentNode)toast.parentNode.removeChild(toast);
@@ -269,11 +269,14 @@ function buildInjectedJS(css) {
       }
       if(triesLeft<=0){
         if(toast.parentNode)toast.parentNode.removeChild(toast);
-        cb(); // give up — let the original function show its own fallback message
+        /* Do NOT call cb() here — falling through to the original function
+           would skip Razorpay's "typeof Razorpay==='undefined'" check and
+           print/share the report for free. Fail closed instead. */
+        mmToast('❌ পেমেন্ট গেটওয়ে লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
         return;
       }
       triesLeft--;
-      setTimeout(poll,500);
+      setTimeout(poll,600);
     })();
   }
   setTimeout(function(){
