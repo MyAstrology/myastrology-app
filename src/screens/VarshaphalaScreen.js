@@ -117,15 +117,27 @@ div:has(#year2026){
 .btn.btn-primary:disabled,#calcBtn:disabled{background:#bbb!important;cursor:not-allowed!important;opacity:.7!important;}
 /* ── Results area ── */
 #resultsArea{padding:0!important;}
-.result-header{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
-.person-name{font-size:1.05rem!important;font-weight:700!important;color:#3a2218!important;}
-.year-badge{display:inline-flex!important;align-items:center!important;background:#7a2e2e!important;color:#ffd700!important;padding:4px 12px!important;border-radius:20px!important;font-weight:700!important;font-size:.85rem!important;margin-top:6px!important;}
+.result-header{background:linear-gradient(135deg,#fdf8ed,#fff8e1)!important;border-radius:14px!important;border:2px solid #b8860b!important;padding:14px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
+.person-name{font-size:1.1rem!important;font-weight:700!important;color:#3a2218!important;}
+.year-badge{display:inline-flex!important;align-items:center!important;background:#0a192f!important;color:#ffd700!important;padding:4px 12px!important;border-radius:20px!important;font-weight:700!important;font-size:.85rem!important;margin-top:6px!important;}
 /* ── Prediction box ── */
 .prediction-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.85rem!important;line-height:1.7!important;color:#3a2218!important;}
-/* ── Lord/muntha cards ── */
-.lord-card,.muntha-card{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;margin-bottom:10px!important;}
-.lord-planet,.muntha-rashi{font-size:1.05rem!important;font-weight:700!important;color:#7a2e2e!important;}
-.effect-badge{display:inline-flex!important;background:#7a2e2e!important;color:#fff!important;padding:2px 10px!important;border-radius:12px!important;font-size:.78rem!important;margin-left:8px!important;}
+/* ── Lord/muntha cards — border-left accent + muntha in green, matching the
+   website (currently identical maroon for both, losing the visual cue that
+   বর্ষেশ and মুন্থা are two different, separately-colored indicators) ── */
+.lord-card,.muntha-card{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px 12px 12px 14px!important;margin-bottom:10px!important;}
+.lord-card{border-left:4px solid #b8860b!important;}
+.muntha-card{border-left:4px solid #5c7a44!important;}
+.lord-planet{font-size:1.05rem!important;font-weight:700!important;color:#7a2e2e!important;}
+.muntha-rashi{font-size:1.05rem!important;font-weight:700!important;color:#2c5e2e!important;}
+.lord-meta,.muntha-meta{font-size:.82rem!important;color:#5c3d2e!important;margin-top:3px!important;}
+/* ── ফলাফল ব্যাজ — শুভ/অশুভ/মিশ্র রঙ ছাড়া সব ব্যাজ একই রঙে দেখাচ্ছিল ── */
+.effect-badge{display:inline-flex!important;padding:2px 10px!important;border-radius:12px!important;font-size:.78rem!important;font-weight:700!important;margin-left:8px!important;}
+.effect-shubha{background:#e8f5e9!important;color:#2e7d32!important;border:1.5px solid #66bb6a!important;}
+.effect-ashubha{background:#fdecea!important;color:#c0392b!important;border:1.5px solid #ef9a9a!important;}
+.effect-mishra{background:#fff3e0!important;color:#e67e22!important;border:1.5px solid #ffa726!important;}
+/* ── দশা নোট বক্স — সম্পূর্ণ অনুপস্থিত ছিল ── */
+.dasha-note{background:#fdf0cc!important;border-radius:9px!important;padding:12px 14px!important;font-size:.85rem!important;color:#5c3d2e!important;line-height:1.6!important;margin-bottom:10px!important;}
 /* ── Tables ── */
 table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
 thead{display:table-header-group!important;}tbody{display:table-row-group!important;}
