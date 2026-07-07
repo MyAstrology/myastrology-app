@@ -1,11 +1,15 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
 import { getTodayRashifal } from '../engine/rashifal';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { radii } from '../theme/radii';
+import { shadows } from '../theme/shadows';
+import { typography } from '../theme/typography';
+import { haptics } from '../utils/haptics';
 
 const RASHI_IMAGES = [
   require('../assets/rashi/aries.png'),
@@ -41,18 +45,17 @@ function RashiGrid({ onSelect }) {
       {data.rashifal.map((r) => {
         const tc = TAG_COLOR[r.tag] || TAG_COLOR['মিশ্র'];
         return (
-          <TouchableOpacity
+          <Pressable
             key={r.rashiIndex}
-            style={styles.gridCell}
-            onPress={() => onSelect(r.rashiIndex)}
-            activeOpacity={0.7}
+            style={({ pressed }) => [styles.gridCell, pressed && styles.gridCellPressed]}
+            onPress={() => { haptics.tap(); onSelect(r.rashiIndex); }}
           >
             <Image source={RASHI_IMAGES[r.rashiIndex]} style={styles.gridImg} resizeMode="contain" />
             <Text style={styles.gridName}>{r.rashi}</Text>
             <View style={[styles.gridTag, { backgroundColor: tc.bg, borderColor: tc.border }]}>
               <Text style={[styles.gridTagText, { color: tc.text }]}>{r.tag}</Text>
             </View>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -88,25 +91,30 @@ const styles = StyleSheet.create({
   content:    { padding: spacing.md, paddingBottom: 40 },
   moonBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.card, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: colors.card, borderRadius: radii.pill, paddingHorizontal: 14, paddingVertical: 8,
     borderWidth: 1, borderColor: colors.cardBorder, alignSelf: 'center', marginBottom: spacing.md,
+    ...shadows.card,
   },
-  moonText:  { fontSize: 13, color: colors.textSecondary },
-  moonRashi: { fontWeight: '700', color: colors.text },
+  moonText:  { ...typography.body, fontSize: 13, color: colors.textSecondary },
+  moonRashi: { ...typography.value, fontSize: 13 },
   grid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.md,
   },
   gridCell: {
-    width: '30.5%', backgroundColor: colors.card, borderRadius: 12,
+    width: '30.5%', backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
     alignItems: 'center', paddingVertical: 12, paddingHorizontal: 4,
+    ...shadows.card,
+  },
+  gridCellPressed: {
+    backgroundColor: colors.goldWash, borderColor: colors.goldBorder, transform: [{ scale: 0.96 }],
   },
   gridImg:  { width: 38, height: 38, marginBottom: 4, opacity: 0.7 },
-  gridName: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  gridName: { ...typography.value, fontSize: 13, marginBottom: 4 },
   gridTag:  {
-    paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, borderWidth: 1,
+    paddingHorizontal: 5, paddingVertical: 2, borderRadius: radii.sm, borderWidth: 1,
   },
-  gridTagText: { fontSize: 9, fontWeight: '600' },
+  gridTagText: { ...typography.caption, fontSize: 9, fontWeight: '600' },
   hint: { alignItems: 'center', marginTop: 24, gap: 8, paddingHorizontal: 20 },
-  hintText: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
+  hintText: { ...typography.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
 });

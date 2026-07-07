@@ -9,6 +9,7 @@ import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/match-making';
 import PRINT_HTML from '../web-html/match-making-print';
 import { colors } from '../theme/colors';
+import { haptics } from '../utils/haptics';
 
 // Injects the print data directly into the HTML so it doesn't need localStorage.
 function buildPrintHtml(rawJson) {
@@ -373,6 +374,7 @@ export function MatchMakingScreen() {
         width: 595,
         height: 842,
       });
+      haptics.success();
       Alert.alert(
         'PDF তৈরি হয়েছে',
         'কী করতে চান?',
@@ -408,6 +410,7 @@ export function MatchMakingScreen() {
         ]
       );
     } catch (e2) {
+      haptics.error();
       Alert.alert('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
       pdfBusyRef.current = false;

@@ -32,6 +32,7 @@ export function BottomTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        animation: 'fade',
         tabBarActiveTintColor:   colors.gold,
         tabBarInactiveTintColor: '#A89060',
         tabBarStyle: {

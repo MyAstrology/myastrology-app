@@ -228,6 +228,10 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       setSupportMultipleWindows={false}
       cacheEnabled={false}
       startInLoadingState={true}
+      // শুধু লাইভ (remoteUrl) পেজে pull-to-refresh চালু — bundled ফর্ম পেজে
+      // (কুণ্ডলী/ম্যাচমেকিং ইত্যাদি) এটা চালু থাকলে টেনে ধরলে ভরা ফর্মের ডেটা
+      // মুছে পুরো পেজ রিলোড হয়ে যেত, যা অনিচ্ছাকৃত ডেটা-লস তৈরি করত।
+      pullToRefreshEnabled={!!remoteUrl}
       onNavigationStateChange={(state) => { canGoBackRef.current = state.canGoBack; }}
       onMessage={handleMessage}
       onShouldStartLoadWithRequest={handleNavRequest}

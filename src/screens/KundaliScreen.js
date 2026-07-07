@@ -15,6 +15,7 @@ import KUNDALI_PRINT_HTML from '../web-html/kundali-print';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS } from '../navigation/menuItems';
+import { haptics } from '../utils/haptics';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -528,6 +529,7 @@ export function KundaliScreen() {
               setPdfRenderState(null);
               pdfBusyRef.current = false;
               const { uri } = await Print.printToFileAsync({ html: m.html, base64: false, width: 595, height: 842 });
+              haptics.success();
               Alert.alert(
                 'PDF তৈরি হয়েছে',
                 'কী করতে চান?',
@@ -563,6 +565,7 @@ export function KundaliScreen() {
                 ]
               );
             } catch (_) {
+              haptics.error();
               setPdfRenderState(null);
               pdfBusyRef.current = false;
             }

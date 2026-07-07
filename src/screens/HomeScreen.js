@@ -16,6 +16,7 @@ import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
 import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
+import { haptics } from '../utils/haptics';
 
 const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
@@ -84,7 +85,7 @@ function RashiSelectorModal({ visible, onSelect, onClose }) {
 function QuickTile({ icon, label, onPress }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => { haptics.tap(); onPress(); }}
       style={({ pressed }) => [s.quickBtn, pressed && s.quickBtnPressed]}
     >
       <MaterialCommunityIcons name={icon} size={26} color={colors.gold} />

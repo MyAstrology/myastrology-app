@@ -14,6 +14,7 @@ import PANJIKA_HTML from '../web-html/panjika';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS } from '../navigation/menuItems';
+import { haptics } from '../utils/haptics';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -285,6 +286,7 @@ export function PanchangScreen() {
     pdfBusyRef.current = true;
     try {
       const { uri } = await Print.printToFileAsync({ html: msg.html, base64: false, width: 595, height: 842 });
+      haptics.success();
       Alert.alert(
         'PDF তৈরি হয়েছে',
         'কী করতে চান?',
@@ -316,6 +318,7 @@ export function PanchangScreen() {
         ]
       );
     } catch (e) {
+      haptics.error();
       Alert.alert('ত্রুটি', 'PDF তৈরি করা যায়নি।');
     } finally {
       pdfBusyRef.current = false;

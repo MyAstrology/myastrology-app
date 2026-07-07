@@ -5,6 +5,8 @@ import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import { RASHI_SIGNS, rashifalUrl } from '../data/rashifalSigns';
 import { colors } from '../theme/colors';
+import { radii } from '../theme/radii';
+import { typography } from '../theme/typography';
 
 // rashifal/<slug>.html ও rashifal/saptahik/<slug>.html সাইটের বট প্রতিদিন
 // নতুন করে জেনারেট করে (তারিখ/সপ্তাহ-ভিত্তিক কনটেন্ট) — তাই এটিকে বান্ডল করা
@@ -76,16 +78,16 @@ const s = StyleSheet.create({
   wv:   { flex: 1 },
   modeRow: {
     flexDirection: 'row', gap: 5, margin: 12, marginBottom: 0,
-    backgroundColor: '#f5efe0', padding: 4, borderRadius: 50,
+    backgroundColor: '#f5efe0', padding: 4, borderRadius: radii.pill,
     borderWidth: 1, borderColor: 'rgba(201,146,42,.2)',
   },
   modeBtn: {
     flex: 1, paddingVertical: 9, paddingHorizontal: 10,
-    borderRadius: 50, alignItems: 'center', justifyContent: 'center',
+    borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center',
   },
   modeBtnOn: {
     backgroundColor: colors.primary,
   },
-  modeBtnText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
-  modeBtnTextOn: { color: '#fff' },
+  modeBtnText: { ...typography.label, fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  modeBtnTextOn: { color: colors.white },
 });
