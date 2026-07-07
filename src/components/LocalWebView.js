@@ -85,8 +85,8 @@ const RESULTS_TRACKER_JS = `(function(){
 //   queryString       — optional "a=1&b=2" appended to the file:// uri, so the
 //                       page's own location.search-based prefill logic (e.g.
 //                       result.html reading ?q=...) picks it up on load
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString }) {
-  const [uri,   setUri]   = useState(null);
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl }) {
+  const [uri,   setUri]   = useState(remoteUrl || null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
   const webViewRef = useRef(null);
@@ -94,12 +94,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const resultsVisibleRef = useRef(false);
 
   useEffect(() => {
+    if (remoteUrl) { setUri(remoteUrl); return; }
     let cancelled = false;
     ensureFile(name, html)
       .then(u  => { if (!cancelled) setUri(u);          })
       .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; };
-  }, [name, html]);
+  }, [name, html, remoteUrl]);
 
   // Hardware back priority: (1) if results are showing, hide them and go back
   // to the form — mirrors what a user expects "back" to do after "calculate"

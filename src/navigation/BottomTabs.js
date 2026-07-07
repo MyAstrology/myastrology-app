@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen }        from '../screens/HomeScreen';
 import { PanchangScreen }    from '../screens/PanchangScreen';
 import { RashifalScreen }    from '../screens/RashifalScreen';
+import { RashifalDetailScreen } from '../screens/RashifalDetailScreen';
 import { KundaliScreen }     from '../screens/KundaliScreen';
 import { MoreScreen }        from '../screens/MoreScreen';
 import { NamakaranScreen }   from '../screens/NamakaranScreen';
@@ -77,6 +78,11 @@ export function BottomTabs() {
       <Tab.Screen
         name="Prashna"
         component={PrashnaScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="RashifalDetail"
+        component={RashifalDetailScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>
