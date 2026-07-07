@@ -25,7 +25,7 @@ const SECTIONS = [
     title: 'AI ও পরামর্শ',
     items: [
       { label: 'AI জ্যোতিষী',   icon: 'robot-outline',         url: 'https://www.myastrology.in/ai-jyotishi.html' },
-      { label: 'পরামর্শ বুকিং', icon: 'phone-in-talk-outline', url: 'https://www.myastrology.in/consult.html'      },
+      { label: 'পরামর্শ বুকিং', icon: 'phone-in-talk-outline', screen: 'Booking' },
     ],
   },
   {

@@ -15,6 +15,7 @@ import { NumerologyResultScreen } from '../screens/NumerologyResultScreen';
 import { VarshaphalaScreen } from '../screens/VarshaphalaScreen';
 import { PrashnaScreen }     from '../screens/PrashnaScreen';
 import { BlogScreen }        from '../screens/BlogScreen';
+import { BookingScreen }     from '../screens/BookingScreen';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -89,6 +90,11 @@ export function BottomTabs() {
       <Tab.Screen
         name="Blog"
         component={BlogScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Booking"
+        component={BookingScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
     </Tab.Navigator>
