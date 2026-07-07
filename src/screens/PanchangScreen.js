@@ -13,6 +13,7 @@ import * as Sharing from 'expo-sharing';
 import PANJIKA_HTML from '../web-html/panjika';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { MENU_ITEMS } from '../navigation/menuItems';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -320,17 +321,6 @@ export function PanchangScreen() {
       pdfBusyRef.current = false;
     }
   };
-
-  const MENU_ITEMS = [
-    { tab: 'Home',        icon: 'home-variant',          label: 'হোম' },
-    { tab: 'Panchang',    icon: 'calendar-month',        label: 'পঞ্জিকা' },
-    { tab: 'Rashifal',    icon: 'star-circle',            label: 'রাশিফল' },
-    { tab: 'Kundali',     icon: 'chart-donut',            label: 'জন্ম কুণ্ডলী' },
-    { tab: 'MatchMaking', icon: 'heart-multiple',         label: 'যোটক বিচার' },
-    { tab: 'Numerology',  icon: 'numeric-9-plus-box',     label: 'সংখ্যাজ্যোতিষ' },
-    { tab: 'Namakaran',   icon: 'baby-face-outline',      label: 'নামকরণ' },
-    { tab: 'More',        icon: 'dots-horizontal-circle', label: 'আরও' },
-  ];
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>

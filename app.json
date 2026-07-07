@@ -5,9 +5,19 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FEFAF2"
+    },
     "assetBundlePatterns": ["assets/web/**", "assets/fonts/**", "assets/panjika/**"],
     "android": {
-      "package": "in.myastrology.app"
+      "package": "in.myastrology.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E8DFCB"
+      }
     }
   }
 }
