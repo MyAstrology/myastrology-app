@@ -28,10 +28,12 @@ export const MENU_ITEMS = [
   { tab: 'More',           icon: 'dots-horizontal-circle',  label: 'আরও'             },
 ];
 
-// হোম স্ক্রিনের ছোট quick-access গ্রিডের জন্য — সবচেয়ে বেশি ব্যবহৃত কয়েকটা
+// হোম স্ক্রিনের ছোট quick-access গ্রিডের জন্য — সবচেয়ে বেশি ব্যবহৃত ৮টা
+// (2×4 গ্রিড পূর্ণ করার জন্য ঠিক ৮টা — 'More' বাদ, কারণ সেটা নিচের ট্যাব বারেই
+// সবসময় দেখা যায়, এখানে ডুপ্লিকেট করার দরকার নেই)
 export const QUICK_ACCESS_TABS = [
-  'Kundali', 'MatchMaking', 'Panchang', 'Numerology', 'Rashifal',
-  'Namakaran', 'Prashna', 'Booking', 'More',
+  'Kundali', 'MatchMaking', 'Panchang', 'Numerology',
+  'Rashifal', 'Namakaran', 'Prashna', 'Booking',
 ];
 
 export const QUICK_ACCESS_ITEMS = QUICK_ACCESS_TABS.map(

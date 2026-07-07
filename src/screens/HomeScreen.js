@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, Dimensions,
+  View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
+import { getFestivalsForMonth } from '../engine/bengali_festivals';
+import PANJIKA_IMAGES from '../engine/panjika-images';
 import { QUICK_ACCESS_ITEMS } from '../navigation/menuItems';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -58,8 +60,8 @@ function QuickTile({ icon, label, onPress }) {
       onPress={() => { haptics.tap(); onPress(); }}
       style={({ pressed }) => [s.quickBtn, pressed && s.quickBtnPressed]}
     >
-      <MaterialCommunityIcons name={icon} size={26} color={colors.gold} />
-      <Text style={s.quickLabel}>{label}</Text>
+      <MaterialCommunityIcons name={icon} size={22} color={colors.gold} />
+      <Text style={s.quickLabel} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
     </Pressable>
   );
 }
@@ -68,23 +70,34 @@ export function HomeScreen() {
   const navigation = useNavigation();
   const insets     = useSafeAreaInsets();
 
+  const today = useMemo(() => new Date(), []);
+  const iso   = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
   const data = useMemo(() => {
     try {
-      const today = new Date();
-      const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
       return getPanchangForDate(iso);
     } catch (_) {
       return { tithi:'—', nakshatra:'—', yoga:'—', karana:'—', sunrise:'—', sunset:'—',
                weekday:'—', weekdayNum:0, paksha:'—', bengaliDay:null,
                bengaliMonth:'—', bengaliYear:null, ritu:'—' };
     }
-  }, []);
+  }, [iso]);
 
-  const today    = useMemo(() => new Date(), []);
   const enDateStr = `${today.getDate()} ${EN_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
   const bnDateStr = data.bengaliDay
     ? `${toBN(data.bengaliDay)} ${data.bengaliMonth} ${toBN(data.bengaliYear)} বঙ্গাব্দ`
     : '—';
+
+  const todaysFestival = useMemo(() => {
+    try {
+      const days = [{ dateStr: iso, tithiIdx: data.tithiIdx, bengaliDay: data.bengaliDay }];
+      const found = getFestivalsForMonth(today.getFullYear(), today.getMonth(), days)
+        .find(f => f.dateStr === iso);
+      return found ? { ...found, image: found.imageKey ? PANJIKA_IMAGES[found.imageKey] : null } : null;
+    } catch (_) {
+      return null;
+    }
+  }, [iso, data.tithiIdx, data.bengaliDay]);
 
   const tabBarH = 58 + insets.bottom;
 
@@ -172,6 +185,27 @@ export function HomeScreen() {
             </>
           )}
 
+          {/* ── আজকের বিশেষ দিন ── */}
+          {todaysFestival && (
+            <Pressable
+              onPress={() => { haptics.tap(); navigation.navigate('Panchang'); }}
+              style={({ pressed }) => [s.festivalCard, pressed && { opacity: 0.85 }]}
+            >
+              {todaysFestival.image ? (
+                <Image source={todaysFestival.image} style={s.festivalImg} />
+              ) : (
+                <View style={[s.festivalImg, s.festivalImgFallback]}>
+                  <MaterialCommunityIcons name="party-popper" size={20} color={colors.gold} />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={s.festivalTag}>আজকের বিশেষ দিন</Text>
+                <Text style={s.festivalName} numberOfLines={1}>{todaysFestival.name}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textSecondary} />
+            </Pressable>
+          )}
+
           {/* ── Quick Actions ── */}
           <Text style={[s.sectionTitle, { marginHorizontal: spacing.md, marginTop: 14, marginBottom: 8 }]}>
             দ্রুত অ্যাক্সেস
@@ -196,7 +230,7 @@ export function HomeScreen() {
   );
 }
 
-const CARD_W = (Dimensions.get('window').width - spacing.md * 2 - 10 * 2) / 3;
+const CARD_W = (Dimensions.get('window').width - spacing.md * 2 - 10 * 3) / 4;
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
@@ -264,13 +298,27 @@ const s = StyleSheet.create({
   quickBtn: {
     width: CARD_W, backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    alignItems: 'center', paddingVertical: 14, gap: 7,
+    alignItems: 'center', paddingVertical: 12, paddingHorizontal: 4, gap: 6,
     ...shadows.card,
   },
   quickBtnPressed: {
     backgroundColor: colors.goldWash, borderColor: colors.goldBorder, transform: [{ scale: 0.96 }],
   },
-  quickLabel: { ...typography.label, color: colors.text, fontWeight: '600', textAlign: 'center' },
+  quickLabel: { ...typography.label, fontSize: 11, color: colors.text, fontWeight: '600', textAlign: 'center' },
+
+  /* আজকের বিশেষ দিন */
+  festivalCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    marginHorizontal: spacing.md, marginBottom: 14,
+    backgroundColor: '#FFF8E6', borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.goldBorder,
+    paddingHorizontal: 12, paddingVertical: 10,
+    ...shadows.card,
+  },
+  festivalImg: { width: 42, height: 42, borderRadius: radii.md },
+  festivalImgFallback: { backgroundColor: colors.goldWash, alignItems: 'center', justifyContent: 'center' },
+  festivalTag:  { ...typography.caption, color: colors.goldLight, fontWeight: '700' },
+  festivalName: { ...typography.value, fontSize: 14, marginTop: 1 },
 
   infoStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: spacing.md, paddingVertical: 6 },
   infoText:  { ...typography.label, color: colors.textSecondary },

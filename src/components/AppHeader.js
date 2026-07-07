@@ -21,7 +21,10 @@ export function AppHeader() {
           <Text style={s.brand}>MYASTROLOGY</Text>
           <Text style={s.tagline}>জ্যোতিষ · পঞ্জিকা · কুণ্ডলী</Text>
         </View>
-        <TouchableOpacity style={s.hamBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+        <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Settings')} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="bell-outline" size={22} color={colors.gold} />
+        </TouchableOpacity>
+        <TouchableOpacity style={s.iconBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
           <MaterialCommunityIcons name="menu" size={24} color={colors.gold} />
         </TouchableOpacity>
       </View>
@@ -68,7 +71,7 @@ const s = StyleSheet.create({
   brand:        { fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: 3 },
   tagline:      { fontSize: 9, color: colors.textSecondary, letterSpacing: 1.2, marginTop: 1,
                   fontFamily: 'NotoSerifBengali-Regular' },
-  hamBtn:       { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
+  iconBtn:      { width: 34, height: 38, alignItems: 'center', justifyContent: 'center' },
 
   drawerOverlay: { ...StyleSheet.absoluteFillObject, flexDirection: 'row-reverse', zIndex: 100 },
   drawer: {
