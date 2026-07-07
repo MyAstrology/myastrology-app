@@ -1,9 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
+
+// Links that should always hand off to the OS (WhatsApp app, dialer, mail
+// client) instead of loading inside the WebView. Without this, tapping one
+// navigates the WebView's *main frame* to e.g. wa.me — replacing the whole
+// app screen with a "wa.me" landing page that has no history back to the
+// report, so the hardware back button falls through to React Navigation
+// and exits to Home instead of going back to the report.
+function isExternalHandoffUrl(url) {
+  return /^(tel:|mailto:)/i.test(url) ||
+    /^https?:\/\/(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com)\//i.test(url);
+}
 
 const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
 const _ready  = {};
@@ -83,6 +94,10 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS }) {
   // Returns false to block the WebView from actually navigating away.
   const handleNavRequest = useCallback((request) => {
     const url = request.url || '';
+    if (isExternalHandoffUrl(url)) {
+      Linking.openURL(url).catch(() => {});
+      return false;
+    }
     if (!url.startsWith('file://')) return true;
 
     const page = parsePageName(url);
