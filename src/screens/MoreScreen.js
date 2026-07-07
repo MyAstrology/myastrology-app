@@ -19,7 +19,6 @@ const SECTIONS = [
       { label: 'সংখ্যাতত্ত্ব',  icon: 'numeric',                screen: 'Numerology'  },
       { label: 'বর্ষফল',         icon: 'chart-timeline-variant', screen: 'Varshaphala' },
       { label: 'প্রশ্ন জ্যোতিষ', icon: 'help-circle-outline',   screen: 'Prashna'     },
-      { label: 'গোচর',          icon: 'orbit',                  screen: 'Kundali'     },
       { label: 'রত্নপাথর পরামর্শ', icon: 'diamond-stone',        screen: 'Gemstone'    },
       { label: 'বাস্তু শাস্ত্র', icon: 'home-city-outline',      screen: 'Vastu'       },
       { label: 'ব্লগ',           icon: 'post-outline',           screen: 'Blog'        },
