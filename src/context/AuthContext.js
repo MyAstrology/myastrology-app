@@ -15,9 +15,21 @@ export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Android client ID isn't set up yet (needs an EAS dev-client build's SHA-1
+  // fingerprint) — passing its REPLACE_ME placeholder as-is to Google made
+  // every sign-in attempt fail with a "malformed request" error, since
+  // useAuthRequest prefers androidClientId on Android regardless of whether
+  // it's real. In Expo Go the request is always proxied through
+  // auth.expo.io and validated against the Web client's config anyway, so
+  // falling back to webClientId here is correct until the placeholder is
+  // filled in with a real Android client ID for standalone/dev-client builds.
+  const androidClientId = GOOGLE_ANDROID_CLIENT_ID.startsWith('REPLACE_ME')
+    ? GOOGLE_WEB_CLIENT_ID
+    : GOOGLE_ANDROID_CLIENT_ID;
+
   const [, response, promptAsync] = Google.useAuthRequest({
-    webClientId:     GOOGLE_WEB_CLIENT_ID,
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId,
   });
 
   useEffect(() => {
