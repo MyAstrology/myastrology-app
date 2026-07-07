@@ -29,8 +29,6 @@ header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!import
 #mmFormHeader,#mmFormSub{display:none!important;}
 .mm-quicklinks,.mm-alt-actions,.mm-alt-links{display:none!important;}
 .mm-quicklink-btn{display:none!important;}
-/* ── Hide premium/special tabs ── */
-.mm-tab-premium,.mm-tab-special{display:none!important;}
 /* ── Hide author byline & SEO sections (below results) ── */
 .author-byline{display:none!important;}
 #seoSection,#faqSection,#testimonialSection{display:none!important;}
@@ -145,19 +143,19 @@ input[type=text],input[type=number]{
 /* ── জন্মতথ্য comparison card (mm-pc) ── */
 .mm-pc{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;padding:12px!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;}
 .mm-pc-title{font-size:.9rem!important;font-weight:700!important;color:#3a2218!important;margin:0 0 10px!important;padding-bottom:6px!important;border-bottom:1.5px solid #ede0ce!important;}
-.mm-pc table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
-.mm-pc th{background:#f5ede0!important;color:#7a2e2e!important;font-size:.78rem!important;font-weight:700!important;text-align:left!important;padding:7px 8px!important;}
-.mm-pc td{display:table-cell!important;padding:6px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;}
+.mm-pc table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.74rem!important;table-layout:fixed!important;}
+.mm-pc th{background:#f5ede0!important;color:#7a2e2e!important;font-size:.74rem!important;font-weight:700!important;text-align:left!important;padding:7px 4px!important;word-break:break-word!important;}
+.mm-pc td{display:table-cell!important;padding:7px 4px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;vertical-align:middle!important;word-break:break-word!important;}
 .mm-pc tr:nth-child(even) td{background:#fdf8f3!important;}
 .mm-pc-hl-amber td{color:#b8860b!important;font-weight:600!important;}
 .mm-pc-hl-green td{color:#1a7a2e!important;font-weight:600!important;}
 .mm-pc-hl-blue td{color:#1565c0!important;font-weight:600!important;}
 /* ── Tables ── */
-table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
+table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.74rem!important;table-layout:fixed!important;}
 thead{display:table-header-group!important;}tbody{display:table-row-group!important;}
 tr{display:table-row!important;}
-th,td{display:table-cell!important;padding:6px 8px!important;vertical-align:middle!important;}
-th{background:#7a2e2e!important;color:#fff!important;font-size:.76rem!important;text-align:left!important;font-weight:600!important;}
+th,td{display:table-cell!important;padding:6px 4px!important;vertical-align:middle!important;word-break:break-word!important;}
+th{background:#7a2e2e!important;color:#fff!important;font-size:.74rem!important;text-align:left!important;font-weight:600!important;}
 td{border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;}
 tr:nth-child(even) td{background:#fdf8f3!important;}
 /* ── Charts ── */
@@ -167,6 +165,32 @@ svg{max-width:100%!important;}
 /* ── Wide tables (অষ্টকূট ছক ইত্যাদি) — scroll horizontally instead of getting cut off ── */
 .mm-tbl-scroll{width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
 .mm-tbl-scroll table{width:auto!important;min-width:100%!important;}
+/* ── Premium/Special promo cards — missing from the bundled copy of the page,
+   so these classes were rendering as unstyled plain text. Mirrors the current
+   website's CSS (mobile breakpoint values applied unconditionally, since the
+   app is always phone-sized). ── */
+.premium-promo{position:relative!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:10px!important;background:linear-gradient(135deg,#2d0060,#1a0040)!important;border:1px solid rgba(255,215,0,.35)!important;border-radius:14px!important;padding:16px 14px 12px!important;}
+.premium-promo-badge{position:absolute!important;top:-8px!important;right:10px!important;background:#ffd700!important;color:#1a0040!important;font-size:.6rem!important;font-weight:800!important;padding:2px 8px!important;border-radius:20px!important;box-shadow:0 2px 8px rgba(0,0,0,.25)!important;white-space:nowrap!important;}
+.premium-promo-icon{font-size:1.5rem!important;flex-shrink:0!important;}
+.premium-promo-text{flex:1!important;min-width:0!important;}
+.premium-promo-title{color:#ffd700!important;font-weight:800!important;font-size:.85rem!important;margin-bottom:2px!important;line-height:1.4!important;}
+.premium-promo-sub{font-size:.74rem!important;color:rgba(255,255,255,.75)!important;line-height:1.55!important;}
+.premium-promo-old{text-decoration:line-through!important;opacity:.5!important;margin-right:4px!important;}
+.premium-promo-new{color:#ffd700!important;font-weight:800!important;font-size:1.02rem!important;}
+.premium-promo-btn{width:100%!important;background:linear-gradient(135deg,#ffd700,#ff8f00)!important;color:#1a0040!important;border:none!important;border-radius:50px!important;padding:9px 16px!important;font-size:.85rem!important;font-weight:900!important;cursor:pointer!important;font-family:inherit!important;white-space:nowrap!important;flex-shrink:0!important;}
+.premium-promo-urgency{display:inline-flex!important;align-items:center!important;gap:5px!important;margin-top:6px!important;font-size:.7rem!important;font-weight:700!important;color:#ffd700!important;background:rgba(255,215,0,.12)!important;border:1px solid rgba(255,215,0,.3)!important;border-radius:20px!important;padding:2px 10px!important;}
+.csp-promo{background:linear-gradient(135deg,#7a2e2e,#4a1414)!important;border:1px solid rgba(255,215,0,.4)!important;}
+.csp-promo .premium-promo-badge{background:#ffd700!important;color:#4a1414!important;}
+.csp-promo .premium-promo-new{color:#ffd700!important;}
+.mm-promo-mini-wrap{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;margin-top:1.4rem!important;}
+.mm-promo-mini{display:flex!important;align-items:center!important;gap:12px!important;border-radius:14px!important;padding:14px 16px!important;cursor:pointer!important;border:1px solid rgba(255,215,0,.3)!important;}
+.mm-promo-mini.mm-promo-prem{background:linear-gradient(135deg,#2d0060,#1a0040)!important;}
+.mm-promo-mini.mm-promo-spec{background:linear-gradient(135deg,#7a2e2e,#4a1414)!important;}
+.mm-promo-mini-icon{font-size:1.6rem!important;flex-shrink:0!important;}
+.mm-promo-mini-text{flex:1!important;min-width:0!important;}
+.mm-promo-mini-title{color:#ffd700!important;font-weight:800!important;font-size:.84rem!important;line-height:1.4!important;}
+.mm-promo-mini-sub{font-size:.74rem!important;color:rgba(255,255,255,.75)!important;margin-top:2px!important;}
+.mm-promo-mini-arrow{color:#ffd700!important;font-size:1.1rem!important;flex-shrink:0!important;}
 `;
 
 function buildInjectedJS(css) {
@@ -188,15 +212,61 @@ function buildInjectedJS(css) {
   mmWrapTables();
   new MutationObserver(mmWrapTables).observe(document.body,{childList:true,subtree:true});
   /* Load Razorpay checkout.js — absent from the offline app bundle, needs network.
-     downloadMatchPDF() itself instantiates "new Razorpay(...)" directly (not via
-     the blocked openRzp/proceedToRazorpay helpers above), so once this script is
-     present the real ₹৫১ payment flow works exactly like the website. */
+     downloadMatchPDF()/_mmStartPayment() instantiate "new Razorpay(...)" directly
+     (not via the blocked openRzp/proceedToRazorpay helpers above), so once this
+     script is present the real ₹৫১/₹৫০১/₹১৫০১ payment flows work like the website. */
   if(typeof Razorpay==='undefined'&&!document.querySelector('script[src*="checkout.razorpay"]')){
     var rzpScript=document.createElement('script');
     rzpScript.src='https://checkout.razorpay.com/v1/checkout.js';
     document.head.appendChild(rzpScript);
   }
+  /* On slow connections checkout.js can take several seconds to arrive — the
+     page's own code only checks "typeof Razorpay==='undefined'" synchronously
+     and silently skips straight to the free/no-payment path if it isn't ready
+     yet. Wrap the payment entry points so they wait (with a small toast) for
+     Razorpay to actually be loaded before handing off to the original function. */
+  function mmToast(msg){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:76px;left:14px;right:14px;background:#0a192f;color:#ffd700;'+
+      'padding:13px 16px;border-radius:10px;font-size:.88rem;z-index:99999;border:1px solid #b8860b;'+
+      'text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.35);';
+    t.textContent=msg;
+    document.body.appendChild(t);
+    return t;
+  }
+  function mmWaitForRazorpay(cb){
+    if(typeof Razorpay!=='undefined'){cb();return;}
+    var toast=mmToast('⏳ পেমেন্ট গেটওয়ে লোড হচ্ছে, একটু অপেক্ষা করুন…');
+    var triesLeft=40; // ~20s on a slow connection
+    (function poll(){
+      if(typeof Razorpay!=='undefined'){
+        if(toast.parentNode)toast.parentNode.removeChild(toast);
+        cb();
+        return;
+      }
+      if(triesLeft<=0){
+        if(toast.parentNode)toast.parentNode.removeChild(toast);
+        cb(); // give up — let the original function show its own fallback message
+        return;
+      }
+      triesLeft--;
+      setTimeout(poll,500);
+    })();
+  }
   setTimeout(function(){
+    var origDownload=window.downloadMatchPDF;
+    if(typeof origDownload==='function'){
+      window.downloadMatchPDF=function(){
+        var args=arguments,self=this;
+        mmWaitForRazorpay(function(){origDownload.apply(self,args);});
+      };
+    }
+    var origStartPayment=window._mmStartPayment;
+    if(typeof origStartPayment==='function'){
+      window._mmStartPayment=function(kind){
+        mmWaitForRazorpay(function(){origStartPayment(kind);});
+      };
+    }
     /* Hide form/tabbar; show tab nav when results appear */
     var mmTabbar=document.getElementById('mmTabbar');
     var mmInput=document.getElementById('mmInputSection');
