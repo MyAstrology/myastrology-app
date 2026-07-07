@@ -29,6 +29,11 @@ header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!import
 #mmFormHeader,#mmFormSub{display:none!important;}
 .mm-quicklinks,.mm-alt-actions,.mm-alt-links{display:none!important;}
 .mm-quicklink-btn{display:none!important;}
+/* ── mm-shloka-box is print-only on the website (.mm-shloka-box{display:none}
+   there; the print stylesheet is what makes it visible) — that rule is missing
+   from the bundled copy, so it was showing as stray unstyled text on the live
+   results screen between the score card and the birth-chart card. ── */
+.mm-shloka-box{display:none!important;}
 /* ── Hide author byline & SEO sections (below results) ── */
 .author-byline{display:none!important;}
 #seoSection,#faqSection,#testimonialSection{display:none!important;}
