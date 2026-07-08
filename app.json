@@ -27,6 +27,11 @@
         "backgroundColor": "#FEFAF2"
       }],
       "./plugins/withGradleMemory.js"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2678cdd7-fa10-4b80-8aa5-f276b88a51a3"
+      }
+    }
   }
 }
