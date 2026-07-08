@@ -1,0 +1,5 @@
+# The repo root .gitignore excludes package-lock.json globally, but this
+# app needs its dependency versions pinned for reproducible EAS builds —
+# without a lockfile, npm/yarn resolved slightly different transitive
+# versions on different runs and caused several build failures.
+!package-lock.json
