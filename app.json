@@ -26,7 +26,8 @@
         "resizeMode": "contain",
         "backgroundColor": "#FEFAF2"
       }],
-      "./plugins/withGradleMemory.js"
+      "./plugins/withGradleMemory.js",
+      "./plugins/withFixReactGradleProps.js"
     ],
     "extra": {
       "eas": {
