@@ -455,6 +455,7 @@ export function KundaliScreen() {
             domStorageEnabled={true}
             cacheEnabled={false}
             startInLoadingState={true}
+            geolocationEnabled={true}
             scrollEnabled={true}
             injectedJavaScript={INJECTED_JS}
             onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
