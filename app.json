@@ -25,7 +25,8 @@
         "imageWidth": 220,
         "resizeMode": "contain",
         "backgroundColor": "#FEFAF2"
-      }]
+      }],
+      "./plugins/withGradleMemory.js"
     ]
   }
 }
