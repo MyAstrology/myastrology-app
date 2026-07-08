@@ -20,6 +20,7 @@
       "bundleIdentifier": "in.myastrology.app"
     },
     "plugins": [
+      "@react-native-google-signin/google-signin",
       ["onesignal-expo-plugin", { "mode": "development" }],
       ["expo-splash-screen", {
         "image": "./assets/splash.png",
