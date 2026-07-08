@@ -19,7 +19,7 @@ const SECTIONS = [
       { label: 'জ্যোতিষ শাস্ত্র', icon: 'star-four-points-outline', screen: 'VedicAstrology' },
       { label: 'হস্তরেখা বিচার', icon: 'hand-back-right-outline', screen: 'Palmistry'  },
       { label: 'নামকরণ',        icon: 'baby-face-outline',      screen: 'Namakaran'   },
-      { label: 'বিবাহ মিলাপ',   icon: 'heart-multiple-outline', screen: 'MatchMaking' },
+      { label: 'কুন্ডলি মিলন',  icon: 'heart-multiple-outline', screen: 'MatchMaking' },
       { label: 'সংখ্যাতত্ত্ব',  icon: 'numeric',                screen: 'Numerology'  },
       { label: 'বর্ষফল',         icon: 'chart-timeline-variant', screen: 'Varshaphala' },
       { label: 'প্রশ্ন জ্যোতিষ', icon: 'help-circle-outline',   screen: 'Prashna'     },

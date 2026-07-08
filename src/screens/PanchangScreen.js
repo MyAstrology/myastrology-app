@@ -294,6 +294,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
       domStorageEnabled={true}
       cacheEnabled={false}
       startInLoadingState={true}
+      geolocationEnabled={true}
       injectedJavaScript={injectedJavaScript}
       onMessage={onMessage}
       onShouldStartLoadWithRequest={handleNavRequest}
