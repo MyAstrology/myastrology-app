@@ -30,7 +30,7 @@ const firebaseConfig = {
 // (Android), using the dev client's package name (in.myastrology.app) and
 // its signing certificate's SHA-1.
 export const GOOGLE_WEB_CLIENT_ID     = '455926974196-a7quruldvd5n1ol42ipoq707scsujk7g.apps.googleusercontent.com';
-export const GOOGLE_ANDROID_CLIENT_ID = 'REPLACE_ME.apps.googleusercontent.com';
+export const GOOGLE_ANDROID_CLIENT_ID = '455926974196-dnpl1ft6cest4chk910n3ovj67tcva4d.apps.googleusercontent.com';
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
