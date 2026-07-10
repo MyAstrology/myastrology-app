@@ -204,17 +204,18 @@ const BOOKING_BANNER_IMG = require('../../assets/booking-banner-shiva.webp');
 function BookingBanner({ onPress }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.bookingBannerWrap, pressed && { opacity: 0.9 }]}>
-      <ImageBackground
-        source={BOOKING_BANNER_IMG}
-        resizeMode="cover"
-        imageStyle={{ borderRadius: radii.lg }}
-        style={s.bookingBanner}
-      >
+      <View style={s.bookingBanner}>
+        {/* সম্পূর্ণ ছবি (পুরো width, ক্রপ করা হয়নি) — height ধরে aspectRatio
+            অনুযায়ী width বসানো হচ্ছে, যেটা ব্যানারের width-এর চেয়ে বড় হয়ে
+            বাঁয়ে-অ্যালাইনড থাকে (position স্ট্যাটিক, প্রথম child)। বাড়তি অংশ
+            শুধু ডান দিকে (খালি নক্ষত্র-আকাশ) overflow:hidden দিয়ে কাটা যায়,
+            শিব সবসময় বাঁয়ে পুরোপুরি অক্ষত থাকেন। */}
+        <Image source={BOOKING_BANNER_IMG} style={s.bookingBannerImg} />
         <LinearGradient
           colors={['transparent', 'rgba(15,8,35,0.35)', 'rgba(15,8,35,0.72)']}
           start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
           locations={[0, 0.42, 1]}
-          style={s.bookingBannerScrim}
+          style={[StyleSheet.absoluteFillObject, s.bookingBannerScrim]}
         >
           <View style={s.bookingBannerSpacer} />
           <View style={{ flex: 1 }}>
@@ -226,7 +227,7 @@ function BookingBanner({ onPress }) {
             </View>
           </View>
         </LinearGradient>
-      </ImageBackground>
+      </View>
     </Pressable>
   );
 }
@@ -595,13 +596,14 @@ const s = StyleSheet.create({
   /* পরামর্শ বুকিং ব্যানার */
   bookingBannerWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
   bookingBanner: {
-    height: 74, borderRadius: radii.lg, overflow: 'hidden',
+    height: 80, borderRadius: radii.lg, overflow: 'hidden',
     ...shadows.raised,
   },
+  bookingBannerImg: { height: '100%', aspectRatio: 1896 / 353 },
   bookingBannerScrim: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', padding: 10,
+    flexDirection: 'row', alignItems: 'center', padding: 10,
   },
-  bookingBannerSpacer: { width: 88 },
+  bookingBannerSpacer: { width: 96 },
   bookingBannerTitle: { ...typography.value, fontSize: 11.5, color: colors.white, lineHeight: 14.5 },
   bookingBannerSub:   { ...typography.label, fontSize: 9, color: 'rgba(255,255,255,0.75)', marginTop: 1, lineHeight: 11.5 },
   bookingBannerCta: {
