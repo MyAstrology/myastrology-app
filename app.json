@@ -25,7 +25,7 @@
       ["onesignal-expo-plugin", { "mode": "development" }],
       ["expo-splash-screen", {
         "image": "./assets/splash.png",
-        "imageWidth": 220,
+        "imageWidth": 320,
         "resizeMode": "contain",
         "backgroundColor": "#FEFAF2"
       }],

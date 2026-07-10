@@ -4,7 +4,6 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
 import { getFestivalsForMonth } from '../engine/bengali_festivals';
@@ -183,7 +182,6 @@ function QuickTile({ icon, label, color, onPress }) {
 
 export function HomeScreen() {
   const navigation = useNavigation();
-  const insets     = useSafeAreaInsets();
   const { user, saveUser } = useUser();
   const [rashiModal, setRashiModal] = useState(false);
   const [blogPosts, setBlogPosts]   = useState([]);
@@ -229,8 +227,6 @@ export function HomeScreen() {
     }
   }, [iso, data.tithiIdx, data.bengaliDay]);
 
-  const tabBarH = 58 + insets.bottom;
-
   const fmt = (slot) => `${slot.start} – ${slot.end}`;
   const muhurtaRows = [
     data.rahuKala && { label: 'রাহুকাল',        sub: 'এড়িয়ে চলুন', icon: 'alert-octagon-outline', time: fmt(data.rahuKala), tone: 'bad'  },
@@ -243,7 +239,7 @@ export function HomeScreen() {
     <View style={s.container}>
       <AppHeader />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: tabBarH + 16 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Panchang Hero Card ── */}
