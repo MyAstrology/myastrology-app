@@ -388,6 +388,7 @@ export function KundaliScreen() {
   const webViewRef    = useRef(null);
   const pdfWebViewRef = useRef(null);
   const pdfBusyRef    = useRef(false); // prevent double-tap
+  const pdfChunksRef  = useRef([]);    // accumulates chunked HTML from the PDF renderer until complete
   const lastPrefillRef = useRef(null);
 
   const kUri = useKUri();
@@ -512,10 +513,19 @@ export function KundaliScreen() {
                   [].slice.call(document.querySelectorAll('script')).forEach(function(s) {
                     s.parentNode && s.parentNode.removeChild(s);
                   });
-                  window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'pdfStaticHtml',
-                    html: document.documentElement.outerHTML
-                  }));
+                  // একবারে পুরো (৭০+ পাতার) HTML postMessage করলে কম RAM-এর
+                  // ফোনে bridge ওভারলোড হয়ে অ্যাপ ক্র্যাশ করে — তাই ছোট
+                  // টুকরোয় ভেঙে পাঠানো হচ্ছে, React Native পাশে জোড়া লাগবে।
+                  var __html = document.documentElement.outerHTML;
+                  var __CHUNK = 200000;
+                  var __total = Math.ceil(__html.length / __CHUNK) || 1;
+                  for (var __c = 0; __c < __total; __c++) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                      type: 'pdfStaticHtmlChunk',
+                      i: __c, total: __total,
+                      chunk: __html.substring(__c * __CHUNK, (__c + 1) * __CHUNK)
+                    }));
+                  }
                 } else {
                   setTimeout(poll, 400);
                 }
@@ -526,10 +536,14 @@ export function KundaliScreen() {
           onMessage={async (e) => {
             try {
               const m = JSON.parse(e.nativeEvent.data);
-              if (m.type !== 'pdfStaticHtml') return;
+              if (m.type !== 'pdfStaticHtmlChunk') return;
+              pdfChunksRef.current[m.i] = m.chunk;
+              if (Object.keys(pdfChunksRef.current).length < m.total) return; // still waiting for more chunks
+              const fullHtml = pdfChunksRef.current.join('');
+              pdfChunksRef.current = [];
               setPdfRenderState(null);
               pdfBusyRef.current = false;
-              const { uri } = await Print.printToFileAsync({ html: m.html, base64: false, width: 595, height: 842 });
+              const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
               haptics.success();
               Alert.alert(
                 'PDF তৈরি হয়েছে',
