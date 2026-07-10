@@ -130,6 +130,28 @@ function BlogCard({ post, onPress }) {
   );
 }
 
+const BOOKING_TOPICS = [
+  { icon: '💍', title: 'বিয়েতে বাধা বা দেরি হচ্ছে?',   sub: 'কুণ্ডলী মিলিয়ে জানুন বিয়ের যোগ ও প্রকৃত কারণ' },
+  { icon: '💼', title: 'চাকরি বা প্রমোশন আটকে আছে?',    sub: 'কর্মজীবন বিশ্লেষণে জানুন সঠিক দিশা ও সময়' },
+  { icon: '💰', title: 'ব্যবসায় লোকসান বা স্থবিরতা?',   sub: 'জ্যোতিষ পরামর্শে বুঝুন ব্যবসার শুভ সময়' },
+  { icon: '💔', title: 'সম্পর্কে অশান্তি বা ভুল বোঝাবুঝি?', sub: 'কুণ্ডলী মিলিয়ে জানুন সম্পর্কের চিত্র ও সমাধান' },
+  { icon: '🏠', title: 'বাড়ি বা অফিসে বারবার অশান্তি?', sub: 'বাস্তু পরামর্শে দূর করুন নেতিবাচক প্রভাব' },
+];
+
+function BookingCard({ topic, onPress }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [s.bookingCard, pressed && { opacity: 0.85 }]}>
+      <Text style={s.bookingIcon}>{topic.icon}</Text>
+      <Text style={s.bookingTitle} numberOfLines={2}>{topic.title}</Text>
+      <Text style={s.bookingSub} numberOfLines={2}>{topic.sub}</Text>
+      <View style={s.bookingCta}>
+        <Text style={s.bookingCtaText}>পরামর্শ বুকিং করুন</Text>
+        <MaterialCommunityIcons name="arrow-right" size={13} color={colors.gold} />
+      </View>
+    </Pressable>
+  );
+}
+
 function QuickTile({ icon, label, onPress }) {
   return (
     <Pressable
@@ -318,6 +340,27 @@ export function HomeScreen() {
             </Pressable>
           )}
 
+          {/* ── পরামর্শ বুকিং ── */}
+          <View style={s.sectionRow}>
+            <Text style={s.sectionTitle}>আপনার সমস্যা কী?</Text>
+            <Pressable onPress={() => navigation.navigate('Booking')}>
+              <Text style={s.sectionLink}>সব দেখুন</Text>
+            </Pressable>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.bookingRow}
+          >
+            {BOOKING_TOPICS.map((topic, i) => (
+              <BookingCard
+                key={i}
+                topic={topic}
+                onPress={() => { haptics.tap(); navigation.navigate('Booking'); }}
+              />
+            ))}
+          </ScrollView>
+
           {/* ── সাম্প্রতিক ব্লগ ── */}
           {blogPosts.length > 0 && (
             <>
@@ -451,6 +494,21 @@ const s = StyleSheet.create({
   rashiChipLabel: { ...typography.body, fontSize: 13 },
 
   /* সাম্প্রতিক ব্লগ */
+  bookingRow: { paddingHorizontal: spacing.md, gap: 8 },
+  bookingCard: {
+    width: 168, backgroundColor: colors.card, borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.cardBorder, padding: 12,
+    ...shadows.card,
+  },
+  bookingIcon: { fontSize: 24, marginBottom: 6 },
+  bookingTitle: { ...typography.value, fontSize: 12.5, lineHeight: 16, height: 32 },
+  bookingSub: { ...typography.caption, color: colors.textSecondary, fontSize: 10.5, lineHeight: 13, height: 26, marginTop: 3 },
+  bookingCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.divider,
+  },
+  bookingCtaText: { ...typography.label, color: colors.gold, fontSize: 11 },
+
   blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
     width: 132, backgroundColor: colors.card, borderRadius: radii.lg,
