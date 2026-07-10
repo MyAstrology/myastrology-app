@@ -213,6 +213,11 @@ body.yearly-mode>*:not(#yearlyPanjikaView){display:none!important;}
 // কল করে। window.print()-কে override করে static HTML capture + React Native-এ
 // postMessage — কোনো native print dialog-এর ওপর নির্ভর না করে expo-print দিয়ে
 // আসল PDF বানানো হবে (Kundali/MatchMaking-এর pattern-এর মতোই)।
+//
+// একটা সম্পূর্ণ বছরের (১২ মাস) HTML একসাথে postMessage করলে কিছু (বিশেষত কম
+// RAM-এর) ফোনে react-native-webview-এর bridge ওভারলোড হয়ে অ্যাপ ক্র্যাশ করে —
+// তাই এখানে HTML-কে ছোট ছোট টুকরোয় ভেঙে একাধিক postMessage-এ পাঠানো হচ্ছে,
+// React Native পাশে জোড়া লাগিয়ে নেওয়া হয়।
 const YEARLY_PDF_JS = `
 setTimeout(function(){
   if(typeof Razorpay==='undefined'&&!document.querySelector('script[src*="checkout.razorpay"]')){
@@ -229,7 +234,14 @@ setTimeout(function(){
     clone.querySelector('head').appendChild(printSt);
     var html='<!DOCTYPE html>'+clone.outerHTML;
     if(window.ReactNativeWebView){
-      window.ReactNativeWebView.postMessage(JSON.stringify({type:'panjikaPdf',html:html}));
+      var CHUNK=200000;
+      var total=Math.ceil(html.length/CHUNK)||1;
+      for(var c=0;c<total;c++){
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type:'panjikaPdfChunk', i:c, total:total,
+          chunk:html.substring(c*CHUNK,(c+1)*CHUNK)
+        }));
+      }
     }
   };
 },600);
@@ -315,8 +327,9 @@ export function PanchangScreen() {
   const insets     = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('today');
   const [menuOpen,  setMenuOpen]  = useState(false);
-  const pdfBusyRef = useRef(false); // prevent double-tap while a PDF is being generated
-  const webViewRef = useRef(null); // shared across tabs — only one PjWebView is mounted at a time
+  const pdfBusyRef   = useRef(false); // prevent double-tap while a PDF is being generated
+  const pdfChunksRef = useRef([]);    // accumulates chunked HTML from window.print() override until complete
+  const webViewRef   = useRef(null);  // shared across tabs — only one PjWebView is mounted at a time
 
   const pjUri = usePjUri();
 
@@ -334,11 +347,15 @@ export function PanchangScreen() {
   const handleOldTabMessage = async (event) => {
     let msg;
     try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
-    if (!msg || msg.type !== 'panjikaPdf') return;
+    if (!msg || msg.type !== 'panjikaPdfChunk') return;
+    pdfChunksRef.current[msg.i] = msg.chunk;
+    if (Object.keys(pdfChunksRef.current).length < msg.total) return; // still waiting for more chunks
+    const fullHtml = pdfChunksRef.current.join('');
+    pdfChunksRef.current = [];
     if (pdfBusyRef.current) return;
     pdfBusyRef.current = true;
     try {
-      const { uri } = await Print.printToFileAsync({ html: msg.html, base64: false, width: 595, height: 842 });
+      const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
       haptics.success();
       Alert.alert(
         'PDF তৈরি হয়েছে',
