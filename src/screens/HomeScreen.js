@@ -109,57 +109,45 @@ function StarRow({ score }) {
   );
 }
 
-// "আমার রাশি" সেকশন — বাঁয়ে গাঢ় গ্র্যাডিয়েন্ট হিরো কার্ড (রাশির ছবি + নাম),
-// ডানে সাদা "আজকের ব্যক্তিগত ভবিষ্যৎ" কার্ড (প্রেম/স্বাস্থ্য/চাকরি/অর্থ রেটিং)
+// "আমার রাশি" সেকশন — একটাই হালকা/আইভরি কার্ড, মাঝে উল্লম্ব ডিভাইডার দিয়ে দুই
+// ভাগ: বাঁয়ে গোল অ্যাভাটার + নাম + পরিবর্তনের লিংক, ডানে "আজকের সংক্ষিপ্ত
+// ভবিষ্যৎ" — ৪টা আইকন এক সারিতে, প্রতিটার নিচে স্টার রেটিং।
 function RashiHeroRow({ rashiIdx, score, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
-    <View style={s.heroRow}>
-      <LinearGradient
-        colors={[colors.text, '#4A3510']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={s.rashiGradCard}
-      >
-        <View style={s.rashiGradImgWrap}>
-          <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiGradImg} resizeMode="contain" />
-        </View>
-        <Text style={s.rashiGradName}>{RASHI_NAMES[rashiIdx]}</Text>
-        <Text style={s.rashiGradEn}>{ENGLISH_RASHI_NAMES[rashiIdx]}</Text>
-        <Pressable onPress={onChangePress} style={s.rashiGradBtn}>
-          <Text style={s.rashiGradBtnText}>পরিবর্তন করুন</Text>
-          <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
+    <View style={s.rashiHeroCard}>
+      <View style={s.rashiHeroLeft}>
+        <Pressable onPress={onChangePress} style={s.rashiHeroAvatarWrap}>
+          <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiHeroAvatarImg} resizeMode="contain" />
         </Pressable>
-      </LinearGradient>
+        <Text style={s.rashiHeroName}>{RASHI_NAMES[rashiIdx]}</Text>
+        <Text style={s.rashiHeroEn}>({ENGLISH_RASHI_NAMES[rashiIdx]})</Text>
+        <Pressable onPress={onChangePress} hitSlop={6}>
+          <Text style={s.rashiHeroChangeLink}>রাশি পরিবর্তন করুন ›</Text>
+        </Pressable>
+      </View>
 
-      <View style={s.forecastCard}>
-        <Text style={s.forecastTitle} numberOfLines={1}>আজকের ব্যক্তিগত ভবিষ্যৎ</Text>
+      <View style={s.rashiHeroDivider} />
+
+      <Pressable onPress={onRashifalPress} style={s.rashiHeroRight}>
+        <Text style={s.forecastTitle} numberOfLines={1}>আজকের সংক্ষিপ্ত ভবিষ্যৎ</Text>
         {score ? (
-          <>
-            <View style={s.forecastGrid}>
-              {FORECAST_CATS.map(cat => (
-                <View key={cat.key} style={s.forecastCell}>
-                  <MaterialCommunityIcons name={cat.icon} size={13} color={colors.primary} />
-                  <Text style={s.forecastLabel}>{cat.label}</Text>
-                  <StarRow score={score[cat.key]} />
-                </View>
-              ))}
-            </View>
-            <Pressable onPress={onRashifalPress} style={s.forecastCta}>
-              <Text style={s.forecastCtaText} numberOfLines={1}>সম্পূর্ণ রাশিফল পড়ুন</Text>
-              <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
-            </Pressable>
-          </>
+          <View style={s.forecastRow}>
+            {FORECAST_CATS.map(cat => (
+              <View key={cat.key} style={s.forecastCell}>
+                <MaterialCommunityIcons name={cat.icon} size={15} color={colors.primary} />
+                <Text style={s.forecastLabel} numberOfLines={1}>{cat.label}</Text>
+                <StarRow score={score[cat.key]} />
+              </View>
+            ))}
+          </View>
         ) : (
           <>
             <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
             <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
-            <Pressable onPress={onRashifalPress} style={s.forecastCta}>
-              <Text style={s.forecastCtaText} numberOfLines={1}>আজকের রাশিফল দেখুন</Text>
-              <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
-            </Pressable>
           </>
         )}
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -205,12 +193,12 @@ function BookingBanner({ onPress }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.bookingBannerWrap, pressed && { opacity: 0.9 }]}>
       <LinearGradient
-        colors={[colors.text, '#4A3510']}
+        colors={['#3A2170', '#1C0F3D']}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={s.bookingBanner}
       >
         <View style={s.bookingBannerIconWrap}>
-          <MaterialCommunityIcons name="hand-heart-outline" size={26} color={colors.gold} />
+          <MaterialCommunityIcons name="om" size={28} color={colors.gold} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.bookingBannerTitle}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
@@ -532,43 +520,32 @@ const s = StyleSheet.create({
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
   sectionLink:  { ...typography.label, color: colors.gold },
 
-  /* আমার রাশি — হিরো রো (গ্র্যাডিয়েন্ট কার্ড + forecast কার্ড) */
-  heroRow: {
-    flexDirection: 'row', gap: 8,
+  /* আমার রাশি — একটাই হালকা কার্ড, উল্লম্ব ডিভাইডারে দুই ভাগ */
+  rashiHeroCard: {
+    flexDirection: 'row', alignItems: 'stretch',
     marginHorizontal: spacing.md, marginBottom: 2,
-  },
-  rashiGradCard: {
-    width: 130, borderRadius: radii.lg, padding: 12,
-    alignItems: 'center', ...shadows.raised,
-  },
-  rashiGradImgWrap: {
-    width: 56, height: 56, borderRadius: radii.pill, marginBottom: 6,
-    backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center',
-  },
-  rashiGradImg:  { width: 36, height: 36 },
-  rashiGradName: { ...typography.heading, fontSize: 16, color: colors.white },
-  rashiGradEn:   { ...typography.label, fontSize: 10, color: 'rgba(255,255,255,0.65)', marginBottom: 10 },
-  rashiGradBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: colors.gold, borderRadius: radii.pill,
-    paddingHorizontal: 10, paddingVertical: 6,
-  },
-  rashiGradBtnText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
-
-  forecastCard: {
-    flex: 1, backgroundColor: colors.card, borderRadius: radii.lg,
+    backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
     padding: 12, ...shadows.card,
   },
-  forecastTitle: { ...typography.value, fontSize: 11.5, marginBottom: 8 },
-  forecastGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
-  forecastCell: { width: '50%', gap: 2 },
-  forecastLabel: { ...typography.label, fontSize: 10.5, color: colors.textSecondary, marginTop: 1 },
-  forecastCta: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
-    marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.divider,
+  rashiHeroLeft: { width: 108, alignItems: 'center' },
+  rashiHeroAvatarWrap: {
+    width: 60, height: 60, borderRadius: radii.pill,
+    backgroundColor: colors.goldWash, borderWidth: 1.5, borderColor: colors.goldBorder,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 6,
   },
-  forecastCtaText: { ...typography.label, fontSize: 10.5, color: colors.primary, fontWeight: '700' },
+  rashiHeroAvatarImg: { width: 40, height: 40 },
+  rashiHeroName: { ...typography.heading, fontSize: 15, color: colors.text },
+  rashiHeroEn:   { ...typography.label, fontSize: 10.5, color: colors.textSecondary, marginBottom: 4 },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 10.5, color: colors.primary, fontWeight: '700', textAlign: 'center' },
+
+  rashiHeroDivider: { width: 1, backgroundColor: colors.divider, marginHorizontal: 10 },
+
+  rashiHeroRight: { flex: 1, justifyContent: 'center' },
+  forecastTitle: { ...typography.value, fontSize: 11.5, marginBottom: 8, color: colors.primary },
+  forecastRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  forecastCell: { alignItems: 'center', gap: 2, flex: 1 },
+  forecastLabel: { ...typography.label, fontSize: 9.5, color: colors.textSecondary },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
 
   rashiPrompt: {
