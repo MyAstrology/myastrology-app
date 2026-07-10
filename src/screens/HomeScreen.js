@@ -22,6 +22,15 @@ import { haptics } from '../utils/haptics';
 const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
 const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+// সূর্যোদয়/সূর্যাস্ত "HH:MM" (২৪ ঘণ্টা)-কে "সকাল ৫:০১" ফরম্যাটে দেখানোর জন্য —
+// সূর্যোদয় সবসময় সকাল, সূর্যাস্ত সবসময় সন্ধ্যা, তাই period সরাসরি প্যারামিটার
+// হিসেবে নেওয়া হচ্ছে, সাধারণ AM/PM লজিকের দরকার নেই।
+const to12h = (hhmm, period) => {
+  if (!hhmm || hhmm === '—') return hhmm;
+  const [h, m] = hhmm.split(':').map(Number);
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${period} ${toBN(h12)}:${toBN(String(m).padStart(2, '0'))}`;
+};
 // রাশিফল গ্রিড কার্ডের (RashifalScreen.js) একই ইমেজ সেট — সেখানকার
 // RASHI_IMAGES-এর ক্রমের সাথে মিল রেখে (মেষ→মীন)
 const RASHI_IMAGES = [
@@ -96,13 +105,14 @@ const FORECAST_CATS = [
 
 function StarRow({ score }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 1 }}>
+    <View style={{ flexDirection: 'row' }}>
       {[1, 2, 3, 4, 5].map(i => (
         <MaterialCommunityIcons
           key={i}
           name={i <= score ? 'star' : 'star-outline'}
-          size={11}
+          size={8}
           color={i <= score ? colors.gold : colors.cardBorder}
+          style={{ marginRight: i < 5 ? 0.5 : 0 }}
         />
       ))}
     </View>
@@ -135,7 +145,7 @@ function RashiHeroRow({ rashiIdx, score, onChangePress, onRashifalPress }) {
           <View style={s.forecastRow}>
             {FORECAST_CATS.map(cat => (
               <View key={cat.key} style={s.forecastCell}>
-                <MaterialCommunityIcons name={cat.icon} size={15} color={colors.primary} />
+                <MaterialCommunityIcons name={cat.icon} size={13} color={colors.primary} />
                 <Text style={s.forecastLabel} numberOfLines={1}>{cat.label}</Text>
                 <StarRow score={score[cat.key]} />
               </View>
@@ -186,29 +196,37 @@ function BlogCard({ post, onPress }) {
   );
 }
 
-// একটামাত্র বড় গ্র্যাডিয়েন্ট promo ব্যানার — আগে ৫টা আলাদা টপিক-কার্ডের
-// horizontal scroll ছিল, রেফারেন্স ডিজাইন অনুযায়ী একটা প্রশস্ত CTA ব্যানারে
-// একত্র করা হলো (ব্যানারে চাপলে Booking স্ক্রিনেই যায়, কোনো ফিচার হারায়নি)।
+const BOOKING_BANNER_IMG = require('../../assets/booking-banner-shiva.webp');
+
+// একটামাত্র বড় ব্যানার — শিবের ছবি ব্যাকগ্রাউন্ডে (বাঁয়ে শিব দৃশ্যমান থাকে,
+// ডানদিকে অন্ধকার নক্ষত্র-আকাশের অংশে লেখা বসানো, ওপরে হালকা গ্র্যাডিয়েন্ট
+// scrim দিয়ে লেখা স্পষ্ট রাখা হয়েছে)।
 function BookingBanner({ onPress }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.bookingBannerWrap, pressed && { opacity: 0.9 }]}>
-      <LinearGradient
-        colors={['#3A2170', '#1C0F3D']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+      <ImageBackground
+        source={BOOKING_BANNER_IMG}
+        resizeMode="cover"
+        imageStyle={{ borderRadius: radii.lg }}
         style={s.bookingBanner}
       >
-        <View style={s.bookingBannerIconWrap}>
-          <MaterialCommunityIcons name="om" size={28} color={colors.gold} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.bookingBannerTitle}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
-          <Text style={s.bookingBannerSub}>অভিজ্ঞ জ্যোতিষীদের সাথে কথা বলুন</Text>
-        </View>
-        <View style={s.bookingBannerCta}>
-          <Text style={s.bookingBannerCtaText}>এখনই বুক করুন</Text>
-          <MaterialCommunityIcons name="arrow-right" size={13} color={colors.text} />
-        </View>
-      </LinearGradient>
+        <LinearGradient
+          colors={['transparent', 'rgba(15,8,35,0.35)', 'rgba(15,8,35,0.72)']}
+          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+          locations={[0, 0.42, 1]}
+          style={s.bookingBannerScrim}
+        >
+          <View style={s.bookingBannerSpacer} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.bookingBannerTitle}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
+            <Text style={s.bookingBannerSub}>অভিজ্ঞ জ্যোতিষী প্রদ্যুৎ আচার্যের সাথে কথা বলুন</Text>
+            <View style={s.bookingBannerCta}>
+              <Text style={s.bookingBannerCtaText}>এখনই বুক করুন</Text>
+              <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
+            </View>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
     </Pressable>
   );
 }
@@ -348,8 +366,8 @@ export function HomeScreen() {
               </View>
               <View style={s.cardDivider} />
               <View style={s.cellGrid2}>
-                <PanchangCell icon="weather-sunset-up"   label="সূর্যোদয়" value={data.sunrise} />
-                <PanchangCell icon="weather-sunset-down" label="সূর্যাস্ত" value={data.sunset}  />
+                <PanchangCell icon="weather-sunset-up"   label="সূর্যোদয়" value={to12h(data.sunrise, 'সকাল')} />
+                <PanchangCell icon="weather-sunset-down" label="সূর্যাস্ত" value={to12h(data.sunset, 'সন্ধ্যা')}  />
               </View>
             </View>
         </View>
@@ -520,32 +538,32 @@ const s = StyleSheet.create({
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
   sectionLink:  { ...typography.label, color: colors.gold },
 
-  /* আমার রাশি — একটাই হালকা কার্ড, উল্লম্ব ডিভাইডারে দুই ভাগ */
+  /* আমার রাশি — একটাই হালকা কার্ড, উল্লম্ব ডিভাইডারে দুই ভাগ (কম্প্যাক্ট হাইট) */
   rashiHeroCard: {
-    flexDirection: 'row', alignItems: 'stretch',
+    flexDirection: 'row', alignItems: 'center',
     marginHorizontal: spacing.md, marginBottom: 2,
     backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    padding: 12, ...shadows.card,
+    paddingVertical: 10, paddingHorizontal: 10, ...shadows.card,
   },
-  rashiHeroLeft: { width: 108, alignItems: 'center' },
+  rashiHeroLeft: { width: 96, alignItems: 'center' },
   rashiHeroAvatarWrap: {
-    width: 60, height: 60, borderRadius: radii.pill,
+    width: 46, height: 46, borderRadius: radii.pill,
     backgroundColor: colors.goldWash, borderWidth: 1.5, borderColor: colors.goldBorder,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 6,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 4,
   },
-  rashiHeroAvatarImg: { width: 40, height: 40 },
-  rashiHeroName: { ...typography.heading, fontSize: 15, color: colors.text },
-  rashiHeroEn:   { ...typography.label, fontSize: 10.5, color: colors.textSecondary, marginBottom: 4 },
-  rashiHeroChangeLink: { ...typography.label, fontSize: 10.5, color: colors.primary, fontWeight: '700', textAlign: 'center' },
+  rashiHeroAvatarImg: { width: 30, height: 30 },
+  rashiHeroName: { ...typography.heading, fontSize: 13, color: colors.text },
+  rashiHeroEn:   { ...typography.label, fontSize: 9.5, color: colors.textSecondary, marginBottom: 2 },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 9.5, color: colors.primary, fontWeight: '700', textAlign: 'center' },
 
-  rashiHeroDivider: { width: 1, backgroundColor: colors.divider, marginHorizontal: 10 },
+  rashiHeroDivider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.divider, marginHorizontal: 8 },
 
-  rashiHeroRight: { flex: 1, justifyContent: 'center' },
-  forecastTitle: { ...typography.value, fontSize: 11.5, marginBottom: 8, color: colors.primary },
-  forecastRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  forecastCell: { alignItems: 'center', gap: 2, flex: 1 },
-  forecastLabel: { ...typography.label, fontSize: 9.5, color: colors.textSecondary },
+  rashiHeroRight: { flex: 1 },
+  forecastTitle: { ...typography.value, fontSize: 10.5, marginBottom: 6, color: colors.primary },
+  forecastRow: { flexDirection: 'row' },
+  forecastCell: { alignItems: 'center', gap: 1, width: '25%', overflow: 'hidden' },
+  forecastLabel: { ...typography.label, fontSize: 8.5, color: colors.textSecondary },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
 
   rashiPrompt: {
@@ -577,21 +595,19 @@ const s = StyleSheet.create({
   /* পরামর্শ বুকিং ব্যানার */
   bookingBannerWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
   bookingBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: radii.lg, padding: 14,
+    height: 108, borderRadius: radii.lg, overflow: 'hidden',
     ...shadows.raised,
   },
-  bookingBannerIconWrap: {
-    width: 44, height: 44, borderRadius: radii.md,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center', justifyContent: 'center',
+  bookingBannerScrim: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', padding: 14,
   },
+  bookingBannerSpacer: { width: 96 },
   bookingBannerTitle: { ...typography.value, fontSize: 13, color: colors.white, lineHeight: 17 },
-  bookingBannerSub:   { ...typography.label, fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  bookingBannerSub:   { ...typography.label, fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2, lineHeight: 13 },
   bookingBannerCta: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
+    flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start',
     backgroundColor: colors.gold, borderRadius: radii.pill,
-    paddingHorizontal: 10, paddingVertical: 8,
+    paddingHorizontal: 10, paddingVertical: 6, marginTop: 8,
   },
   bookingBannerCtaText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
 
