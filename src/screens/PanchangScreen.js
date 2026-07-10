@@ -137,11 +137,13 @@ setTimeout(function(){
 },300);
 `;
 
-// festival/remembrance photos (আজকের বিশেষ দিন, এই মাসের উৎসব ইত্যাদি) এবং কিছু
-// স্ট্যাটিক আইকন (গণেশ, প্রোফাইল ছবি) root-relative "/gallery/..." পাথ দিয়ে
-// রেফারেন্স করা — file:// বান্ডেলে এগুলো কখনোই রিজলভ হয় না। এত রকম ছবি (প্রতি
-// উৎসব/ঐতিহাসিক ব্যক্তির আলাদা ছবি) সব base64 করে বান্ডেলে গুঁজে দেওয়ার বদলে
-// লাইভ CDN থেকে লোড করাই ভালো — ডিভাইসে ইন্টারনেট থাকলে সব ছবি ঠিকভাবে আসবে।
+// festival/remembrance photos (আজকের বিশেষ দিন, এই মাসের উৎসব ইত্যাদি), কিছু
+// স্ট্যাটিক আইকন (গণেশ, প্রোফাইল ছবি) এবং কিছু বাটন (যেমন "শুভ সময় নির্ধারণের
+// গাইড"-এর বুকিং বাটন) root-relative "/gallery/...", "/images/..." বা
+// "/booking.html"-এর মতো পাথ দিয়ে রেফারেন্স করা — file:// বান্ডেলে এগুলো
+// কখনোই রিজলভ হয় না (লিংকে ট্যাপ করলে net::ERR_FILE_NOT_FOUND)। এত রকম ছবি
+// (প্রতি উৎসব/ঐতিহাসিক ব্যক্তির আলাদা ছবি) সব base64 করে বান্ডেলে গুঁজে দেওয়ার
+// বদলে লাইভ CDN/পেজ থেকে লোড করাই ভালো — ডিভাইসে ইন্টারনেট থাকলে সব ঠিকভাবে আসবে।
 const FIX_IMAGES_JS = `
 (function(){
   function fix(){
@@ -150,6 +152,11 @@ const FIX_IMAGES_JS = `
     for(var i=0;i<imgs.length;i++){
       var raw=imgs[i].getAttribute('src');
       imgs[i].setAttribute('src','https://myastrology.in'+raw);
+    }
+    var links=document.querySelectorAll('a[href^="/"]:not([href^="//"])');
+    for(var j=0;j<links.length;j++){
+      var rawH=links[j].getAttribute('href');
+      links[j].setAttribute('href','https://myastrology.in'+rawH);
     }
   }
   fix();
