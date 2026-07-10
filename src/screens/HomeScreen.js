@@ -595,9 +595,9 @@ const s = StyleSheet.create({
   rashiChipLabel: { ...typography.body, fontSize: 13 },
 
   /* পরামর্শ বুকিং ব্যানার */
-  bookingBannerWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
+  bookingBannerWrap: { marginHorizontal: spacing.md, marginTop: 10, marginBottom: 2 },
   bookingBanner: {
-    height: 80, borderRadius: radii.lg, overflow: 'hidden',
+    height: 72, borderRadius: radii.lg, overflow: 'hidden',
     ...shadows.raised,
   },
   bookingBannerImg: { height: '100%', aspectRatio: 1896 / 353 },
@@ -610,7 +610,7 @@ const s = StyleSheet.create({
   bookingBannerCta: {
     flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start',
     backgroundColor: colors.gold, borderRadius: radii.pill,
-    paddingHorizontal: 9, paddingVertical: 4, marginTop: 5, marginLeft: 26,
+    paddingHorizontal: 9, paddingVertical: 4, marginTop: 5, marginLeft: 48,
   },
   bookingBannerCtaText: { ...typography.label, fontSize: 9.5, color: colors.text, fontWeight: '700' },
 
