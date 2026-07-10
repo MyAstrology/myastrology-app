@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image, Modal, ImageBackground,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
@@ -38,6 +39,12 @@ const RASHI_IMAGES = [
   require('../assets/rashi/pisces.png'),
 ];
 const HERO_BG = require('../../assets/panchang-hero-bg.webp');
+// RASHI_NAMES (UserContext.js)-এর একই ক্রমে (মেষ→মীন) ইংরেজি নাম — "আমার রাশি"
+// গ্র্যাডিয়েন্ট কার্ডে বাংলা নামের নিচে ছোট করে দেখানোর জন্য।
+const ENGLISH_RASHI_NAMES = [
+  'Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+  'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces',
+];
 const BLOG_LIST_URL = 'https://myastrology.in/src/content/blog/list.json';
 const formatBlogDate = (iso) => {
   const [y, m, d] = (iso || '').split('-').map(Number);
@@ -60,57 +67,99 @@ function PanchangCell({ icon, label, value, timeStart, timeEnd }) {
   );
 }
 
-function MuhurtaRow({ icon, label, sub, time, tone, isLast }) {
-  const bad = tone === 'bad';
+// আজকের শুভ-অশুভ সময়ের চিপ — সবুজ (good) বা লালচে-গোলাপি (bad) ব্যাজ,
+// horizontal scroll-এ পাশাপাশি (রেফারেন্স ডিজাইনের pill-row অনুযায়ী)
+function MuhurtaChip({ icon, label, time, tone }) {
+  const good = tone === 'good';
   return (
-    <View style={[s.muhurtaRow, !isLast && s.muhurtaRowDivider]}>
-      <View style={[s.muhurtaIconWrap, bad ? s.muhurtaIconWrapBad : s.muhurtaIconWrapGood]}>
-        <MaterialCommunityIcons name={icon} size={13} color={bad ? '#B71C1C' : '#2E7D32'} />
-      </View>
-      <View style={s.muhurtaTextWrap}>
-        <Text style={s.muhurtaLabel}>{label}</Text>
-        <Text style={[s.muhurtaSub, { color: bad ? '#B71C1C' : '#2E7D32' }]}>{sub}</Text>
-      </View>
-      <Text style={s.muhurtaTime}>{time}</Text>
+    <View style={[s.muhurtaChip, good ? s.muhurtaChipGood : s.muhurtaChipBad]}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={15}
+        color={good ? '#2E7D32' : '#B71C1C'}
+        style={{ marginBottom: 3 }}
+      />
+      <Text style={[s.muhurtaChipLabel, { color: good ? '#2E7D32' : '#B71C1C' }]} numberOfLines={1}>{label}</Text>
+      <Text style={s.muhurtaChipTime} numberOfLines={1}>{time}</Text>
     </View>
   );
 }
 
-const RASHI_CATS = [
-  { key: 'love',    icon: '💕', label: 'প্রেম' },
-  { key: 'work',    icon: '💼', label: 'কর্ম' },
-  { key: 'health',  icon: '❤️‍🩹', label: 'স্বাস্থ্য' },
-  { key: 'finance', icon: '💰', label: 'অর্থ' },
+// "আজকের ব্যক্তিগত ভবিষ্যৎ" কার্ডের ২×২ গ্রিড — প্রেম/স্বাস্থ্য উপরের সারিতে,
+// চাকরি/অর্থ নিচের সারিতে (রেফারেন্স ডিজাইনের ক্রম অনুযায়ী)
+const FORECAST_CATS = [
+  { key: 'love',    icon: 'heart',            label: 'প্রেম'   },
+  { key: 'health',  icon: 'leaf',             label: 'স্বাস্থ্য' },
+  { key: 'work',    icon: 'briefcase-outline',label: 'চাকরি'   },
+  { key: 'finance', icon: 'cash-multiple',    label: 'অর্থ'    },
 ];
 
-function RashiLuckyCard({ rashiIdx, score, onChangePress, onRashifalPress }) {
+function StarRow({ score }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 1 }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <MaterialCommunityIcons
+          key={i}
+          name={i <= score ? 'star' : 'star-outline'}
+          size={11}
+          color={i <= score ? colors.gold : colors.cardBorder}
+        />
+      ))}
+    </View>
+  );
+}
+
+// "আমার রাশি" সেকশন — বাঁয়ে গাঢ় গ্র্যাডিয়েন্ট হিরো কার্ড (রাশির ছবি + নাম),
+// ডানে সাদা "আজকের ব্যক্তিগত ভবিষ্যৎ" কার্ড (প্রেম/স্বাস্থ্য/চাকরি/অর্থ রেটিং)
+function RashiHeroRow({ rashiIdx, score, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
-    <View style={s.rashiCard}>
-      <Pressable onPress={onChangePress} style={[s.rashiAvatar, { backgroundColor: lucky.color + '22' }]}>
-        <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiAvatarImg} resizeMode="contain" />
-      </Pressable>
-      <View style={{ flex: 1 }}>
-        <Text style={s.rashiName}>{RASHI_NAMES[rashiIdx]} রাশি</Text>
+    <View style={s.heroRow}>
+      <LinearGradient
+        colors={[colors.text, '#4A3510']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={s.rashiGradCard}
+      >
+        <View style={s.rashiGradImgWrap}>
+          <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiGradImg} resizeMode="contain" />
+        </View>
+        <Text style={s.rashiGradName}>{RASHI_NAMES[rashiIdx]}</Text>
+        <Text style={s.rashiGradEn}>{ENGLISH_RASHI_NAMES[rashiIdx]}</Text>
+        <Pressable onPress={onChangePress} style={s.rashiGradBtn}>
+          <Text style={s.rashiGradBtnText}>পরিবর্তন করুন</Text>
+          <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
+        </Pressable>
+      </LinearGradient>
+
+      <View style={s.forecastCard}>
+        <Text style={s.forecastTitle} numberOfLines={1}>আজকের ব্যক্তিগত ভবিষ্যৎ</Text>
         {score ? (
-          <View style={s.rashiCatRow}>
-            {RASHI_CATS.map(cat => (
-              <Text key={cat.key} style={s.rashiCatItem}>
-                {cat.icon} {toBN(score[cat.key])}/{toBN(5)}
-              </Text>
-            ))}
-          </View>
+          <>
+            <View style={s.forecastGrid}>
+              {FORECAST_CATS.map(cat => (
+                <View key={cat.key} style={s.forecastCell}>
+                  <MaterialCommunityIcons name={cat.icon} size={13} color={colors.primary} />
+                  <Text style={s.forecastLabel}>{cat.label}</Text>
+                  <StarRow score={score[cat.key]} />
+                </View>
+              ))}
+            </View>
+            <Pressable onPress={onRashifalPress} style={s.forecastCta}>
+              <Text style={s.forecastCtaText} numberOfLines={1}>সম্পূর্ণ রাশিফল পড়ুন</Text>
+              <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
+            </Pressable>
+          </>
         ) : (
           <>
             <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
             <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
+            <Pressable onPress={onRashifalPress} style={s.forecastCta}>
+              <Text style={s.forecastCtaText} numberOfLines={1}>আজকের রাশিফল দেখুন</Text>
+              <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
+            </Pressable>
           </>
         )}
       </View>
-      <Pressable onPress={onRashifalPress} style={s.rashiCta}>
-        <Text style={s.rashiCtaText} numberOfLines={1}>আজকের রাশিফল</Text>
-        <MaterialCommunityIcons name="chevron-right" size={14} color={colors.primary} />
-      </Pressable>
     </View>
   );
 }
@@ -149,24 +198,29 @@ function BlogCard({ post, onPress }) {
   );
 }
 
-const BOOKING_TOPICS = [
-  { icon: '💍', color: '#D6577A', title: 'বিয়েতে বাধা বা দেরি হচ্ছে?',   sub: 'কুণ্ডলী মিলিয়ে জানুন বিয়ের যোগ ও প্রকৃত কারণ' },
-  { icon: '💼', color: '#3E7FC1', title: 'চাকরি বা প্রমোশন আটকে আছে?',    sub: 'কর্মজীবন বিশ্লেষণে জানুন সঠিক দিশা ও সময়' },
-  { icon: '💰', color: '#E08A3C', title: 'ব্যবসায় লোকসান বা স্থবিরতা?',   sub: 'জ্যোতিষ পরামর্শে বুঝুন ব্যবসার শুভ সময়' },
-  { icon: '💔', color: '#9457B0', title: 'সম্পর্কে অশান্তি বা ভুল বোঝাবুঝি?', sub: 'কুণ্ডলী মিলিয়ে জানুন সম্পর্কের চিত্র ও সমাধান' },
-  { icon: '🏠', color: '#4FA57A', title: 'বাড়ি বা অফিসে বারবার অশান্তি?', sub: 'বাস্তু পরামর্শে দূর করুন নেতিবাচক প্রভাব' },
-];
-
-function BookingCard({ topic, onPress }) {
+// একটামাত্র বড় গ্র্যাডিয়েন্ট promo ব্যানার — আগে ৫টা আলাদা টপিক-কার্ডের
+// horizontal scroll ছিল, রেফারেন্স ডিজাইন অনুযায়ী একটা প্রশস্ত CTA ব্যানারে
+// একত্র করা হলো (ব্যানারে চাপলে Booking স্ক্রিনেই যায়, কোনো ফিচার হারায়নি)।
+function BookingBanner({ onPress }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.bookingCard, { borderLeftColor: topic.color }, pressed && { opacity: 0.85 }]}>
-      <Text style={s.bookingIcon}>{topic.icon}</Text>
-      <Text style={s.bookingTitle} numberOfLines={2}>{topic.title}</Text>
-      <Text style={s.bookingSub} numberOfLines={2}>{topic.sub}</Text>
-      <View style={s.bookingCta}>
-        <Text style={[s.bookingCtaText, { color: topic.color }]}>পরামর্শ বুকিং করুন</Text>
-        <MaterialCommunityIcons name="arrow-right" size={13} color={topic.color} />
-      </View>
+    <Pressable onPress={onPress} style={({ pressed }) => [s.bookingBannerWrap, pressed && { opacity: 0.9 }]}>
+      <LinearGradient
+        colors={[colors.text, '#4A3510']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={s.bookingBanner}
+      >
+        <View style={s.bookingBannerIconWrap}>
+          <MaterialCommunityIcons name="hand-heart-outline" size={26} color={colors.gold} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={s.bookingBannerTitle}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
+          <Text style={s.bookingBannerSub}>অভিজ্ঞ জ্যোতিষীদের সাথে কথা বলুন</Text>
+        </View>
+        <View style={s.bookingBannerCta}>
+          <Text style={s.bookingBannerCtaText}>এখনই বুক করুন</Text>
+          <MaterialCommunityIcons name="arrow-right" size={13} color={colors.text} />
+        </View>
+      </LinearGradient>
     </Pressable>
   );
 }
@@ -257,9 +311,11 @@ export function HomeScreen() {
 
   const fmt = (slot) => `${slot.start} – ${slot.end}`;
   const muhurtaRows = [
-    data.rahuKala && { label: 'রাহুকাল',        sub: 'এড়িয়ে চলুন', icon: 'alert-octagon-outline', time: fmt(data.rahuKala), tone: 'bad'  },
-    data.gulika   && { label: 'গুলিক কাল',      sub: 'এড়িয়ে চলুন', icon: 'alert-outline',         time: fmt(data.gulika),   tone: 'bad'  },
-    data.abhijit  && { label: 'অভিজিৎ মুহূর্ত', sub: 'শুভ সময়',    icon: 'white-balance-sunny',   time: fmt(data.abhijit),  tone: 'good' },
+    data.abhijit  && { label: 'অভিজিৎ',    icon: 'white-balance-sunny',   time: fmt(data.abhijit),  tone: 'good' },
+    data.amritKal && { label: 'অমৃত কাল',  icon: 'water-check-outline',   time: fmt(data.amritKal), tone: 'good' },
+    data.rahuKala && { label: 'রাহুকাল',   icon: 'alert-octagon-outline', time: fmt(data.rahuKala), tone: 'bad'  },
+    data.gulika   && { label: 'গুলিক কাল', icon: 'alert-outline',         time: fmt(data.gulika),   tone: 'bad'  },
+    data.yamagnda && { label: 'যমঘণ্ট',    icon: 'alert-circle-outline',  time: fmt(data.yamagnda), tone: 'bad'  },
   ].filter(Boolean);
 
   return (
@@ -311,17 +367,16 @@ export function HomeScreen() {
         </View>
 
           {/* ── আমার রাশি ── */}
-          <View style={s.sectionRow}>
-            <Text style={s.sectionTitle}>আমার রাশি</Text>
-            <Pressable onPress={() => setRashiModal(true)}>
-              <Text style={s.sectionLink}>পরিবর্তন করুন</Text>
-            </Pressable>
-          </View>
+          {userRashi === null && (
+            <View style={s.sectionRow}>
+              <Text style={s.sectionTitle}>আমার রাশি</Text>
+            </View>
+          )}
           {userRashi !== null ? (
-            <RashiLuckyCard
+            <RashiHeroRow
               rashiIdx={userRashi}
               score={todayRashiScore}
-              onChangePress={() => setRashiModal(true)}
+              onChangePress={() => { haptics.tap(); setRashiModal(true); }}
               onRashifalPress={() => { haptics.tap(); navigation.navigate('RashifalDetail', { rashiIndex: userRashi }); }}
             />
           ) : (
@@ -355,11 +410,15 @@ export function HomeScreen() {
               <View style={s.sectionRow}>
                 <Text style={s.sectionTitle}>আজকের শুভ-অশুভ সময়</Text>
               </View>
-              <View style={s.muhurtaCard}>
-                {muhurtaRows.map((row, i) => (
-                  <MuhurtaRow key={row.label} {...row} isLast={i === muhurtaRows.length - 1} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.muhurtaRow}
+              >
+                {muhurtaRows.map(row => (
+                  <MuhurtaChip key={row.label} {...row} />
                 ))}
-              </View>
+              </ScrollView>
             </>
           )}
 
@@ -385,25 +444,7 @@ export function HomeScreen() {
           )}
 
           {/* ── পরামর্শ বুকিং ── */}
-          <View style={s.sectionRow}>
-            <Text style={s.sectionTitle}>আপনার সমস্যা কী?</Text>
-            <Pressable onPress={() => navigation.navigate('Booking')}>
-              <Text style={s.sectionLink}>সব দেখুন</Text>
-            </Pressable>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.bookingRow}
-          >
-            {BOOKING_TOPICS.map((topic, i) => (
-              <BookingCard
-                key={i}
-                topic={topic}
-                onPress={() => { haptics.tap(); navigation.navigate('Booking'); }}
-              />
-            ))}
-          </ScrollView>
+          <BookingBanner onPress={() => { haptics.tap(); navigation.navigate('Booking'); }} />
 
           {/* ── সাম্প্রতিক ব্লগ ── */}
           {blogPosts.length > 0 && (
@@ -491,27 +532,44 @@ const s = StyleSheet.create({
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
   sectionLink:  { ...typography.label, color: colors.gold },
 
-  /* আমার রাশি */
-  rashiCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
+  /* আমার রাশি — হিরো রো (গ্র্যাডিয়েন্ট কার্ড + forecast কার্ড) */
+  heroRow: {
+    flexDirection: 'row', gap: 8,
     marginHorizontal: spacing.md, marginBottom: 2,
-    backgroundColor: colors.card, borderRadius: radii.lg,
+  },
+  rashiGradCard: {
+    width: 130, borderRadius: radii.lg, padding: 12,
+    alignItems: 'center', ...shadows.raised,
+  },
+  rashiGradImgWrap: {
+    width: 56, height: 56, borderRadius: radii.pill, marginBottom: 6,
+    backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center',
+  },
+  rashiGradImg:  { width: 36, height: 36 },
+  rashiGradName: { ...typography.heading, fontSize: 16, color: colors.white },
+  rashiGradEn:   { ...typography.label, fontSize: 10, color: 'rgba(255,255,255,0.65)', marginBottom: 10 },
+  rashiGradBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: colors.gold, borderRadius: radii.pill,
+    paddingHorizontal: 10, paddingVertical: 6,
+  },
+  rashiGradBtnText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
+
+  forecastCard: {
+    flex: 1, backgroundColor: colors.card, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
-    paddingHorizontal: 12, paddingVertical: 9,
-    ...shadows.card,
+    padding: 12, ...shadows.card,
   },
-  rashiAvatar: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  rashiAvatarImg: { width: 28, height: 28 },
-  rashiName:   { ...typography.value, fontSize: 14, marginBottom: 3 },
+  forecastTitle: { ...typography.value, fontSize: 11.5, marginBottom: 8 },
+  forecastGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
+  forecastCell: { width: '50%', gap: 2 },
+  forecastLabel: { ...typography.label, fontSize: 10.5, color: colors.textSecondary, marginTop: 1 },
+  forecastCta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+    marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.divider,
+  },
+  forecastCtaText: { ...typography.label, fontSize: 10.5, color: colors.primary, fontWeight: '700' },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
-  rashiCatRow:  { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2, columnGap: 8 },
-  rashiCatItem: { ...typography.label, color: colors.textSecondary, fontSize: 11 },
-  rashiCta: {
-    flexDirection: 'row', alignItems: 'center', gap: 2,
-    backgroundColor: colors.goldWash, borderRadius: radii.pill,
-    paddingHorizontal: 10, paddingVertical: 7, maxWidth: 96,
-  },
-  rashiCtaText: { ...typography.label, fontSize: 10, color: colors.primary, fontWeight: '700' },
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -539,22 +597,26 @@ const s = StyleSheet.create({
   rashiChipDot:   { width: 10, height: 10, borderRadius: 5 },
   rashiChipLabel: { ...typography.body, fontSize: 13 },
 
-  /* সাম্প্রতিক ব্লগ */
-  bookingRow: { paddingHorizontal: spacing.md, gap: 8 },
-  bookingCard: {
-    width: 168, backgroundColor: colors.card, borderRadius: radii.lg,
-    borderWidth: 1, borderColor: colors.cardBorder, borderLeftWidth: 3,
-    padding: 12,
-    ...shadows.card,
+  /* পরামর্শ বুকিং ব্যানার */
+  bookingBannerWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
+  bookingBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: radii.lg, padding: 14,
+    ...shadows.raised,
   },
-  bookingIcon: { fontSize: 24, marginBottom: 6 },
-  bookingTitle: { ...typography.value, fontSize: 12.5, lineHeight: 16, height: 32 },
-  bookingSub: { ...typography.caption, color: colors.textSecondary, fontSize: 10.5, lineHeight: 13, height: 26, marginTop: 3 },
-  bookingCta: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.divider,
+  bookingBannerIconWrap: {
+    width: 44, height: 44, borderRadius: radii.md,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  bookingCtaText: { ...typography.label, color: colors.gold, fontSize: 11 },
+  bookingBannerTitle: { ...typography.value, fontSize: 13, color: colors.white, lineHeight: 17 },
+  bookingBannerSub:   { ...typography.label, fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  bookingBannerCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: colors.gold, borderRadius: radii.pill,
+    paddingHorizontal: 10, paddingVertical: 8,
+  },
+  bookingBannerCtaText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
 
   blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
@@ -566,26 +628,16 @@ const s = StyleSheet.create({
   blogTitle: { ...typography.value, fontSize: 11, lineHeight: 14, marginHorizontal: 7, marginTop: 6, height: 28 },
   blogDate:  { ...typography.caption, color: colors.textSecondary, marginHorizontal: 7, marginTop: 3, marginBottom: 6 },
 
-  /* আজকের শুভ-অশুভ সময় */
-  muhurtaCard: {
-    marginHorizontal: spacing.md, marginBottom: 2,
-    backgroundColor: colors.card, borderRadius: radii.lg,
-    borderWidth: 1, borderColor: colors.cardBorder,
-    paddingHorizontal: 14,
-    ...shadows.card,
+  /* আজকের শুভ-অশুভ সময় — pill চিপ, horizontal scroll */
+  muhurtaRow: { flexDirection: 'row', paddingHorizontal: spacing.md, gap: 8 },
+  muhurtaChip: {
+    width: 92, borderRadius: radii.lg, borderWidth: 1,
+    alignItems: 'center', paddingVertical: 10, paddingHorizontal: 6,
   },
-  muhurtaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-  muhurtaRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  muhurtaIconWrap: {
-    width: 24, height: 24, borderRadius: radii.sm,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  muhurtaIconWrapBad:  { backgroundColor: '#FCE4EC' },
-  muhurtaIconWrapGood: { backgroundColor: '#E8F5E9' },
-  muhurtaTextWrap: { flex: 1 },
-  muhurtaLabel: { ...typography.value, fontSize: 12 },
-  muhurtaSub:   { ...typography.caption, fontSize: 10, fontWeight: '600' },
-  muhurtaTime:  { ...typography.value, fontSize: 11, color: colors.textSecondary },
+  muhurtaChipGood: { backgroundColor: '#E8F5E9', borderColor: '#C8E6C9' },
+  muhurtaChipBad:  { backgroundColor: '#FCE4EC', borderColor: '#F8BBD0' },
+  muhurtaChipLabel: { ...typography.value, fontSize: 11, fontWeight: '700', marginBottom: 2 },
+  muhurtaChipTime:  { ...typography.label, fontSize: 9.5, color: colors.textSecondary },
 
   /* Quick Grid */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 8 },

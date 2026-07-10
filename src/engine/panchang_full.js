@@ -192,6 +192,15 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     }
   } catch (_) { /* keep the vsop87-based fallback computed above */ }
 
+  // অমৃত কাল — একই লাইভ পঞ্জিকা ইঞ্জিন থেকে; দিনে একাধিক স্লট থাকতে পারে,
+  // হোম স্ক্রিনে দেখানোর জন্য শুধু দিনের প্রথম (সবচেয়ে প্রাসঙ্গিক) স্লট নেওয়া হলো।
+  let amritKal = null;
+  try {
+    const dp = PEph.getDailyPanchang(dateStr, 12);
+    const slot = dp?.amritaMahendra?.amritaDay?.[0];
+    if (slot) amritKal = { start: slot.startStr, end: slot.endStr };
+  } catch (_) { /* অমৃত কাল না থাকলে সেই চিপ বাদ যাবে, ক্র্যাশ করবে না */ }
+
   const tIdx  = p.tithi.index;
   const paksha = tIdx < 15 ? 'শুক্লপক্ষ' : 'কৃষ্ণপক্ষ';
   const bnDate = getBengaliDate(dateStr);
@@ -244,6 +253,7 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     gulika,
     yamagnda,
     abhijit,
+    amritKal,
     brahmaM,
     varebela,
   };
