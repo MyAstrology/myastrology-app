@@ -18,6 +18,7 @@ import { BlogScreen }        from '../screens/BlogScreen';
 import { BookingScreen }     from '../screens/BookingScreen';
 import { PalmistryScreen }   from '../screens/PalmistryScreen';
 import { VastuScreen }       from '../screens/VastuScreen';
+import { LearningScreen }    from '../screens/LearningScreen';
 import { VedicAstrologyScreen } from '../screens/VedicAstrologyScreen';
 import { GemstoneScreen }    from '../screens/GemstoneScreen';
 import { VideoScreen }       from '../screens/VideoScreen';
@@ -119,6 +120,11 @@ export function BottomTabs() {
       <Tab.Screen
         name="Vastu"
         component={VastuScreen}
+        options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="Learning"
+        component={LearningScreen}
         options={{ tabBarItemStyle: { display: 'none' }, tabBarButton: () => null }}
       />
       <Tab.Screen

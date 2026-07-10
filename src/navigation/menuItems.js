@@ -38,6 +38,7 @@ export const MENU_ITEMS = [
   { tab: 'Palmistry',      icon: 'hand-back-right-outline', label: 'হস্তরেখা বিচার'  },
   { tab: 'Gemstone',       icon: 'diamond-stone',           label: 'রত্নপাথর পরামর্শ'},
   { tab: 'Vastu',          icon: 'home-city-outline',       label: 'বাস্তু শাস্ত্র'   },
+  { tab: 'Learning',       icon: 'school-outline',          label: 'জ্যোতিষ শিক্ষা'  },
   { tab: 'Blog',           icon: 'post-outline',            label: 'ব্লগ'            },
   { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           },
   { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   },

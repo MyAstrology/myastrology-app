@@ -25,6 +25,7 @@ const SECTIONS = [
       { label: 'প্রশ্ন জ্যোতিষ', icon: 'help-circle-outline',   screen: 'Prashna'     },
       { label: 'রত্নপাথর পরামর্শ', icon: 'diamond-stone',        screen: 'Gemstone'    },
       { label: 'বাস্তু শাস্ত্র', icon: 'home-city-outline',      screen: 'Vastu'       },
+      { label: 'জ্যোতিষ শিক্ষা', icon: 'school-outline',        screen: 'Learning'    },
       { label: 'ব্লগ',           icon: 'post-outline',           screen: 'Blog'        },
       { label: 'ভিডিও',          icon: 'youtube',                screen: 'Video'       },
     ],
