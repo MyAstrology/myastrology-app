@@ -595,21 +595,21 @@ const s = StyleSheet.create({
   /* পরামর্শ বুকিং ব্যানার */
   bookingBannerWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
   bookingBanner: {
-    height: 108, borderRadius: radii.lg, overflow: 'hidden',
+    height: 74, borderRadius: radii.lg, overflow: 'hidden',
     ...shadows.raised,
   },
   bookingBannerScrim: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', padding: 14,
+    flex: 1, flexDirection: 'row', alignItems: 'center', padding: 10,
   },
-  bookingBannerSpacer: { width: 96 },
-  bookingBannerTitle: { ...typography.value, fontSize: 13, color: colors.white, lineHeight: 17 },
-  bookingBannerSub:   { ...typography.label, fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2, lineHeight: 13 },
+  bookingBannerSpacer: { width: 88 },
+  bookingBannerTitle: { ...typography.value, fontSize: 11.5, color: colors.white, lineHeight: 14.5 },
+  bookingBannerSub:   { ...typography.label, fontSize: 9, color: 'rgba(255,255,255,0.75)', marginTop: 1, lineHeight: 11.5 },
   bookingBannerCta: {
     flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start',
     backgroundColor: colors.gold, borderRadius: radii.pill,
-    paddingHorizontal: 10, paddingVertical: 6, marginTop: 8,
+    paddingHorizontal: 9, paddingVertical: 4, marginTop: 5,
   },
-  bookingBannerCtaText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
+  bookingBannerCtaText: { ...typography.label, fontSize: 9.5, color: colors.text, fontWeight: '700' },
 
   blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
