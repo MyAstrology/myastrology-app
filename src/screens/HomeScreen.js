@@ -131,34 +131,51 @@ function BlogCard({ post, onPress }) {
 }
 
 const BOOKING_TOPICS = [
-  { icon: '💍', title: 'বিয়েতে বাধা বা দেরি হচ্ছে?',   sub: 'কুণ্ডলী মিলিয়ে জানুন বিয়ের যোগ ও প্রকৃত কারণ' },
-  { icon: '💼', title: 'চাকরি বা প্রমোশন আটকে আছে?',    sub: 'কর্মজীবন বিশ্লেষণে জানুন সঠিক দিশা ও সময়' },
-  { icon: '💰', title: 'ব্যবসায় লোকসান বা স্থবিরতা?',   sub: 'জ্যোতিষ পরামর্শে বুঝুন ব্যবসার শুভ সময়' },
-  { icon: '💔', title: 'সম্পর্কে অশান্তি বা ভুল বোঝাবুঝি?', sub: 'কুণ্ডলী মিলিয়ে জানুন সম্পর্কের চিত্র ও সমাধান' },
-  { icon: '🏠', title: 'বাড়ি বা অফিসে বারবার অশান্তি?', sub: 'বাস্তু পরামর্শে দূর করুন নেতিবাচক প্রভাব' },
+  { icon: '💍', color: '#D6577A', title: 'বিয়েতে বাধা বা দেরি হচ্ছে?',   sub: 'কুণ্ডলী মিলিয়ে জানুন বিয়ের যোগ ও প্রকৃত কারণ' },
+  { icon: '💼', color: '#3E7FC1', title: 'চাকরি বা প্রমোশন আটকে আছে?',    sub: 'কর্মজীবন বিশ্লেষণে জানুন সঠিক দিশা ও সময়' },
+  { icon: '💰', color: '#E08A3C', title: 'ব্যবসায় লোকসান বা স্থবিরতা?',   sub: 'জ্যোতিষ পরামর্শে বুঝুন ব্যবসার শুভ সময়' },
+  { icon: '💔', color: '#9457B0', title: 'সম্পর্কে অশান্তি বা ভুল বোঝাবুঝি?', sub: 'কুণ্ডলী মিলিয়ে জানুন সম্পর্কের চিত্র ও সমাধান' },
+  { icon: '🏠', color: '#4FA57A', title: 'বাড়ি বা অফিসে বারবার অশান্তি?', sub: 'বাস্তু পরামর্শে দূর করুন নেতিবাচক প্রভাব' },
 ];
 
 function BookingCard({ topic, onPress }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.bookingCard, pressed && { opacity: 0.85 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [s.bookingCard, { borderLeftColor: topic.color }, pressed && { opacity: 0.85 }]}>
       <Text style={s.bookingIcon}>{topic.icon}</Text>
       <Text style={s.bookingTitle} numberOfLines={2}>{topic.title}</Text>
       <Text style={s.bookingSub} numberOfLines={2}>{topic.sub}</Text>
       <View style={s.bookingCta}>
-        <Text style={s.bookingCtaText}>পরামর্শ বুকিং করুন</Text>
-        <MaterialCommunityIcons name="arrow-right" size={13} color={colors.gold} />
+        <Text style={[s.bookingCtaText, { color: topic.color }]}>পরামর্শ বুকিং করুন</Text>
+        <MaterialCommunityIcons name="arrow-right" size={13} color={topic.color} />
       </View>
     </Pressable>
   );
 }
 
-function QuickTile({ icon, label, onPress }) {
+// শুধু হোম স্ক্রিনের quick-access গ্রিডের জন্য — প্রতিটা টাইলে আলাদা রঙ দিয়ে
+// গ্রিডটাকে আরও প্রাণবন্ত করা হচ্ছে, কিন্তু এই ম্যাপিং শুধু এই ফাইলেই সীমাবদ্ধ
+// রাখা হয়েছে যাতে drawer মেনু বা অন্য স্ক্রিনের (যেগুলো একই MENU_ITEMS শেয়ার
+// করে) সোনালি/আইভরি রঙের ধারাবাহিকতা অক্ষুণ্ণ থাকে।
+const QUICK_TILE_COLORS = {
+  Kundali:     '#6C63C7', // ইন্ডিগো
+  MatchMaking: '#D6577A', // গোলাপি
+  Panchang:    '#2E9E8F', // টিল
+  Numerology:  '#E08A3C', // কমলা
+  Rashifal:    '#3E7FC1', // আকাশি নীল
+  Namakaran:   '#4FA57A', // সবুজ
+  Prashna:     '#9457B0', // বেগুনি
+  Booking:     '#C1543D', // টেরাকোটা
+};
+
+function QuickTile({ icon, label, color, onPress }) {
   return (
     <Pressable
       onPress={() => { haptics.tap(); onPress(); }}
       style={({ pressed }) => [s.quickBtn, pressed && s.quickBtnPressed]}
     >
-      <MaterialCommunityIcons name={icon} size={22} color={colors.gold} />
+      <View style={[s.quickIconWrap, { backgroundColor: color + '1E' }]}>
+        <MaterialCommunityIcons name={icon} size={20} color={color} />
+      </View>
       <Text style={s.quickLabel} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
     </Pressable>
   );
@@ -300,6 +317,7 @@ export function HomeScreen() {
                 key={q.tab}
                 icon={q.icon}
                 label={q.label}
+                color={QUICK_TILE_COLORS[q.tab] || colors.gold}
                 onPress={() => navigation.navigate(q.tab)}
               />
             ))}
@@ -497,7 +515,8 @@ const s = StyleSheet.create({
   bookingRow: { paddingHorizontal: spacing.md, gap: 8 },
   bookingCard: {
     width: 168, backgroundColor: colors.card, borderRadius: radii.lg,
-    borderWidth: 1, borderColor: colors.cardBorder, padding: 12,
+    borderWidth: 1, borderColor: colors.cardBorder, borderLeftWidth: 3,
+    padding: 12,
     ...shadows.card,
   },
   bookingIcon: { fontSize: 24, marginBottom: 6 },
@@ -550,6 +569,10 @@ const s = StyleSheet.create({
   },
   quickBtnPressed: {
     backgroundColor: colors.goldWash, borderColor: colors.goldBorder, transform: [{ scale: 0.96 }],
+  },
+  quickIconWrap: {
+    width: 38, height: 38, borderRadius: radii.md,
+    alignItems: 'center', justifyContent: 'center',
   },
   quickLabel: { ...typography.label, fontSize: 11, color: colors.text, fontWeight: '600', textAlign: 'center' },
 
