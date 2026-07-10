@@ -22,7 +22,7 @@
     },
     "plugins": [
       "@react-native-google-signin/google-signin",
-      ["onesignal-expo-plugin", { "mode": "development" }],
+      ["onesignal-expo-plugin", { "mode": "production" }],
       ["expo-splash-screen", {
         "image": "./assets/splash.png",
         "imageWidth": 320,
