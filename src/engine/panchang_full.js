@@ -137,6 +137,20 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   try { p = v.getDailyPanchang(y, m, d, lat, lon); }
   catch (_) { return null; }
 
+  // যোগ ও করণ তিথি/নক্ষত্রের চেয়ে অনেক দ্রুত বদলায় (করণ প্রতি তিথিতেই
+  // দুইবার), তাই ওয়েবসাইটের পঞ্জিকা এই দুটোকে সবসময় "এই মুহূর্তে চলতি"
+  // মান দেখায় — সূর্যোদয়ের মান না (তিথি/নক্ষত্র সূর্যোদয়ের মানই দেখায়,
+  // যেটা p থেকে ইতিমধ্যে ঠিক আছে)। এখানেও তাই বর্তমান মুহূর্ত ব্যবহার করা
+  // হচ্ছে, যাতে হোম স্ক্রিন সবসময় ওয়েবসাইটের পঞ্জিকার সাথে মিলে যায়।
+  try {
+    const now   = new Date();
+    const ist   = new Date(now.getTime() + 5.5 * 3600000);
+    const nowJD = v.JD_IST(ist.getUTCFullYear(), ist.getUTCMonth() + 1, ist.getUTCDate(),
+                            ist.getUTCHours() + ist.getUTCMinutes() / 60 + ist.getUTCSeconds() / 3600);
+    p.yoga   = v.getYoga(nowJD);
+    p.karana = v.getKarana(nowJD);
+  } catch (_) { /* keep the sunrise-based yoga/karana computed above */ }
+
   const wd    = p.date.weekday;
   const riseH = parseHMS(p.sunrise);
   const setH  = parseHMS(p.sunset);
