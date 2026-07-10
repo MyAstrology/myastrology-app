@@ -327,6 +327,7 @@ export function PanchangScreen() {
   const insets     = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('today');
   const [menuOpen,  setMenuOpen]  = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false); // drives the "PDF তৈরি হচ্ছে…" overlay
   const pdfBusyRef   = useRef(false); // prevent double-tap while a PDF is being generated
   const pdfChunksRef = useRef([]);    // accumulates chunked HTML from window.print() override until complete
   const webViewRef   = useRef(null);  // shared across tabs — only one PjWebView is mounted at a time
@@ -348,6 +349,7 @@ export function PanchangScreen() {
     let msg;
     try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
     if (!msg || msg.type !== 'panjikaPdfChunk') return;
+    setPdfGenerating(true);
     pdfChunksRef.current[msg.i] = msg.chunk;
     if (Object.keys(pdfChunksRef.current).length < msg.total) return; // still waiting for more chunks
     const fullHtml = pdfChunksRef.current.join('');
@@ -392,6 +394,7 @@ export function PanchangScreen() {
       Alert.alert('ত্রুটি', 'PDF তৈরি করা যায়নি।');
     } finally {
       pdfBusyRef.current = false;
+      setPdfGenerating(false);
     }
   };
 
@@ -435,6 +438,15 @@ export function PanchangScreen() {
         {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS} />}
         {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD} onMessage={handleOldTabMessage} />}
       </View>
+
+      {/* ── PDF generation overlay — otherwise the wait (rendering a whole
+           year's calendar, then handing off to expo-print) looks frozen ── */}
+      {pdfGenerating && (
+        <View style={s.pdfOverlay}>
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={s.pdfOverlayText}>PDF তৈরি হচ্ছে…{'\n'}একটু অপেক্ষা করুন</Text>
+        </View>
+      )}
 
       {/* ── Drawer ── */}
       {menuOpen && (
@@ -503,6 +515,14 @@ const s = StyleSheet.create({
              fontFamily: 'NotoSerifBengali-Regular' },
 
   /* Drawer */
+  pdfOverlay: {
+    ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(20,14,4,0.72)', zIndex: 200,
+  },
+  pdfOverlayText: {
+    marginTop: 14, color: '#fff', fontSize: 15, textAlign: 'center', lineHeight: 22,
+    fontFamily: 'NotoSerifBengali-Regular',
+  },
   drawerOverlay: { ...StyleSheet.absoluteFillObject, flexDirection: 'row-reverse', zIndex: 100 },
   drawer: {
     width: '75%', backgroundColor: colors.card,

@@ -385,6 +385,7 @@ export function KundaliScreen() {
   const [menuOpen, setMenuOpen]           = useState(false);
   const [webCanGoBack, setWebCanGoBack]   = useState(false);
   const [pdfRenderState, setPdfRenderState] = useState(null); // { printData: string }
+  const [pdfGenerating, setPdfGenerating]   = useState(false); // drives the "PDF তৈরি হচ্ছে…" overlay
   const webViewRef    = useRef(null);
   const pdfWebViewRef = useRef(null);
   const pdfBusyRef    = useRef(false); // prevent double-tap
@@ -473,6 +474,7 @@ export function KundaliScreen() {
                   }
                   if (pdfBusyRef.current) return;
                   pdfBusyRef.current = true;
+                  setPdfGenerating(true);
                   // Trigger the hidden WebView to render kundali-print.html with
                   // real JavaScript. After rendering we capture the static DOM and
                   // hand it to expo-print — no scripts needed at print time.
@@ -544,6 +546,7 @@ export function KundaliScreen() {
               setPdfRenderState(null);
               pdfBusyRef.current = false;
               const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
+              setPdfGenerating(false);
               haptics.success();
               Alert.alert(
                 'PDF তৈরি হয়েছে',
@@ -583,9 +586,19 @@ export function KundaliScreen() {
               haptics.error();
               setPdfRenderState(null);
               pdfBusyRef.current = false;
+              setPdfGenerating(false);
             }
           }}
         />
+      )}
+
+      {/* ── PDF generation overlay — otherwise the wait (rendering 70+ pages,
+           then handing off to expo-print) looks like the app has frozen ── */}
+      {pdfGenerating && (
+        <View style={s.pdfOverlay}>
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={s.pdfOverlayText}>PDF তৈরি হচ্ছে…{'\n'}একটু অপেক্ষা করুন</Text>
+        </View>
       )}
 
       {/* ── Drawer ── */}
@@ -640,6 +653,14 @@ const s = StyleSheet.create({
   wv:        { flex: 1 },
   /* Off-screen hidden WebView for PDF rendering — real JS execution */
   pdfRenderer: { position: 'absolute', left: -9999, top: -9999, width: 1, height: 1, opacity: 0 },
+  pdfOverlay: {
+    ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(20,14,4,0.72)', zIndex: 200,
+  },
+  pdfOverlayText: {
+    marginTop: 14, color: '#fff', fontSize: 15, textAlign: 'center', lineHeight: 22,
+    fontFamily: 'NotoSerifBengali-Regular',
+  },
   loadCenter: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.background,
