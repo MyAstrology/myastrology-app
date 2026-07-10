@@ -13,7 +13,7 @@ import * as Sharing from 'expo-sharing';
 import PANJIKA_HTML from '../web-html/panjika';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { MENU_ITEMS } from '../navigation/menuItems';
+import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { RASHI_SIGNS } from '../data/rashifalSigns';
 
@@ -471,7 +471,7 @@ export function PanchangScreen() {
               <TouchableOpacity key={item.tab} style={s.menuItem}
                 onPress={() => { setMenuOpen(false); navigation.navigate(item.tab); }}
                 activeOpacity={0.7}>
-                <MaterialCommunityIcons name={item.icon} size={20} color={colors.primary} />
+                <MenuIcon tab={item.tab} icon={item.icon} size={20} color={colors.primary} />
                 <Text style={s.menuLabel}>{item.label}</Text>
                 <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
               </TouchableOpacity>

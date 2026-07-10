@@ -14,7 +14,7 @@ import KUNDALI_HTML from '../web-html/kundali';
 import KUNDALI_PRINT_HTML from '../web-html/kundali-print';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { MENU_ITEMS } from '../navigation/menuItems';
+import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 
 const LOGO = require('../../assets/logo.png');
@@ -617,7 +617,7 @@ export function KundaliScreen() {
               <TouchableOpacity key={item.tab} style={s.menuItem}
                 onPress={() => { setMenuOpen(false); navigation.navigate(item.tab); }}
                 activeOpacity={0.7}>
-                <MaterialCommunityIcons name={item.icon} size={20} color={colors.primary} />
+                <MenuIcon tab={item.tab} icon={item.icon} size={20} color={colors.primary} />
                 <Text style={s.menuLabel}>{item.label}</Text>
                 <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
               </TouchableOpacity>

@@ -1,3 +1,20 @@
+import React from 'react';
+import { Image } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+// কুণ্ডলীর জন্য MaterialCommunityIcons-এর গোল "chart-donut"-এর বদলে আসল বৈদিক
+// কুণ্ডলী ছকের (বর্গ + কোণাকুণি + মাঝের রম্বস) কাস্টম আইকন — react-native-svg
+// নতুন native dependency (আরেকটা dev-client rebuild) এড়াতে PNG হিসেবে বসানো,
+// tintColor দিয়ে অন্য আইকনগুলোর মতোই যেকোনো রঙে দেখানো যায়।
+const KUNDALI_ICON = require('../../assets/kundali-icon.png');
+
+export function MenuIcon({ tab, icon, size = 20, color }) {
+  if (tab === 'Kundali') {
+    return <Image source={KUNDALI_ICON} style={{ width: size, height: size, tintColor: color }} resizeMode="contain" />;
+  }
+  return <MaterialCommunityIcons name={icon} size={size} color={color} />;
+}
+
 // হ্যামবার্গার মেনু ও হোম স্ক্রিনের quick-access গ্রিডে ব্যবহৃত একমাত্র সোর্স —
 // আগে AppHeader.js, HomeScreen.js, PanchangScreen.js, KundaliScreen.js প্রতিটা
 // নিজের একটা করে হার্ডকোডেড কপি রাখত, যেগুলো এই সেশনে যোগ হওয়া নতুন স্ক্রিন

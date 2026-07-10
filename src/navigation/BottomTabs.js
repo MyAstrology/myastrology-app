@@ -25,9 +25,14 @@ import { SettingsScreen }    from '../screens/SettingsScreen';
 import { AdminScreen }       from '../screens/AdminScreen';
 import { AboutAstrologerScreen } from '../screens/AboutAstrologerScreen';
 import { colors } from '../theme/colors';
+import { MenuIcon } from './menuItems';
 
 const Tab = createBottomTabNavigator();
 const ico = name => ({ color, size }) => <MaterialCommunityIcons name={name} size={size} color={color} />;
+// কুণ্ডলী ট্যাবের কাস্টম আইকনের জন্য — MenuIcon-এর 'tab' প্যারামিটার দিয়ে
+// 'chart-donut'-এর বদলে বৈদিক কুণ্ডলী ছকের ছবি দেখায়, বাকি সব ট্যাবে
+// MaterialCommunityIcons-ই থাকে (icoMenu-এর 'icon' নাম উপেক্ষা করে)।
+const icoMenu = tab => ({ color, size }) => <MenuIcon tab={tab} size={size} color={color} />;
 
 export function BottomTabs() {
   const insets = useSafeAreaInsets();
@@ -57,7 +62,7 @@ export function BottomTabs() {
       <Tab.Screen name="Home"     component={HomeScreen}     options={{ tabBarLabel: 'হোম',     tabBarIcon: ico('home-variant')           }} />
       <Tab.Screen name="Panchang" component={PanchangScreen} options={{ tabBarLabel: 'পঞ্জিকা', tabBarIcon: ico('calendar-month')         }} />
       <Tab.Screen name="Rashifal" component={RashifalScreen} options={{ tabBarLabel: 'রাশিফল',  tabBarIcon: ico('star-circle')            }} />
-      <Tab.Screen name="Kundali"  component={KundaliScreen}  options={{ tabBarLabel: 'কুণ্ডলী', tabBarIcon: ico('chart-donut')            }} />
+      <Tab.Screen name="Kundali"  component={KundaliScreen}  options={{ tabBarLabel: 'কুণ্ডলী', tabBarIcon: icoMenu('Kundali')             }} />
       <Tab.Screen name="More"     component={MoreScreen}     options={{ tabBarLabel: 'আরও',     tabBarIcon: ico('dots-horizontal-circle') }} />
 
       {/* Hidden screens — navigable from MoreScreen / hamburger menu */}

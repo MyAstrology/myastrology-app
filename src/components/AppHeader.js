@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { MENU_ITEMS } from '../navigation/menuItems';
+import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -47,7 +47,7 @@ export function AppHeader() {
                 onPress={() => { setMenuOpen(false); navigation.navigate(item.tab); }}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons name={item.icon} size={20} color={colors.primary} />
+                <MenuIcon tab={item.tab} icon={item.icon} size={20} color={colors.primary} />
                 <Text style={s.menuLabel}>{item.label}</Text>
                 <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
               </TouchableOpacity>

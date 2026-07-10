@@ -10,7 +10,7 @@ import { getTodayRashifal } from '../engine/rashifal';
 import { getFestivalsForMonth } from '../engine/bengali_festivals';
 import PANJIKA_IMAGES from '../engine/panjika-images';
 import { useUser, RashiLucky, RASHI_NAMES } from '../context/UserContext';
-import { QUICK_ACCESS_ITEMS } from '../navigation/menuItems';
+import { QUICK_ACCESS_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { radii } from '../theme/radii';
@@ -186,14 +186,14 @@ const QUICK_TILE_COLORS = {
   Booking:     '#C1543D', // টেরাকোটা
 };
 
-function QuickTile({ icon, label, color, onPress }) {
+function QuickTile({ tab, icon, label, color, onPress }) {
   return (
     <Pressable
       onPress={() => { haptics.tap(); onPress(); }}
       style={({ pressed }) => [s.quickBtn, pressed && s.quickBtnPressed]}
     >
       <View style={[s.quickIconWrap, { backgroundColor: color + '1E' }]}>
-        <MaterialCommunityIcons name={icon} size={20} color={color} />
+        <MenuIcon tab={tab} icon={icon} size={20} color={color} />
       </View>
       <Text style={s.quickLabel} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
     </Pressable>
@@ -340,6 +340,7 @@ export function HomeScreen() {
             {QUICK_ACCESS_ITEMS.map(q => (
               <QuickTile
                 key={q.tab}
+                tab={q.tab}
                 icon={q.icon}
                 label={q.label}
                 color={QUICK_TILE_COLORS[q.tab] || colors.gold}
