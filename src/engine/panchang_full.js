@@ -142,11 +142,12 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   // মান দেখায় — সূর্যোদয়ের মান না (তিথি/নক্ষত্র সূর্যোদয়ের মানই দেখায়,
   // যেটা p থেকে ইতিমধ্যে ঠিক আছে)। এখানেও তাই বর্তমান মুহূর্ত ব্যবহার করা
   // হচ্ছে, যাতে হোম স্ক্রিন সবসময় ওয়েবসাইটের পঞ্জিকার সাথে মিলে যায়।
+  let nowJD = null;
   try {
     const now   = new Date();
     const ist   = new Date(now.getTime() + 5.5 * 3600000);
-    const nowJD = v.JD_IST(ist.getUTCFullYear(), ist.getUTCMonth() + 1, ist.getUTCDate(),
-                            ist.getUTCHours() + ist.getUTCMinutes() / 60 + ist.getUTCSeconds() / 3600);
+    nowJD = v.JD_IST(ist.getUTCFullYear(), ist.getUTCMonth() + 1, ist.getUTCDate(),
+                      ist.getUTCHours() + ist.getUTCMinutes() / 60 + ist.getUTCSeconds() / 3600);
     p.yoga   = v.getYoga(nowJD);
     p.karana = v.getKarana(nowJD);
   } catch (_) { /* keep the sunrise-based yoga/karana computed above */ }
@@ -208,12 +209,19 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   // Compute slot start/end times via binary search
   const refJD = p.sunrise ? istStrToJD(y, m, d, p.sunrise)
                            : (v.JD(y, m, d) + 5.5 / 24 - 0.5 + 5 / 24);
+  // যোগ/করণ p.yoga.index ও p.karana.index-এ "বর্তমান মুহূর্তের" (nowJD) মান
+  // বসানো হয়েছে উপরে (সূর্যোদয়ের না) — তাই তাদের start/end খোঁজার রেফারেন্স
+  // JD-ও nowJD হতে হবে, refJD (সূর্যোদয়) না, নাহলে ভুল index-এর transition
+  // খুঁজে ভুল/অসংগত সময় দিতে পারে (করণ দিনে ~৪ বার বদলায় বলে সবচেয়ে ঝুঁকিপূর্ণ)।
+  const curJD = nowJD || refJD;
   const tSt = jdHM(findStartJD(v.getTithi,     refJD, tIdx));
   const tEn = jdHM(findEndJD  (v.getTithi,     refJD, tIdx));
   const nSt = jdHM(findStartJD(v.getNakshatra, refJD, p.nakshatra.index));
   const nEn = jdHM(findEndJD  (v.getNakshatra, refJD, p.nakshatra.index));
-  const ySt = jdHM(findStartJD(v.getYoga,      refJD, p.yoga.index));
-  const yEn = jdHM(findEndJD  (v.getYoga,      refJD, p.yoga.index));
+  const ySt = jdHM(findStartJD(v.getYoga,      curJD, p.yoga.index));
+  const yEn = jdHM(findEndJD  (v.getYoga,      curJD, p.yoga.index));
+  const kSt = jdHM(findStartJD(v.getKarana,    curJD, p.karana.index));
+  const kEn = jdHM(findEndJD  (v.getKarana,    curJD, p.karana.index));
 
   const ay      = p.ayanamsa || 0;
   const ayDeg   = Math.floor(ay);
@@ -232,6 +240,7 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     tithiStart:     tSt,  tithiEnd:     tEn,
     nakshatraStart: nSt,  nakshatraEnd: nEn,
     yogaStart:      ySt,  yogaEnd:      yEn,
+    karanaStart:    kSt,  karanaEnd:    kEn,
     sunrise:  p.sunrise  ? p.sunrise.substring(0,5)  : '—',
     sunset:   p.sunset   ? p.sunset.substring(0,5)   : '—',
     transit:  p.transit  ? p.transit.substring(0,5)  : '—',

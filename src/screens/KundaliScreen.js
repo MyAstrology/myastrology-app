@@ -103,9 +103,10 @@ section.k-wrap{display:none!important;}
 .premium-promo{display:none!important;}
 /* ── ফুটার — সম্পূর্ণ লুকানোর বদলে শুধু ব্র্যান্ড/ফোন লাইনটা রাখা হচ্ছে (bundle-
    web-assets.js-এর একই compact-footer রুল, ফর্মের নিচে ফাঁকা জায়গা এড়াতে) ── */
-.site-footer:not(:has(.fg)){display:block!important;}
+.site-footer:not(:has(.fg)){display:block!important;background:#FAF8F3!important;color:#6b5a42!important;}
 .site-footer:not(:has(.fg)) > div:nth-child(n+2){display:none!important;}
 .site-footer:has(.fg),footer:not(.site-footer){display:none!important;}
+.site-footer:not(:has(.fg)) > div:first-child > div:nth-child(2){color:#3a2218!important;}
 /* ── Page base + scroll ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
 body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-y:auto!important;overflow-x:hidden!important;max-width:100vw!important;}

@@ -363,7 +363,8 @@ export function HomeScreen() {
                   timeStart={data.nakshatraStart} timeEnd={data.nakshatraEnd} />
                 <PanchangCell icon="infinity"        label="যোগ"      value={data.yoga}
                   timeStart={data.yogaStart} timeEnd={data.yogaEnd} />
-                <PanchangCell icon="hexagon-outline" label="করণ"      value={data.karana} />
+                <PanchangCell icon="hexagon-outline" label="করণ"      value={data.karana}
+                  timeStart={data.karanaStart} timeEnd={data.karanaEnd} />
               </View>
               <View style={s.cardDivider} />
               <View style={s.cellGrid2}>
@@ -609,7 +610,7 @@ const s = StyleSheet.create({
   bookingBannerCta: {
     flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start',
     backgroundColor: colors.gold, borderRadius: radii.pill,
-    paddingHorizontal: 9, paddingVertical: 4, marginTop: 5, marginLeft: 10,
+    paddingHorizontal: 9, paddingVertical: 4, marginTop: 5, marginLeft: 26,
   },
   bookingBannerCtaText: { ...typography.label, fontSize: 9.5, color: colors.text, fontWeight: '700' },
 
