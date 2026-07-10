@@ -194,9 +194,13 @@ export function getKundali(dateStr, timeStr, lat = DEFAULT_LAT, lon = DEFAULT_LO
     const [srH, srM] = panchang.sunrise.split(':').map(Number);
     if (h_ist < srH + (srM || 0) / 60) weekdayNum = (weekdayNum + 6) % 7;
   }
-  const tithiIdx   = panchang.tithi.index;
+  // তিথি/যোগ/করণ জন্মের ঠিক মুহূর্তে (jd) গণনা করা হচ্ছে, panchang-এর
+  // সূর্যোদয়-ভিত্তিক মান দিয়ে না — নক্ষত্রের মতোই (নিচে moonNakIdx দেখুন),
+  // কারণ এই তিনটে একদিনে একাধিকবার বদলায় (করণ তো দিনে ৪ বার) এবং
+  // সূর্যোদয়-ভিত্তিক মান রাতের জন্মের ক্ষেত্রে সম্পূর্ণ ভুল করণ/যোগ দিচ্ছিল।
+  const tithiIdx   = v.getTithi(jd).index;
   const paksha     = tithiIdx < 15 ? 'শুক্লপক্ষ' : 'কৃষ্ণপক্ষ';
-  const yogaIdx    = panchang.yoga.index;
+  const yogaIdx    = v.getYoga(jd).index;
 
   // জন্ম নক্ষত্র (জন্মসময় অনুযায়ী)
   const birthNak   = v.getNakshatra(jd);
@@ -236,7 +240,7 @@ export function getKundali(dateStr, timeStr, lat = DEFAULT_LAT, lon = DEFAULT_LO
     pada:       birthNak.pada,
     padaName:   PADA_NAMES[birthNak.pada - 1]    || '',
     yoga:       YOGA_NAMES[yogaIdx]              || '—',
-    karana:     panchang.karana?.name            || '—',
+    karana:     v.getKarana(jd)?.name            || '—',
     janmaRashi: RASHI_NAMES[panchang.janmaRashi] || '—',
     ayanamsa:   `${ayDeg}°${String(ayMin).padStart(2,'0')}'${String(aySec).padStart(2,'0')}"`,
     sunrise:    panchang.sunrise  ? panchang.sunrise.substring(0,5)  : '—',
