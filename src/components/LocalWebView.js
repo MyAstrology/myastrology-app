@@ -212,6 +212,21 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   // onLoadEnd below re-injects it after every navigation, not just the first.
   const fullInjectedJS = (injectedJS || '') + '\n' + RESULTS_TRACKER_JS;
 
+  // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
+  // Vastu/Palmistry/...) এর মানে হলো ওয়েবসাইটের নিজস্ব header/nav/footer-সহ
+  // পুরো পেজ একবার "flash" হয়ে দেখা যায়, তারপর app CSS বসে সেগুলো লুকায়।
+  // injectedJavaScriptBeforeContentLoaded দিয়ে একই স্ক্রিপ্ট পেজের নিজস্ব
+  // রেন্ডার শুরুর আগেই চালানো হচ্ছে — document.head তখনও নাও থাকতে পারে বলে
+  // requestAnimationFrame দিয়ে অপেক্ষা করা হচ্ছে (bundled পেজে CSS আগে থেকেই
+  // HTML-এ বসানো থাকে বলে ওখানে এটা নিছক অতিরিক্ত সুরক্ষা, ক্ষতি নেই)।
+  const earlyInjectedJS = `(function(){
+    function run(){
+      if(!document.head){requestAnimationFrame(run);return;}
+      ${fullInjectedJS}
+    }
+    run();
+  })();true;`;
+
   return (
     <WebView
       ref={webViewRef}
@@ -235,6 +250,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       onNavigationStateChange={(state) => { canGoBackRef.current = state.canGoBack; }}
       onMessage={handleMessage}
       onShouldStartLoadWithRequest={handleNavRequest}
+      injectedJavaScriptBeforeContentLoaded={earlyInjectedJS}
       injectedJavaScript={fullInjectedJS}
       onLoadEnd={() => { webViewRef.current?.injectJavaScript(fullInjectedJS); }}
       renderLoading={() => (

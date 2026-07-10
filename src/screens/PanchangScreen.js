@@ -276,6 +276,26 @@ const JS_CALENDAR = makeJS('mas', CAL_CSS, HIDE_RASHI_PARENTS_JS);
 const JS_EVENTS   = makeJS('mas', EVENTS_CSS, HIDE_RASHI_PARENTS_JS);
 const JS_OLD      = makeJS('pura', '', YEARLY_PDF_JS);
 
+// injectedJavaScript (উপরের makeJS) পেজ লোড শেষ হওয়ার পরে চলে বলে, ততক্ষণে
+// ওয়েবসাইটের নিজস্ব header/nav/tab-bar-সহ পুরো পেজ একবার "flash" হয়ে দেখা
+// যায় — সেটা এড়াতে শুধু বেস CSS-টুকু (ট্যাব-নির্দিষ্ট CAL_CSS/EVENTS_CSS বাদে,
+// যেগুলো এই পর্যায়ে থাকা DOM-নির্ভর) পেজের নিজস্ব রেন্ডার শুরুর আগেই বসানো
+// হচ্ছে। document.head তখনও নাও থাকতে পারে বলে requestAnimationFrame দিয়ে
+// অপেক্ষা করা হচ্ছে।
+function buildEarlyCSS(css) {
+  return `(function(){
+  function inject(){
+    if(!document.head){requestAnimationFrame(inject);return;}
+    var st=document.createElement('style');
+    st.id='__appNativeEarly__';
+    st.textContent=${JSON.stringify(css)};
+    document.head.appendChild(st);
+  }
+  inject();
+})();true;`;
+}
+const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
+
 // ── Shared WebView wrapper ────────────────────────────────────────────────────
 
 const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage }, ref) {
@@ -314,6 +334,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
       cacheEnabled={false}
       startInLoadingState={true}
       geolocationEnabled={true}
+      injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
       injectedJavaScript={injectedJavaScript}
       onMessage={onMessage}
       onShouldStartLoadWithRequest={handleNavRequest}

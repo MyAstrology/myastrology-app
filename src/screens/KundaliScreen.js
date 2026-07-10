@@ -381,6 +381,26 @@ function buildInjectedJS(css) {
 
 const INJECTED_JS = buildInjectedJS(APP_CSS);
 
+// injectedJavaScript (উপরের INJECTED_JS) পেজ লোড হওয়ার পরে চলে, ততক্ষণে
+// ওয়েবসাইটের নিজস্ব (ডেস্কটপ-সাইট) স্টাইলে header/nav/footer-সহ পুরো পেজ
+// একবার "flash" হয়ে দেখা যায়, তারপর CSS বসে ঠিক হয় — এই ভাঙা-দেখানো মুহূর্তটা
+// এড়াতে শুধু CSS-টুকু আলাদাভাবে injectedJavaScriptBeforeContentLoaded দিয়ে
+// পেজের নিজস্ব স্ক্রিপ্ট/রেন্ডার শুরুর আগেই বসানো হচ্ছে। document.head তখনও
+// নাও থাকতে পারে বলে requestAnimationFrame দিয়ে অপেক্ষা করা হচ্ছে।
+function buildEarlyCSS(css) {
+  return `(function(){
+  function inject(){
+    if(!document.head){requestAnimationFrame(inject);return;}
+    var st=document.createElement('style');
+    st.id='__kNativeEarly__';
+    st.textContent=${JSON.stringify(css)};
+    document.head.appendChild(st);
+  }
+  inject();
+})();true;`;
+}
+const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export function KundaliScreen() {
@@ -464,6 +484,7 @@ export function KundaliScreen() {
             startInLoadingState={true}
             geolocationEnabled={true}
             scrollEnabled={true}
+            injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
             injectedJavaScript={INJECTED_JS}
             onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
             onShouldStartLoadWithRequest={req => {
