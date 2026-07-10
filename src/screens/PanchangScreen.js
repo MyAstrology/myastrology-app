@@ -92,7 +92,7 @@ body{
   -webkit-overflow-scrolling:touch!important;
 }
 main{
-  padding:0 0 80px 0!important;margin:0!important;
+  padding:0!important;margin:0!important;
   height:auto!important;overflow-y:visible!important;
   -webkit-overflow-scrolling:touch!important;
 }
