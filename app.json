@@ -30,7 +30,8 @@
         "backgroundColor": "#FEFAF2"
       }],
       "./plugins/withGradleMemory.js",
-      "./plugins/withFixReactGradleProps.js"
+      "./plugins/withFixReactGradleProps.js",
+      "./plugins/withFixUserLeaveHintCrash.js"
     ],
     "extra": {
       "eas": {
