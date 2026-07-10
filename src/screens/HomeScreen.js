@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
+import { getTodayRashifal } from '../engine/rashifal';
 import { getFestivalsForMonth } from '../engine/bengali_festivals';
 import PANJIKA_IMAGES from '../engine/panjika-images';
 import { useUser, RashiLucky, RASHI_NAMES } from '../context/UserContext';
@@ -75,7 +76,14 @@ function MuhurtaRow({ icon, label, sub, time, tone, isLast }) {
   );
 }
 
-function RashiLuckyCard({ rashiIdx, onChangePress, onRashifalPress }) {
+const RASHI_CATS = [
+  { key: 'love',    icon: '💕', label: 'প্রেম' },
+  { key: 'work',    icon: '💼', label: 'কর্ম' },
+  { key: 'health',  icon: '❤️‍🩹', label: 'স্বাস্থ্য' },
+  { key: 'finance', icon: '💰', label: 'অর্থ' },
+];
+
+function RashiLuckyCard({ rashiIdx, score, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
     <View style={s.rashiCard}>
@@ -84,8 +92,20 @@ function RashiLuckyCard({ rashiIdx, onChangePress, onRashifalPress }) {
       </Pressable>
       <View style={{ flex: 1 }}>
         <Text style={s.rashiName}>{RASHI_NAMES[rashiIdx]} রাশি</Text>
-        <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
-        <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
+        {score ? (
+          <View style={s.rashiCatRow}>
+            {RASHI_CATS.map(cat => (
+              <Text key={cat.key} style={s.rashiCatItem}>
+                {cat.icon} {toBN(score[cat.key])}/{toBN(5)}
+              </Text>
+            ))}
+          </View>
+        ) : (
+          <>
+            <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
+            <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
+          </>
+        )}
       </View>
       <Pressable onPress={onRashifalPress} style={s.rashiCta}>
         <Text style={s.rashiCtaText} numberOfLines={1}>আজকের রাশিফল</Text>
@@ -201,6 +221,14 @@ export function HomeScreen() {
   const today = useMemo(() => new Date(), []);
   const iso   = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
+  // "আমার রাশি" কার্ডে প্রতিদিন বদলানো তথ্য দেখানোর জন্য — স্থির শুভ রং/সংখ্যা/
+  // দিকের বদলে আজকের প্রেম/কর্ম/স্বাস্থ্য/আর্থিক রেটিং, যাতে প্রতিদিন নতুন কিছু দেখা যায়।
+  const todayRashiScore = useMemo(() => {
+    if (userRashi === null) return null;
+    try { return getTodayRashifal().rashifal[userRashi]?.score || null; }
+    catch (_) { return null; }
+  }, [userRashi, iso]);
+
   const data = useMemo(() => {
     try {
       return getPanchangForDate(iso);
@@ -292,6 +320,7 @@ export function HomeScreen() {
           {userRashi !== null ? (
             <RashiLuckyCard
               rashiIdx={userRashi}
+              score={todayRashiScore}
               onChangePress={() => setRashiModal(true)}
               onRashifalPress={() => { haptics.tap(); navigation.navigate('RashifalDetail', { rashiIndex: userRashi }); }}
             />
@@ -474,6 +503,8 @@ const s = StyleSheet.create({
   rashiAvatarImg: { width: 28, height: 28 },
   rashiName:   { ...typography.value, fontSize: 14, marginBottom: 3 },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
+  rashiCatRow:  { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2, columnGap: 8 },
+  rashiCatItem: { ...typography.label, color: colors.textSecondary, fontSize: 11 },
   rashiCta: {
     flexDirection: 'row', alignItems: 'center', gap: 2,
     backgroundColor: colors.goldWash, borderRadius: radii.pill,
