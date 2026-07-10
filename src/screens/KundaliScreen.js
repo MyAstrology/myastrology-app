@@ -90,8 +90,7 @@ function useKUri() {
 
 const APP_CSS = `
 /* ── Hide website chrome ── */
-header.site-header,nav.nav,#navMenu,.nav-overlay,#navOverlay,
-footer,.site-footer{display:none!important;}
+header.site-header,nav.nav,#navMenu,.nav-overlay,#navOverlay{display:none!important;}
 .author-byline{display:none!important;}
 section.k-wrap{display:none!important;}
 #moreServicesCard{display:none!important;}
@@ -102,10 +101,15 @@ section.k-wrap{display:none!important;}
 #inputSection > p{display:none!important;}
 #printCoverPage{display:none!important;}
 .premium-promo{display:none!important;}
+/* ── ফুটার — সম্পূর্ণ লুকানোর বদলে শুধু ব্র্যান্ড/ফোন লাইনটা রাখা হচ্ছে (bundle-
+   web-assets.js-এর একই compact-footer রুল, ফর্মের নিচে ফাঁকা জায়গা এড়াতে) ── */
+.site-footer:not(:has(.fg)){display:block!important;}
+.site-footer:not(:has(.fg)) > div:nth-child(n+2){display:none!important;}
+.site-footer:has(.fg),footer:not(.site-footer){display:none!important;}
 /* ── Page base + scroll ── */
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
 body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-y:auto!important;overflow-x:hidden!important;max-width:100vw!important;}
-main{padding:0 0 80px!important;margin:0!important;height:auto!important;}
+main{padding:0!important;margin:0!important;height:auto!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;}
 /* ── Tab panels: height/overflow ONLY — never set display; JS owns show/hide ── */
