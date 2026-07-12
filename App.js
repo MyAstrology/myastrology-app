@@ -1,6 +1,6 @@
 import './src/polyfills';
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { registerRootComponent } from 'expo';
@@ -9,35 +9,51 @@ import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from './src/context/UserContext';
 import { AuthProvider } from './src/context/AuthContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
+import { SplashOverlay } from './src/components/SplashOverlay';
 import { initOneSignal } from './src/utils/onesignal';
 
-// অ্যাপ চালু হওয়ার সময় ফন্ট লোড না হওয়া পর্যন্ত নেটিভ স্প্ল্যাশ স্ক্রিন ধরে
-// রাখা (আগে ফন্ট লোড হওয়ার আগেই স্প্ল্যাশ সরে গিয়ে একটা খালি/আলাদা রঙের
-// পর্দা দেখাতো), এবং সরার সময় হঠাৎ কাট না করে হালকা fade — এটাই এখন একমাত্র
-// "অ্যানিমেশন" (আইকন/স্প্ল্যাশ ছবি নিজে স্থির, লোগো-অ্যানিমেশন না)।
+// Android 12+ এ OS নিজেই শুধু ছোট আইকন স্প্ল্যাশ দেখাতে পারে, পুরো ব্র্যান্ডেড
+// ছবি না — তাই সেটা যত দ্রুত সম্ভব সরিয়ে (fade ছাড়াই) দেওয়া হয়, আর এর বদলে
+// App.js নিজে একটা পূর্ণ-স্ক্রিন <SplashOverlay> দেখায় যেটা আসল ডিজাইন করা
+// স্প্ল্যাশ ছবিটা (assets/splash-full.png) সম্পূর্ণ দেখিয়ে তারপর ফেড-আউট হয়।
 SplashScreen.preventAutoHideAsync().catch(() => {});
-SplashScreen.setOptions({ duration: 150, fade: true });
+SplashScreen.setOptions({ duration: 0, fade: false });
 
 function App() {
   const [fontsLoaded] = useFonts({
     'NotoSerifBengali-Regular': require('./assets/fonts/NotoSerifBengali-Regular.ttf'),
     'NotoSerifBengali-Bold':    require('./assets/fonts/NotoSerifBengali-Bold.ttf'),
   });
+  const [showSplash, setShowSplash] = useState(true);
+  const splashOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => { initOneSignal(); }, []);
-  useEffect(() => { if (fontsLoaded) SplashScreen.hideAsync(); }, [fontsLoaded]);
 
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FEFAF2' }} />;
+  useEffect(() => {
+    if (!fontsLoaded) return;
+    SplashScreen.hideAsync();
+    // ব্র্যান্ডেড ছবিটা অন্তত কিছুক্ষণ পুরোপুরি দেখার সময় দেওয়া, তারপর fade
+    const t = setTimeout(() => {
+      Animated.timing(splashOpacity, { toValue: 0, duration: 350, useNativeDriver: true })
+        .start(() => setShowSplash(false));
+    }, 500);
+    return () => clearTimeout(t);
+  }, [fontsLoaded]);
 
   return (
     <SafeAreaProvider>
       <UserProvider>
         <AuthProvider>
-          <NavigationContainer>
-            <BottomTabs />
-          </NavigationContainer>
+          {fontsLoaded ? (
+            <NavigationContainer>
+              <BottomTabs />
+            </NavigationContainer>
+          ) : (
+            <View style={{ flex: 1, backgroundColor: '#FEFAF2' }} />
+          )}
         </AuthProvider>
       </UserProvider>
+      {showSplash && <SplashOverlay opacity={splashOpacity} />}
     </SafeAreaProvider>
   );
 }
