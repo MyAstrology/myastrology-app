@@ -16,7 +16,7 @@ import { initOneSignal } from './src/utils/onesignal';
 // পর্দা দেখাতো), এবং সরার সময় হঠাৎ কাট না করে হালকা fade — এটাই এখন একমাত্র
 // "অ্যানিমেশন" (আইকন/স্প্ল্যাশ ছবি নিজে স্থির, লোগো-অ্যানিমেশন না)।
 SplashScreen.preventAutoHideAsync().catch(() => {});
-SplashScreen.setOptions({ duration: 400, fade: true });
+SplashScreen.setOptions({ duration: 150, fade: true });
 
 function App() {
   const [fontsLoaded] = useFonts({

@@ -6153,19 +6153,23 @@ function showDetail(date) {
     var moonRashiIdx=Math.floor(graha.moon/30)%12;
     var dashLord=NAKS[moonNakIdx]?NAKS[moonNakIdx][1]:(typeof PD!=='undefined'&&typeof PD.dashLord==='function'?PD.dashLord(moonNakIdx):'—');
     // চন্দ্রের নক্ষত্র — time slot (nakList থেকে)
-    var nakSlots='',_nakCount=0;
+    var nakItems=[],_nakCount=0;
     c.nakList.forEach(function(n){
       if(!n||!n.val)return;
       var nIdx=NAK_L.indexOf(n.val.name);
       var dL=(nIdx>=0&&NAKS[nIdx])?NAKS[nIdx][1]:(typeof PD!=='undefined'&&typeof PD.dashLord==='function'?PD.dashLord(nIdx):'—');
       var birthRashi=Math.floor(nIdx*40/90)%12;
-      nakSlots+='<div class="dtime" style="background:rgba(30,90,60,.18);">'
+      _nakCount++;
+      nakItems.push('<div class="dtime" style="background:rgba(30,90,60,.18);">'
         +'<div class="dtl">⭐ '+n.val.name+(n.endTime?' ('+n.endTime+' পর্যন্ত)':' (চলতি)')+'</div>'
         +'<div class="dtv" style="font-size:.62rem;">জন্মে '+RASHI_L[birthRashi]+' রাশি — '+dL+'র দশা</div>'
-        +'</div>';
+        +'</div>');
     });
-    // nakSlots odd count → শেষটি full-width
-    if(_nakCount%2===1) nakSlots=nakSlots.slice(0,-6)+'style="grid-column:span 2;"></div>';
+    // ৩-কলাম গ্রিডে ফাঁকা ঘর না রাখতে শেষ আইটেমটি প্রয়োজনমতো span করা
+    var _nakRem=_nakCount%3;
+    if(_nakRem===1) nakItems[_nakCount-1]=nakItems[_nakCount-1].replace('background:rgba(30,90,60,.18);','background:rgba(30,90,60,.18);grid-column:span 3;');
+    else if(_nakRem===2) nakItems[_nakCount-1]=nakItems[_nakCount-1].replace('background:rgba(30,90,60,.18);','background:rgba(30,90,60,.18);grid-column:span 2;');
+    var nakSlots=nakItems.join('');
     // ★ Fix: চন্দ্র রাশি main card সরানো — গ্রহ grid-এ degree সহ চন্দ্র আছে
     // শুধু নক্ষত্র time slot (জন্ম দশা) দেখাও
     moonRashiHtml=nakSlots
