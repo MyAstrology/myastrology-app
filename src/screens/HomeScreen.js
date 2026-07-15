@@ -55,6 +55,7 @@ const ENGLISH_RASHI_NAMES = [
   'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces',
 ];
 const BLOG_LIST_URL = 'https://myastrology.in/src/content/blog/list.json';
+const NEWS_LIST_URL = 'https://myastrology.in/news/list.json';
 const formatBlogDate = (iso) => {
   const [y, m, d] = (iso || '').split('-').map(Number);
   return (y && m && d) ? `${d} ${EN_MONTHS[m - 1]} ${y}` : '';
@@ -187,9 +188,17 @@ function RashiSelectorModal({ visible, onSelect, onClose }) {
 }
 
 function BlogCard({ post, onPress }) {
+  const isNews = post.type === 'news';
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.blogCard, pressed && { opacity: 0.85 }]}>
-      <Image source={{ uri: post.image }} style={s.blogImg} />
+      <View>
+        <Image source={{ uri: post.image }} style={s.blogImg} />
+        {isNews && (
+          <View style={s.blogNewsBadge}>
+            <Text style={s.blogNewsBadgeText}>🌌 সংবাদ</Text>
+          </View>
+        )}
+      </View>
       <Text style={s.blogTitle} numberOfLines={2}>{post.title}</Text>
       <Text style={s.blogDate}>{formatBlogDate(post.date)}</Text>
     </Pressable>
@@ -270,10 +279,22 @@ export function HomeScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(BLOG_LIST_URL)
-      .then(r => r.json())
-      .then(posts => { if (!cancelled && Array.isArray(posts)) setBlogPosts(posts.slice(0, 6)); })
-      .catch(() => {});
+    // ব্লগ ও মহাজাগতিক সংবাদ (গ্রহণ/গ্রহ-বক্রী) দুটো আলাদা সোর্স থেকেই আসে,
+    // কিন্তু হোম স্ক্রিনে একই "সাম্প্রতিক" সারিতে তারিখ অনুযায়ী মিশিয়ে
+    // দেখানো হয় — type ট্যাগ দিয়ে বোঝা যায় কোনটা ট্যাপ করলে কোন স্ক্রিনে
+    // (Blog vs News) যেতে হবে। news/list.json বছরে হাতে-গোনা কয়েকবার
+    // আপডেট হয় বলে ব্যর্থ হলেও নীরবে বাদ যায় — শুধু ব্লগ দেখালেই যথেষ্ট।
+    Promise.all([
+      fetch(BLOG_LIST_URL).then(r => r.json()).catch(() => []),
+      fetch(NEWS_LIST_URL).then(r => r.json()).catch(() => []),
+    ]).then(([blog, news]) => {
+      if (cancelled) return;
+      const tagged = [
+        ...(Array.isArray(blog) ? blog.map(p => ({ ...p, type: 'blog' })) : []),
+        ...(Array.isArray(news) ? news.map(p => ({ ...p, type: 'news' })) : []),
+      ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      setBlogPosts(tagged.slice(0, 6));
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -454,11 +475,11 @@ export function HomeScreen() {
           {/* ── পরামর্শ বুকিং ── */}
           <BookingBanner onPress={() => { haptics.tap(); navigation.navigate('Booking'); }} />
 
-          {/* ── সাম্প্রতিক ব্লগ ── */}
+          {/* ── সাম্প্রতিক ব্লগ ও সংবাদ ── */}
           {blogPosts.length > 0 && (
             <>
               <View style={s.sectionRow}>
-                <Text style={s.sectionTitle}>সাম্প্রতিক ব্লগ</Text>
+                <Text style={s.sectionTitle}>সাম্প্রতিক ব্লগ ও সংবাদ</Text>
                 <Pressable onPress={() => navigation.navigate('Blog')}>
                   <Text style={s.sectionLink}>সব দেখুন</Text>
                 </Pressable>
@@ -470,9 +491,12 @@ export function HomeScreen() {
               >
                 {blogPosts.map(post => (
                   <BlogCard
-                    key={post.slug}
+                    key={`${post.type}-${post.slug}`}
                     post={post}
-                    onPress={() => { haptics.tap(); navigation.navigate('Blog', { slug: post.slug }); }}
+                    onPress={() => {
+                      haptics.tap();
+                      navigation.navigate(post.type === 'news' ? 'News' : 'Blog', { slug: post.slug });
+                    }}
                   />
                 ))}
               </ScrollView>
@@ -621,6 +645,11 @@ const s = StyleSheet.create({
     ...shadows.card,
   },
   blogImg:   { width: '100%', height: 66, backgroundColor: colors.goldWash },
+  blogNewsBadge: {
+    position: 'absolute', top: 5, left: 5,
+    backgroundColor: '#3b3178', borderRadius: 20, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  blogNewsBadgeText: { fontSize: 9, fontWeight: '700', color: '#fff' },
   blogTitle: { ...typography.value, fontSize: 11, lineHeight: 14, marginHorizontal: 7, marginTop: 6, height: 28 },
   blogDate:  { ...typography.caption, color: colors.textSecondary, marginHorizontal: 7, marginTop: 3, marginBottom: 6 },
 
