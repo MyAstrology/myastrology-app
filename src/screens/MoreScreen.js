@@ -27,6 +27,7 @@ const SECTIONS = [
       { label: 'বাস্তু শাস্ত্র', icon: 'home-city-outline',      screen: 'Vastu'       },
       { label: 'জ্যোতিষ শিক্ষা', icon: 'school-outline',        screen: 'Learning'    },
       { label: 'ব্লগ',           icon: 'post-outline',           screen: 'Blog'        },
+      { label: 'মহাজাগতিক সংবাদ', icon: 'newspaper-variant-outline', screen: 'News'    },
       { label: 'ভিডিও',          icon: 'youtube',                screen: 'Video'       },
     ],
   },

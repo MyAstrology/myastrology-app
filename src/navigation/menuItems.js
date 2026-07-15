@@ -40,6 +40,7 @@ export const MENU_ITEMS = [
   { tab: 'Vastu',          icon: 'home-city-outline',       label: 'বাস্তু শাস্ত্র'   },
   { tab: 'Learning',       icon: 'school-outline',          label: 'জ্যোতিষ শিক্ষা'  },
   { tab: 'Blog',           icon: 'post-outline',            label: 'ব্লগ'            },
+  { tab: 'News',           icon: 'newspaper-variant-outline',label: 'মহাজাগতিক সংবাদ' },
   { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           },
   { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   },
   { tab: 'AboutAstrologer',icon: 'account-star-outline',    label: 'জ্যোতিষী সম্পর্কে'},
