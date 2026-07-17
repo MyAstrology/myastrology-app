@@ -241,6 +241,43 @@ function BookingBanner({ onPress }) {
   );
 }
 
+// আত্মপর্যালোচনা টিজার কার্ড — সম্পূর্ণ কার্ডটা পঞ্জিকা "আজ" ট্যাবে আগে থেকেই
+// আছে (সংকল্প/অনুশীলন/আত্মজিজ্ঞাসা), এখানে শুধু একটা ছোট আমন্ত্রণ-কার্ড যেটা
+// সেখানে নিয়ে যায়। নক্ষত্র-নির্ভর আসল কনটেন্ট নেটিভ কোডে পুনরায় গণনা না করে
+// (জটিলতা ও দুই জায়গার হিসাব আলাদা হয়ে যাওয়ার ঝুঁকি এড়াতে) ৩টা সাধারণ লাইনের
+// পুল থেকে দিনভিত্তিক একটা লাইন দেখানো হচ্ছে — পঞ্জিকা কার্ডের সংকল্প/অনুশীলন
+// পুলের প্যাটার্নের সাথেই সামঞ্জস্যপূর্ণ।
+const SELF_REFLECTION_TEASER_LINES = [
+  'আজকের আত্মপর্যালোচনা আপনার জন্য অপেক্ষা করছে',
+  'আজ নিজেকে জানার একটি গুরুত্বপূর্ণ মুহূর্ত অপেক্ষা করছে',
+  'আজকের আত্ম-পর্যালোচনা আপনার চিন্তাধারা বদলে দিতে পারে',
+];
+
+function SelfReflectionTeaser({ dayIndex, onPress }) {
+  const line = SELF_REFLECTION_TEASER_LINES[dayIndex % SELF_REFLECTION_TEASER_LINES.length];
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [s.reflectionWrap, pressed && { opacity: 0.9 }]}>
+      <LinearGradient
+        colors={['#3D1F30', '#5C2A3D']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={s.reflectionCard}
+      >
+        <View style={s.reflectionIconWrap}>
+          <MaterialCommunityIcons name="lotus" size={18} color={colors.gold} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
+          <Text style={s.reflectionLine} numberOfLines={2}>{line}</Text>
+        </View>
+        <View style={s.reflectionCta}>
+          <Text style={s.reflectionCtaText}>দেখুন</Text>
+          <MaterialCommunityIcons name="chevron-right" size={13} color={colors.text} />
+        </View>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
 // শুধু হোম স্ক্রিনের quick-access গ্রিডের জন্য — প্রতিটা টাইলে আলাদা রঙ দিয়ে
 // গ্রিডটাকে আরও প্রাণবন্ত করা হচ্ছে, কিন্তু এই ম্যাপিং শুধু এই ফাইলেই সীমাবদ্ধ
 // রাখা হয়েছে যাতে drawer মেনু বা অন্য স্ক্রিনের (যেগুলো একই MENU_ITEMS শেয়ার
@@ -433,6 +470,12 @@ export function HomeScreen() {
             ))}
           </View>
 
+          {/* ── আত্মপর্যালোচনা টিজার ── */}
+          <SelfReflectionTeaser
+            dayIndex={today.getDate()}
+            onPress={() => { haptics.tap(); navigation.navigate('Panchang'); }}
+          />
+
           {/* ── আজকের শুভ-অশুভ সময় ── */}
           {muhurtaRows.length > 0 && (
             <>
@@ -575,7 +618,7 @@ const s = StyleSheet.create({
   rashiHeroLeft: { width: 96, alignItems: 'center' },
   rashiHeroAvatarWrap: {
     width: 46, height: 46, borderRadius: radii.pill,
-    backgroundColor: colors.goldWash, borderWidth: 1.5, borderColor: colors.goldBorder,
+    backgroundColor: 'rgba(201,168,76,0.18)', borderWidth: 1.5, borderColor: 'rgba(201,168,76,0.5)',
     alignItems: 'center', justifyContent: 'center', marginBottom: 4,
   },
   rashiHeroAvatarImg: { width: 30, height: 30 },
@@ -638,6 +681,29 @@ const s = StyleSheet.create({
   },
   bookingBannerCtaText: { ...typography.label, fontSize: 9.5, color: colors.text, fontWeight: '700' },
 
+  /* আত্মপর্যালোচনা টিজার — bookingBanner-এর গাঢ়+সোনালি প্যাটার্নের সাথে
+     সামঞ্জস্যপূর্ণ রঙে, যাতে হোম স্ক্রিনের বাকি অংশের সাথে না মিশে গিয়েও
+     পরিচিত/মানানসই লাগে */
+  reflectionWrap: { marginHorizontal: spacing.md, marginTop: 10, marginBottom: 2 },
+  reflectionCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderRadius: radii.lg, paddingHorizontal: 12, paddingVertical: 11,
+    ...shadows.raised,
+  },
+  reflectionIconWrap: {
+    width: 34, height: 34, borderRadius: radii.pill,
+    backgroundColor: 'rgba(201,168,76,0.18)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.5)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  reflectionTag:  { ...typography.caption, color: colors.gold, fontWeight: '700' },
+  reflectionLine: { ...typography.value, fontSize: 12.5, color: colors.white, marginTop: 2, lineHeight: 16.5 },
+  reflectionCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    backgroundColor: colors.gold, borderRadius: radii.pill,
+    paddingHorizontal: 10, paddingVertical: 5,
+  },
+  reflectionCtaText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
+
   blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
     width: 132, backgroundColor: colors.card, borderRadius: radii.lg,
@@ -684,13 +750,13 @@ const s = StyleSheet.create({
   /* আজকের বিশেষ দিন */
   festivalCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    marginHorizontal: spacing.md, marginBottom: 8,
+    marginHorizontal: spacing.md, marginTop: 10, marginBottom: 8,
     backgroundColor: '#FFF8E6', borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.goldBorder,
     paddingHorizontal: 12, paddingVertical: 8,
     ...shadows.card,
   },
-  festivalImg: { width: 38, height: 38, borderRadius: radii.md },
+  festivalImg: { width: 54, height: 54, borderRadius: radii.md },
   festivalImgFallback: { backgroundColor: colors.goldWash, alignItems: 'center', justifyContent: 'center' },
   festivalTag:  { ...typography.caption, color: colors.goldLight, fontWeight: '700' },
   festivalName: { ...typography.value, fontSize: 14, marginTop: 1 },
