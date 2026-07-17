@@ -44,9 +44,13 @@ export function initOneSignal() {
 export async function getNotificationPreference() {
   try {
     const v = await AsyncStorage.getItem(PREF_KEY);
+    // প্রথমবার অ্যাপ খোলার সময় (কখনো টগল ছোঁয়া হয়নি) — ডিফল্ট ON,
+    // যাতে ব্যবহারকারীকে নিজে থেকে Settings-এ গিয়ে চালু করতে না হয়।
+    // ব্যবহারকারী নিজে বন্ধ করলে ('0' সেভ হবে) তখনই OFF থাকবে।
+    if (v === null) return true;
     return v === '1';
   } catch (_) {
-    return false;
+    return true;
   }
 }
 
