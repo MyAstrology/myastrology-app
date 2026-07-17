@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "assetBundlePatterns": ["assets/web/**", "assets/fonts/**", "assets/panjika/**"],
+    "assetBundlePatterns": ["assets/fonts/**", "assets/panjika/**"],
     "android": {
       "package": "in.myastrology.app",
       "versionCode": 2,
