@@ -11,6 +11,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
 import { SplashOverlay } from './src/components/SplashOverlay';
 import { initOneSignal } from './src/utils/onesignal';
+import { logScreenView } from './src/utils/analytics';
 
 // Android 12+ এ OS নিজেই শুধু ছোট আইকন স্প্ল্যাশ দেখাতে পারে, পুরো ব্র্যান্ডেড
 // ছবি না — তাই সেটা যত দ্রুত সম্ভব সরিয়ে (fade ছাড়াই) দেওয়া হয়, আর এর বদলে
@@ -26,6 +27,8 @@ function App() {
   });
   const [showSplash, setShowSplash] = useState(true);
   const splashOpacity = useRef(new Animated.Value(1)).current;
+  const routeNameRef = useRef();
+  const navigationRef = useRef();
 
   useEffect(() => { initOneSignal(); }, []);
 
@@ -45,7 +48,20 @@ function App() {
       <UserProvider>
         <AuthProvider>
           {fontsLoaded ? (
-            <NavigationContainer>
+            <NavigationContainer
+              ref={navigationRef}
+              onReady={() => {
+                routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
+              }}
+              onStateChange={() => {
+                const previousRouteName = routeNameRef.current;
+                const currentRouteName = navigationRef.current?.getCurrentRoute()?.name;
+                if (currentRouteName && previousRouteName !== currentRouteName) {
+                  logScreenView(currentRouteName);
+                }
+                routeNameRef.current = currentRouteName;
+              }}
+            >
               <BottomTabs />
             </NavigationContainer>
           ) : (
