@@ -8,6 +8,10 @@
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
     "assetBundlePatterns": ["assets/fonts/**", "assets/panjika/**"],
+    "runtimeVersion": { "policy": "appVersion" },
+    "updates": {
+      "url": "https://u.expo.dev/2678cdd7-fa10-4b80-8aa5-f276b88a51a3"
+    },
     "android": {
       "package": "in.myastrology.app",
       "versionCode": 2,
