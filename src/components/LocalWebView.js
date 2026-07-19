@@ -4,6 +4,8 @@ import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
+import { useAuth } from '../context/AuthContext';
+import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -92,6 +94,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const webViewRef = useRef(null);
   const canGoBackRef = useRef(false);
   const resultsVisibleRef = useRef(false);
+  const { user, loading: authLoading } = useAuth() || {};
+  const uid = user?.uid || null;
 
   useEffect(() => {
     if (remoteUrl) { setUri(remoteUrl); return; }
@@ -101,6 +105,25 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; };
   }, [name, html, remoteUrl]);
+
+  // অ্যাপ ↔ ওয়েবসাইট লগইন ব্রিজ — বান্ডল করা পেজেই প্রযোজ্য (mya-auth.js
+  // শুধু ওখানেই আছে); অ্যাপে সাইন-ইন থাকলে WebView-কেও একই Firebase
+  // অ্যাকাউন্টে সাইন-ইন করানো হয় (custom token দিয়ে), যাতে প্রোফাইল
+  // ক্লাউড-সিঙ্ক অ্যাপ থেকেও কাজ করে। অ্যাপে সাইন-আউট করলে WebView-ও
+  // সাইন-আউট হয়ে যায় (একই ডিভাইসে ভিন্ন অ্যাকাউন্টের ডেটা যেন না মেশে)।
+  useEffect(() => {
+    if (remoteUrl || !uri || !webViewRef.current || authLoading) return;
+    let cancelled = false;
+    if (uid) {
+      fetchWebViewAuthToken().then((token) => {
+        if (cancelled || !token || !webViewRef.current) return;
+        webViewRef.current.injectJavaScript(buildBridgeSignInJS(token));
+      });
+    } else {
+      webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
+    }
+    return () => { cancelled = true; };
+  }, [uid, uri, remoteUrl, authLoading]);
 
   // Hardware back priority: (1) if results are showing, hide them and go back
   // to the form — mirrors what a user expects "back" to do after "calculate"

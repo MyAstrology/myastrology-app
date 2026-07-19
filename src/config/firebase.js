@@ -34,6 +34,7 @@ export const GOOGLE_ANDROID_CLIENT_ID = '455926974196-dnpl1ft6cest4chk910n3ovj67
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
+export { app };
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
