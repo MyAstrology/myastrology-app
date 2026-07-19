@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.token.email in [
+          'prodyutacharya7@gmail.com',
+          'bipulbala64@gmail.com'
+        ];
+    }
+
+    // অ্যাপ/ওয়েবসাইট লগইন প্রোফাইল — নিজের ডকুমেন্ট নিজে পড়তে/লিখতে পারবে,
+    // অ্যাডমিন প্যানেল (AdminScreen.js) সবার তালিকা দেখতে পারবে
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow list, get: if isAdmin();
+    }
+
+    // ওয়েবসাইটের চেকআউট পপআপগুলোর মূল্য/প্রোমো কোড — সবাই পড়তে পারবে,
+    // শুধু অ্যাডমিন লিখতে পারবে (pricing-admin.html)
+    match /pricing/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
