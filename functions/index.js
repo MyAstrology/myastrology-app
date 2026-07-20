@@ -29,3 +29,52 @@ exports.mintWebViewToken = onCall({ region: 'asia-south1' }, async (request) => 
     throw new HttpsError('internal', 'টোকেন তৈরি করা যায়নি।');
   }
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   নিবন্ধিত ব্যবহারকারী — ব্লক/ডিলিট (myastrology.in/users-admin.html
+   ও অ্যাপের AdminScreen.js থেকে ব্যবহৃত)
+   Firestore rules-এ অ্যাডমিনও অন্য কারো users/{uid} ডকুমেন্ট লিখতে/মুছতে
+   পারেন না (শুধু নিজের), তাই এই মিউটেশনগুলো Admin SDK দিয়ে (rules এড়িয়ে)
+   এখানে সার্ভার-সাইডে হয় — একই কারণে block করতে Firebase Auth অ্যাকাউন্ট
+   disable করতে হয় (Firestore rule দিয়ে কারো login আটকানো যায় না)।
+   ═══════════════════════════════════════════════════════════════ */
+const ADMIN_EMAILS = ['prodyutacharya7@gmail.com', 'bipulbala64@gmail.com'];
+
+function assertAdmin(request) {
+  const email = ((request.auth && request.auth.token && request.auth.token.email) || '').toLowerCase();
+  if (!request.auth || !ADMIN_EMAILS.includes(email)) {
+    throw new HttpsError('permission-denied', 'অ্যাডমিন অনুমতি নেই।');
+  }
+}
+
+exports.adminSetUserBlocked = onCall({ region: 'asia-south1' }, async (request) => {
+  assertAdmin(request);
+  const { uid, blocked } = request.data || {};
+  if (!uid) throw new HttpsError('invalid-argument', 'uid প্রয়োজন।');
+  if (uid === request.auth.uid) throw new HttpsError('failed-precondition', 'নিজেকে ব্লক করা যাবে না।');
+  try {
+    await admin.auth().updateUser(uid, { disabled: !!blocked });
+    await admin.firestore().collection('users').doc(uid).set({ blocked: !!blocked }, { merge: true });
+    return { ok: true };
+  } catch (err) {
+    console.error('adminSetUserBlocked failed:', err);
+    throw new HttpsError('internal', 'ব্যর্থ হয়েছে।');
+  }
+});
+
+exports.adminDeleteUser = onCall({ region: 'asia-south1' }, async (request) => {
+  assertAdmin(request);
+  const { uid } = request.data || {};
+  if (!uid) throw new HttpsError('invalid-argument', 'uid প্রয়োজন।');
+  if (uid === request.auth.uid) throw new HttpsError('failed-precondition', 'নিজেকে ডিলিট করা যাবে না।');
+  try {
+    await admin.auth().deleteUser(uid).catch((e) => {
+      if (e.code !== 'auth/user-not-found') throw e;
+    });
+    await admin.firestore().collection('users').doc(uid).delete();
+    return { ok: true };
+  } catch (err) {
+    console.error('adminDeleteUser failed:', err);
+    throw new HttpsError('internal', 'ব্যর্থ হয়েছে।');
+  }
+});
