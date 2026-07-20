@@ -1,21 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, Pressable, Linking, BackHandler } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, Linking, BackHandler } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { radii } from '../theme/radii';
-import { typography } from '../theme/typography';
-import { haptics } from '../utils/haptics';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
-
-// react-native-webview-এর onError/onHttpError থেকে পাওয়া description-এ এই
-// প্যাটার্নগুলো থাকলে বোঝা যায় সমস্যাটা ইন্টারনেট সংযোগের, সার্ভার/পেজের নয় —
-// তখন "ইন্টারনেট চালু করুন" জাতীয় নির্দিষ্ট বার্তা দেখানো যায়, নাহলে সাধারণ বার্তা।
-const NO_INTERNET_PATTERN = /ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ERR_ADDRESS_UNREACHABLE|ERR_NETWORK_CHANGED|ERR_CONNECTION_(TIMED_OUT|REFUSED|RESET|CLOSED)|offline/i;
+import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -100,9 +91,9 @@ const RESULTS_TRACKER_JS = `(function(){
 export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl }) {
   const [uri,   setUri]   = useState(remoteUrl || null);
   const [error, setError] = useState(null);
-  const [webError, setWebError] = useState(null); // { noInternet, description } — WebView-স্তরের লোড ব্যর্থতা (network/HTTP), file-write ব্যর্থতার (উপরের error) থেকে আলাদা
   const navigation = useNavigation();
   const webViewRef = useRef(null);
+  const { webError, onLoadStart: onWebLoadStart, onError: handleWebError, onHttpError: handleHttpError, retry: handleRetry } = useWebViewError(webViewRef);
   const canGoBackRef = useRef(false);
   const resultsVisibleRef = useRef(false);
   const { user, loading: authLoading } = useAuth() || {};
@@ -223,34 +214,6 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     return true;
   }, [navigation, name]);
 
-  // মূল ফ্রেম লোড ব্যর্থ হলে (নেটওয়ার্ক/DNS ইত্যাদি) react-native-webview
-  // ডিফল্টভাবে নেটিভ ব্রাউজার এরর চ্যাসিস দেখায় ("Error loading page /
-  // Domain: undefined / ERR_INTERNET_DISCONNECTED") — সেটা আটকে বদলে থিমড,
-  // বোধগম্য বাংলা বার্তা + রিট্রাই বোতাম দেখানো হচ্ছে।
-  const handleWebError = useCallback((e) => {
-    const { nativeEvent } = e;
-    if (nativeEvent?.isMainFrame === false) return; // iframe/sub-resource ব্যর্থতা — মূল পেজ ঠিকই আছে, উপেক্ষা করুন
-    haptics.error();
-    setWebError({
-      noInternet: NO_INTERNET_PATTERN.test(nativeEvent?.description || ''),
-      description: nativeEvent?.description || '',
-    });
-  }, []);
-
-  const handleHttpError = useCallback((e) => {
-    const { nativeEvent } = e;
-    if (nativeEvent?.isMainFrame === false) return;
-    if ((nativeEvent?.statusCode || 0) < 400) return;
-    haptics.error();
-    setWebError({ noInternet: false, description: 'HTTP ' + nativeEvent.statusCode });
-  }, []);
-
-  const handleRetry = useCallback(() => {
-    haptics.tap();
-    setWebError(null);
-    webViewRef.current?.reload();
-  }, []);
-
   if (error) {
     return (
       <View style={[s.center, style]}>
@@ -315,7 +278,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         onShouldStartLoadWithRequest={handleNavRequest}
         injectedJavaScriptBeforeContentLoaded={earlyInjectedJS}
         injectedJavaScript={fullInjectedJS}
-        onLoadStart={() => setWebError(null)}
+        onLoadStart={onWebLoadStart}
         onLoadEnd={() => { webViewRef.current?.injectJavaScript(fullInjectedJS); }}
         onError={handleWebError}
         onHttpError={handleHttpError}
@@ -326,32 +289,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
           </View>
         )}
       />
-      {webError && (
-        <View style={s.errOverlay}>
-          <View style={s.errIconWrap}>
-            <MaterialCommunityIcons
-              name={webError.noInternet ? 'wifi-off' : 'cloud-alert'}
-              size={34}
-              color={colors.primary}
-            />
-          </View>
-          <Text style={s.errTitle}>
-            {webError.noInternet ? 'ইন্টারনেট সংযোগ নেই' : 'পেজ লোড করা যায়নি'}
-          </Text>
-          <Text style={s.errSub}>
-            {webError.noInternet
-              ? 'আপনার মোবাইল ডেটা বা ওয়াইফাই চালু করে আবার চেষ্টা করুন।'
-              : 'কিছুক্ষণ পর আবার চেষ্টা করুন। সমস্যা থাকলে ইন্টারনেট সংযোগ পরীক্ষা করুন।'}
-          </Text>
-          <Pressable
-            onPress={handleRetry}
-            style={({ pressed }) => [s.retryBtn, pressed && s.retryBtnPressed]}
-          >
-            <MaterialCommunityIcons name="refresh" size={17} color={colors.white} />
-            <Text style={s.retryText}>আবার চেষ্টা করুন</Text>
-          </Pressable>
-        </View>
-      )}
+      <WebViewErrorOverlay webError={webError} onRetry={handleRetry} />
     </View>
   );
 }
@@ -361,31 +299,4 @@ const s = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   msg:    { marginTop: 10, color: colors.textSecondary, fontSize: 13 },
   err:    { color: '#DC2626', fontSize: 13, textAlign: 'center', paddingHorizontal: 20 },
-
-  errOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  errIconWrap: {
-    width: 64, height: 64, borderRadius: radii.pill,
-    backgroundColor: colors.goldWash,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  errTitle: { ...typography.heading, color: colors.text, textAlign: 'center', marginBottom: 6 },
-  errSub: {
-    ...typography.body, color: colors.textSecondary, textAlign: 'center',
-    lineHeight: 20, marginBottom: spacing.lg,
-  },
-  retryBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: colors.primary,
-    paddingVertical: 12, paddingHorizontal: 24,
-    borderRadius: radii.pill,
-  },
-  retryBtnPressed: { opacity: 0.8 },
-  retryText: { ...typography.value, color: colors.white },
 });

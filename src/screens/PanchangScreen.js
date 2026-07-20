@@ -16,6 +16,7 @@ import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { RASHI_SIGNS } from '../data/rashifalSigns';
+import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -300,6 +301,7 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 
 const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage }, ref) {
   const navigation = useNavigation();
+  const { webError, onLoadStart, onError, onHttpError, retry } = useWebViewError(ref);
 
   const handleNavRequest = (request) => {
     const url = request.url || '';
@@ -320,31 +322,37 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
     );
   }
   return (
-    <WebView
-      ref={ref}
-      source={{ uri }}
-      style={s.wv}
-      originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
-      allowFileAccess={true}
-      allowFileAccessFromFileURLs={true}
-      allowUniversalAccessFromFileURLs={true}
-      mixedContentMode="always"
-      javaScriptEnabled={true}
-      domStorageEnabled={true}
-      cacheEnabled={false}
-      startInLoadingState={true}
-      geolocationEnabled={true}
-      injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
-      injectedJavaScript={injectedJavaScript}
-      onMessage={onMessage}
-      onShouldStartLoadWithRequest={handleNavRequest}
-      renderLoading={() => (
-        <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
-          <ActivityIndicator size="large" color={colors.gold} />
-          <Text style={s.loadMsg}>গণনা হচ্ছে…</Text>
-        </View>
-      )}
-    />
+    <View style={s.wv}>
+      <WebView
+        ref={ref}
+        source={{ uri }}
+        style={s.wv}
+        originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
+        allowFileAccess={true}
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
+        mixedContentMode="always"
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        cacheEnabled={false}
+        startInLoadingState={true}
+        geolocationEnabled={true}
+        injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
+        injectedJavaScript={injectedJavaScript}
+        onMessage={onMessage}
+        onShouldStartLoadWithRequest={handleNavRequest}
+        onLoadStart={onLoadStart}
+        onError={onError}
+        onHttpError={onHttpError}
+        renderLoading={() => (
+          <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
+            <ActivityIndicator size="large" color={colors.gold} />
+            <Text style={s.loadMsg}>গণনা হচ্ছে…</Text>
+          </View>
+        )}
+      />
+      <WebViewErrorOverlay webError={webError} onRetry={retry} />
+    </View>
   );
 });
 

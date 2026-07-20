@@ -16,6 +16,7 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
+import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -419,6 +420,7 @@ export function KundaliScreen() {
 
   const kUri = useKUri();
   const [sourceUri, setSourceUri] = useState(null);
+  const { webError, onLoadStart, onError, onHttpError, retry } = useWebViewError(webViewRef);
 
   // Coming from another screen (e.g. "কুষ্ঠি দেখুন" in match-making) with birth
   // details in route.params — load kundali.html with those as a query string so
@@ -469,52 +471,58 @@ export function KundaliScreen() {
             <Text style={s.loadMsg}>লোড হচ্ছে…</Text>
           </View>
         ) : (
-          <WebView
-            ref={webViewRef}
-            source={{ uri: sourceUri }}
-            style={s.wv}
-            originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
-            allowFileAccess={true}
-            allowFileAccessFromFileURLs={true}
-            allowUniversalAccessFromFileURLs={true}
-            mixedContentMode="always"
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            cacheEnabled={false}
-            startInLoadingState={true}
-            geolocationEnabled={true}
-            scrollEnabled={true}
-            injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
-            injectedJavaScript={INJECTED_JS}
-            onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
-            onShouldStartLoadWithRequest={req => {
-              return req.url.startsWith('file://') || req.url === 'about:blank';
-            }}
-            onMessage={(event) => {
-              try {
-                const msg = JSON.parse(event.nativeEvent.data);
-                if (msg.type === 'generatePdf') {
-                  if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
-                    Alert.alert('ত্রুটি', 'কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।');
-                    return;
+          <View style={s.wv}>
+            <WebView
+              ref={webViewRef}
+              source={{ uri: sourceUri }}
+              style={s.wv}
+              originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
+              allowFileAccess={true}
+              allowFileAccessFromFileURLs={true}
+              allowUniversalAccessFromFileURLs={true}
+              mixedContentMode="always"
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              cacheEnabled={false}
+              startInLoadingState={true}
+              geolocationEnabled={true}
+              scrollEnabled={true}
+              injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
+              injectedJavaScript={INJECTED_JS}
+              onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
+              onShouldStartLoadWithRequest={req => {
+                return req.url.startsWith('file://') || req.url === 'about:blank';
+              }}
+              onLoadStart={onLoadStart}
+              onError={onError}
+              onHttpError={onHttpError}
+              onMessage={(event) => {
+                try {
+                  const msg = JSON.parse(event.nativeEvent.data);
+                  if (msg.type === 'generatePdf') {
+                    if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
+                      Alert.alert('ত্রুটি', 'কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।');
+                      return;
+                    }
+                    if (pdfBusyRef.current) return;
+                    pdfBusyRef.current = true;
+                    setPdfGenerating(true);
+                    // Trigger the hidden WebView to render kundali-print.html with
+                    // real JavaScript. After rendering we capture the static DOM and
+                    // hand it to expo-print — no scripts needed at print time.
+                    setPdfRenderState({ printData: msg.printData });
                   }
-                  if (pdfBusyRef.current) return;
-                  pdfBusyRef.current = true;
-                  setPdfGenerating(true);
-                  // Trigger the hidden WebView to render kundali-print.html with
-                  // real JavaScript. After rendering we capture the static DOM and
-                  // hand it to expo-print — no scripts needed at print time.
-                  setPdfRenderState({ printData: msg.printData });
-                }
-              } catch (_) {}
-            }}
-            renderLoading={() => (
-              <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.gold} />
-                <Text style={s.loadMsg}>গণনা হচ্ছে…</Text>
-              </View>
-            )}
-          />
+                } catch (_) {}
+              }}
+              renderLoading={() => (
+                <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
+                  <ActivityIndicator size="large" color={colors.gold} />
+                  <Text style={s.loadMsg}>গণনা হচ্ছে…</Text>
+                </View>
+              )}
+            />
+            <WebViewErrorOverlay webError={webError} onRetry={retry} />
+          </View>
         )}
       </View>
 

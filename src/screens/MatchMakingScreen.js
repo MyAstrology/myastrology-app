@@ -103,9 +103,6 @@ input[type=text],input[type=number]{
   background:#fefcf9!important;font-size:.88rem!important;
   color:#3a2218!important;font-family:inherit!important;
 }
-/* ── Date/time grids ── */
-.mm-dt-grid-date,.mm-dt-grid-time{display:flex!important;gap:5px!important;}
-.mm-dt-grid-date .sel-ctrl,.mm-dt-grid-time .sel-ctrl{flex:1!important;}
 /* ── Coords grid — lat & lon side by side ── */
 .coords{display:flex!important;flex-direction:row!important;gap:8px!important;}
 .coords>div{flex:1!important;display:flex!important;flex-direction:column!important;gap:2px!important;}

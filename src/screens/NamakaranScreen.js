@@ -108,9 +108,6 @@ main.p-wrap{max-width:100%!important;padding:6px 12px 20px!important;margin:0!im
 /* ── Form dividers ── */
 .form-sep{border:none!important;border-top:1px solid #ede0ce!important;margin:8px 0!important;}
 .form-sub-label{display:none!important;}
-/* ── Date/time input rows ── */
-.input-row,.input-row2{display:flex!important;gap:5px!important;}
-.input-row .sel-ctrl,.input-row2 .sel-ctrl{flex:1!important;}
 /* ── Selects ── */
 .sel-ctrl,select{
   width:100%!important;padding:7px 8px!important;
