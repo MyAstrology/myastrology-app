@@ -17,6 +17,13 @@ service cloud.firestore {
       allow list, get: if isAdmin();
     }
 
+    // ওয়েবসাইটের mya-cloud-sync.js — users/{uid}/data/kundaliProfiles-এ সেভ-করা
+    // কুণ্ডলী প্রোফাইল রাখে; উপরের match শুধু users/{uid} ডকুমেন্ট কভার করে,
+    // সাব-কালেকশন আলাদা নিয়ম ছাড়া ডিফল্টে বন্ধ থাকত (সিঙ্ক নীরবে ব্যর্থ হতো)
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // ওয়েবসাইটের চেকআউট পপআপগুলোর মূল্য/প্রোমো কোড — সবাই পড়তে পারবে,
     // শুধু অ্যাডমিন লিখতে পারবে (pricing-admin.html)
     match /pricing/{docId} {
