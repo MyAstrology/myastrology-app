@@ -112,7 +112,7 @@ function StarRow({ score }) {
           key={i}
           name={i <= score ? 'star' : 'star-outline'}
           size={8}
-          color={i <= score ? colors.gold : colors.cardBorder}
+          color={i <= score ? '#FFD873' : 'rgba(255,255,255,0.35)'}
           style={{ marginRight: i < 5 ? 0.5 : 0 }}
         />
       ))}
@@ -120,46 +120,71 @@ function StarRow({ score }) {
   );
 }
 
-// "আমার রাশি" সেকশন — একটাই হালকা/আইভরি কার্ড, মাঝে উল্লম্ব ডিভাইডার দিয়ে দুই
-// ভাগ: বাঁয়ে গোল অ্যাভাটার + নাম + পরিবর্তনের লিংক, ডানে "আজকের সংক্ষিপ্ত
-// ভবিষ্যৎ" — ৪টা আইকন এক সারিতে, প্রতিটার নিচে স্টার রেটিং।
-function RashiHeroRow({ rashiIdx, score, onChangePress, onRashifalPress }) {
+// "আমার রাশি" সেকশন — বেগুনি গ্র্যাডিয়েন্ট কার্ড (ওয়েবসাইটের হোম পেজের রাশি
+// কার্ডের সাথে সামঞ্জস্যপূর্ণ)। ওপরে: বাঁয়ে অ্যাভাটার+নাম, ডানে আজকের
+// প্রেম/স্বাস্থ্য/চাকরি/অর্থ স্টার রেটিং। নিচে: হালকা lavender বক্সে ভাগ্য
+// স্কোর (বিদ্যমান ৪টা স্টার রেটিং-এর গড় থেকে বের করা, নতুন ডেটার দরকার নেই)
+// ও আজকের সংক্ষিপ্ত রাশিফল-টেক্সট (আগে থেকেই থাকা summary পুল থেকে)।
+function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
-    <View style={s.rashiHeroCard}>
-      <View style={s.rashiHeroLeft}>
-        <Pressable onPress={onChangePress} style={s.rashiHeroAvatarWrap}>
-          <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiHeroAvatarImg} resizeMode="contain" />
-        </Pressable>
-        <Text style={s.rashiHeroName}>{RASHI_NAMES[rashiIdx]}</Text>
-        <Text style={s.rashiHeroEn}>({ENGLISH_RASHI_NAMES[rashiIdx]})</Text>
-        <Pressable onPress={onChangePress} hitSlop={6}>
-          <Text style={s.rashiHeroChangeLink}>রাশি পরিবর্তন করুন ›</Text>
-        </Pressable>
-      </View>
-
-      <View style={s.rashiHeroDivider} />
-
-      <Pressable onPress={onRashifalPress} style={s.rashiHeroRight}>
-        <Text style={s.forecastTitle} numberOfLines={1}>আজকের সংক্ষিপ্ত ভবিষ্যৎ</Text>
-        {score ? (
-          <View style={s.forecastRow}>
-            {FORECAST_CATS.map(cat => (
-              <View key={cat.key} style={s.forecastCell}>
-                <MaterialCommunityIcons name={cat.icon} size={13} color={colors.primary} />
-                <Text style={s.forecastLabel} numberOfLines={1}>{cat.label}</Text>
-                <StarRow score={score[cat.key]} />
-              </View>
-            ))}
+    <Pressable onPress={onRashifalPress} style={s.rashiHeroWrap}>
+      <LinearGradient
+        colors={['#3B2170', '#7C4FB0']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={s.rashiHeroCard}
+      >
+        <View style={s.rashiHeroTopRow}>
+          <View style={s.rashiHeroLeft}>
+            <Pressable onPress={onChangePress} style={s.rashiHeroAvatarWrap}>
+              <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiHeroAvatarImg} resizeMode="contain" />
+            </Pressable>
+            <Text style={s.rashiHeroName}>{RASHI_NAMES[rashiIdx]}</Text>
+            <Text style={s.rashiHeroEn}>({ENGLISH_RASHI_NAMES[rashiIdx]})</Text>
+            <Pressable onPress={onChangePress} hitSlop={6}>
+              <Text style={s.rashiHeroChangeLink}>রাশি পরিবর্তন করুন ›</Text>
+            </Pressable>
           </View>
-        ) : (
-          <>
-            <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
-            <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
-          </>
+
+          <View style={s.rashiHeroDivider} />
+
+          <View style={s.rashiHeroRight}>
+            <Text style={s.forecastTitle} numberOfLines={1}>আজকের সংক্ষিপ্ত ভবিষ্যৎ</Text>
+            {score ? (
+              <View style={s.forecastRow}>
+                {FORECAST_CATS.map(cat => (
+                  <View key={cat.key} style={s.forecastCell}>
+                    <MaterialCommunityIcons name={cat.icon} size={13} color="rgba(255,255,255,0.9)" />
+                    <Text style={s.forecastLabel} numberOfLines={1}>{cat.label}</Text>
+                    <StarRow score={score[cat.key]} />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <>
+                <Text style={s.rashiDetail} numberOfLines={1}>শুভ রং: {lucky.colorName} · রত্ন: {lucky.gem}</Text>
+                <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
+              </>
+            )}
+          </View>
+        </View>
+
+        {luckScore && advice && (
+          <View style={s.luckBox}>
+            <View style={s.luckScoreCol}>
+              <Text style={s.luckScoreLabel}>ভাগ্য স্কোর</Text>
+              <Text style={s.luckScoreValue}>{toBN(luckScore)}<Text style={s.luckScoreMax}>/১০</Text></Text>
+            </View>
+            <View style={s.luckDivider} />
+            <View style={s.luckAdviceCol}>
+              <Text style={s.luckAdviceLabel}>প্রধান পরামর্শ:</Text>
+              <Text style={s.luckAdviceText} numberOfLines={2}>{advice}</Text>
+              <Text style={s.luckAdviceLink}>বিস্তারিত রাশিফল ›</Text>
+            </View>
+          </View>
         )}
-      </Pressable>
-    </View>
+      </LinearGradient>
+    </Pressable>
   );
 }
 
@@ -258,20 +283,19 @@ function SelfReflectionTeaser({ dayIndex, onPress }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.reflectionWrap, pressed && { opacity: 0.9 }]}>
       <LinearGradient
-        colors={['#3D1F30', '#5C2A3D']}
+        colors={['#3B2170', '#7C4FB0']}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={s.reflectionCard}
       >
-        <View style={s.reflectionIconWrap}>
-          <MaterialCommunityIcons name="lotus" size={18} color={colors.gold} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
-          <Text style={s.reflectionLine} numberOfLines={2}>{line}</Text>
-        </View>
+        <MaterialCommunityIcons
+          name="format-quote-close" size={54} color="rgba(255,255,255,0.12)"
+          style={s.reflectionQuoteDeco}
+        />
+        <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
+        <Text style={s.reflectionLine} numberOfLines={3}>{line}</Text>
         <View style={s.reflectionCta}>
-          <Text style={s.reflectionCtaText}>দেখুন</Text>
-          <MaterialCommunityIcons name="chevron-right" size={13} color={colors.text} />
+          <Text style={s.reflectionCtaText}>আরও পড়ুন</Text>
+          <MaterialCommunityIcons name="chevron-right" size={13} color="#3B2170" />
         </View>
       </LinearGradient>
     </Pressable>
@@ -342,11 +366,19 @@ export function HomeScreen() {
 
   // "আমার রাশি" কার্ডে প্রতিদিন বদলানো তথ্য দেখানোর জন্য — স্থির শুভ রং/সংখ্যা/
   // দিকের বদলে আজকের প্রেম/কর্ম/স্বাস্থ্য/আর্থিক রেটিং, যাতে প্রতিদিন নতুন কিছু দেখা যায়।
-  const todayRashiScore = useMemo(() => {
+  const todayRashiEntry = useMemo(() => {
     if (userRashi === null) return null;
-    try { return getTodayRashifal().rashifal[userRashi]?.score || null; }
+    try { return getTodayRashifal().rashifal[userRashi] || null; }
     catch (_) { return null; }
   }, [userRashi, iso]);
+  const todayRashiScore = todayRashiEntry?.score || null;
+  // ভাগ্য স্কোর (/১০) — প্রেম/স্বাস্থ্য/চাকরি/অর্থ ৪টা ৫-স্টার রেটিং-এর গড়, ×২ করে
+  // ১০-এর স্কেলে আনা হচ্ছে (নতুন কোনো ডেটা ছাড়াই, বিদ্যমান স্কোর থেকেই বের করা)।
+  const todayLuckScore = useMemo(() => {
+    if (!todayRashiScore) return null;
+    const { love = 0, health = 0, work = 0, finance = 0 } = todayRashiScore;
+    return (((love + health + work + finance) / 4) * 2).toFixed(1);
+  }, [todayRashiScore]);
 
   const data = useMemo(() => {
     try {
@@ -442,6 +474,8 @@ export function HomeScreen() {
             <RashiHeroRow
               rashiIdx={userRashi}
               score={todayRashiScore}
+              luckScore={todayLuckScore}
+              advice={todayRashiEntry?.summary}
               onChangePress={() => { haptics.tap(); setRashiModal(true); }}
               onRashifalPress={() => { haptics.tap(); navigation.navigate('RashifalDetail', { rashiIndex: userRashi }); }}
             />
@@ -607,33 +641,48 @@ const s = StyleSheet.create({
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
   sectionLink:  { ...typography.label, color: colors.gold },
 
-  /* আমার রাশি — একটাই হালকা কার্ড, উল্লম্ব ডিভাইডারে দুই ভাগ (কম্প্যাক্ট হাইট) */
+  /* আমার রাশি — বেগুনি গ্র্যাডিয়েন্ট কার্ড, ওপরে অ্যাভাটার+রেটিং, নিচে হালকা
+     lavender বক্সে ভাগ্য স্কোর + প্রধান পরামর্শ (ওয়েবসাইটের হোম পেজের রাশি
+     কার্ডের ডিজাইনের সাথে সামঞ্জস্যপূর্ণ) */
+  rashiHeroWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
   rashiHeroCard: {
-    flexDirection: 'row', alignItems: 'center',
-    marginHorizontal: spacing.md, marginBottom: 2,
-    backgroundColor: colors.card, borderRadius: radii.lg,
-    borderWidth: 1, borderColor: colors.cardBorder,
-    paddingVertical: 10, paddingHorizontal: 10, ...shadows.card,
+    borderRadius: radii.lg, padding: 10, ...shadows.raised,
   },
+  rashiHeroTopRow: { flexDirection: 'row', alignItems: 'center' },
   rashiHeroLeft: { width: 96, alignItems: 'center' },
   rashiHeroAvatarWrap: {
     width: 46, height: 46, borderRadius: radii.pill,
-    backgroundColor: 'rgba(201,168,76,0.18)', borderWidth: 1.5, borderColor: 'rgba(201,168,76,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.14)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.5)',
     alignItems: 'center', justifyContent: 'center', marginBottom: 4,
   },
   rashiHeroAvatarImg: { width: 30, height: 30 },
-  rashiHeroName: { ...typography.heading, fontSize: 13, color: colors.text },
-  rashiHeroEn:   { ...typography.label, fontSize: 9.5, color: colors.textSecondary, marginBottom: 2 },
-  rashiHeroChangeLink: { ...typography.label, fontSize: 9.5, color: colors.primary, fontWeight: '700', textAlign: 'center' },
+  rashiHeroName: { ...typography.heading, fontSize: 13, color: colors.white },
+  rashiHeroEn:   { ...typography.label, fontSize: 9.5, color: 'rgba(255,255,255,0.75)', marginBottom: 2 },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 9.5, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
 
-  rashiHeroDivider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.divider, marginHorizontal: 8 },
+  rashiHeroDivider: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,0.25)', marginHorizontal: 8 },
 
   rashiHeroRight: { flex: 1 },
-  forecastTitle: { ...typography.value, fontSize: 10.5, marginBottom: 6, color: colors.primary },
+  forecastTitle: { ...typography.value, fontSize: 10.5, marginBottom: 6, color: colors.white },
   forecastRow: { flexDirection: 'row' },
   forecastCell: { alignItems: 'center', gap: 1, width: '25%', overflow: 'hidden' },
-  forecastLabel: { ...typography.label, fontSize: 8.5, color: colors.textSecondary },
-  rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
+  forecastLabel: { ...typography.label, fontSize: 8.5, color: 'rgba(255,255,255,0.8)' },
+  rashiDetail: { ...typography.label, color: 'rgba(255,255,255,0.8)', lineHeight: 16, fontSize: 11 },
+
+  luckBox: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F1EAFB', borderRadius: radii.md,
+    marginTop: 10, padding: 10, gap: 10,
+  },
+  luckScoreCol: { alignItems: 'center', width: 62 },
+  luckScoreLabel: { ...typography.label, fontSize: 8.5, color: '#6B4BA8', fontWeight: '700' },
+  luckScoreValue: { ...typography.heading, fontSize: 17, color: '#3B2170', marginTop: 1 },
+  luckScoreMax: { ...typography.label, fontSize: 10, color: '#6B4BA8' },
+  luckDivider: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(107,75,168,0.25)' },
+  luckAdviceCol: { flex: 1 },
+  luckAdviceLabel: { ...typography.label, fontSize: 9, color: '#6B4BA8', fontWeight: '700', marginBottom: 1 },
+  luckAdviceText: { ...typography.caption, fontSize: 10.5, color: '#3D2A5C', lineHeight: 14.5 },
+  luckAdviceLink: { ...typography.label, fontSize: 9.5, color: '#8A4FD1', fontWeight: '700', marginTop: 3 },
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -681,28 +730,23 @@ const s = StyleSheet.create({
   },
   bookingBannerCtaText: { ...typography.label, fontSize: 9.5, color: colors.text, fontWeight: '700' },
 
-  /* আত্মপর্যালোচনা টিজার — bookingBanner-এর গাঢ়+সোনালি প্যাটার্নের সাথে
-     সামঞ্জস্যপূর্ণ রঙে, যাতে হোম স্ক্রিনের বাকি অংশের সাথে না মিশে গিয়েও
-     পরিচিত/মানানসই লাগে */
+  /* আত্মপর্যালোচনা টিজার — ওয়েবসাইটের হোম পেজের "আজকের এক মিনিট" কার্ডের
+     ডিজাইনের সাথে সামঞ্জস্যপূর্ণ: উল্লম্ব লেআউট, বেগুনি গ্র্যাডিয়েন্ট,
+     কোণে হালকা quote আইকন, নিচে হালকা বোতাম */
   reflectionWrap: { marginHorizontal: spacing.md, marginTop: 10, marginBottom: 2 },
   reflectionCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: radii.lg, paddingHorizontal: 12, paddingVertical: 11,
-    ...shadows.raised,
+    borderRadius: radii.lg, paddingHorizontal: 14, paddingVertical: 13,
+    overflow: 'hidden', ...shadows.raised,
   },
-  reflectionIconWrap: {
-    width: 34, height: 34, borderRadius: radii.pill,
-    backgroundColor: 'rgba(201,168,76,0.18)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.5)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  reflectionTag:  { ...typography.caption, color: colors.gold, fontWeight: '700' },
-  reflectionLine: { ...typography.value, fontSize: 12.5, color: colors.white, marginTop: 2, lineHeight: 16.5 },
+  reflectionQuoteDeco: { position: 'absolute', top: 4, right: 8 },
+  reflectionTag:  { ...typography.caption, color: '#FFD873', fontWeight: '700' },
+  reflectionLine: { ...typography.value, fontSize: 12.5, color: colors.white, marginTop: 5, lineHeight: 17.5, maxWidth: '85%' },
   reflectionCta: {
-    flexDirection: 'row', alignItems: 'center', gap: 2,
-    backgroundColor: colors.gold, borderRadius: radii.pill,
-    paddingHorizontal: 10, paddingVertical: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start',
+    backgroundColor: '#fff', borderRadius: radii.pill,
+    paddingHorizontal: 12, paddingVertical: 6, marginTop: 10,
   },
-  reflectionCtaText: { ...typography.label, fontSize: 10, color: colors.text, fontWeight: '700' },
+  reflectionCtaText: { ...typography.label, fontSize: 10, color: '#3B2170', fontWeight: '700' },
 
   blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
