@@ -30,5 +30,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // js/social-data.js-এর লাইভ Google/JustDial/Facebook/YouTube রিভিউ ও
+    // ফলোয়ার সংখ্যা — সবাই পড়তে পারবে (data-sd badge instant আপডেটের জন্য),
+    // শুধু অ্যাডমিন লিখতে পারবে (social-admin.html)
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
