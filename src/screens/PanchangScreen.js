@@ -226,6 +226,14 @@ body.yearly-mode>*:not(#yearlyPanjikaView){display:none!important;}
 // RAM-এর) ফোনে react-native-webview-এর bridge ওভারলোড হয়ে অ্যাপ ক্র্যাশ করে —
 // তাই এখানে HTML-কে ছোট ছোট টুকরোয় ভেঙে একাধিক postMessage-এ পাঠানো হচ্ছে,
 // React Native পাশে জোড়া লাগিয়ে নেওয়া হয়।
+//
+// pdfPayAndPrint()-এর নিজস্ব কোড শুধু "typeof Razorpay==='undefined'" synchronous
+// চেক করে — ধীর ইন্টারনেটে checkout.js তখনও লোড না হলে চুপচাপ পেমেন্ট বাদ দিয়ে
+// সরাসরি বিনামূল্যে PDF দিয়ে দেয় (বা কিছুই দৃশ্যমান হয় না) — এটাই
+// "পেমেন্ট বোতাম কাজ করছে না" রিপোর্টের কারণ। MatchMakingScreen.js-এর
+// mmWaitForRazorpay প্যাটার্ন অনুসরণ করে window.pdfPayAndPrint-কে wrap করে
+// আসল Razorpay লোড হওয়া পর্যন্ত অপেক্ষা করানো হচ্ছে (toast সহ), আর অনেকক্ষণ
+// (~৯০ সেকেন্ড) লোড না হলে fail-closed — বিনামূল্যে ছেড়ে না দিয়ে স্পষ্ট এরর দেখায়।
 const YEARLY_PDF_JS = `
 setTimeout(function(){
   if(typeof Razorpay==='undefined'&&!document.querySelector('script[src*="checkout.razorpay"]')){
@@ -252,6 +260,40 @@ setTimeout(function(){
       }
     }
   };
+  function pjToast(msg){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:76px;left:14px;right:14px;background:#0a192f;color:#ffd700;'+
+      'padding:13px 16px;border-radius:10px;font-size:.88rem;z-index:99999;border:1px solid #b8860b;'+
+      'text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.35);';
+    t.textContent=msg;
+    document.body.appendChild(t);
+    return t;
+  }
+  function pjWaitForRazorpay(cb){
+    if(typeof Razorpay!=='undefined'){cb();return;}
+    var toast=pjToast('⏳ পেমেন্ট গেটওয়ে লোড হচ্ছে, ধীর ইন্টারনেটে কিছুটা সময় লাগতে পারে…');
+    var triesLeft=150;
+    (function poll(){
+      if(typeof Razorpay!=='undefined'){
+        if(toast.parentNode)toast.parentNode.removeChild(toast);
+        cb();
+        return;
+      }
+      if(triesLeft<=0){
+        if(toast.parentNode)toast.parentNode.removeChild(toast);
+        pjToast('❌ পেমেন্ট গেটওয়ে লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
+        return;
+      }
+      triesLeft--;
+      setTimeout(poll,600);
+    })();
+  }
+  var origPdfPayAndPrint=window.pdfPayAndPrint;
+  if(typeof origPdfPayAndPrint==='function'){
+    window.pdfPayAndPrint=function(){
+      pjWaitForRazorpay(origPdfPayAndPrint);
+    };
+  }
 },600);
 `;
 
