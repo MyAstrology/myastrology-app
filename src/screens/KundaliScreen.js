@@ -161,6 +161,22 @@ svg.tab-icon{stroke:rgba(255,255,255,0.55)!important;fill:none!important;width:1
 .tab-btn[aria-selected="true"] svg.tab-icon,.tab-btn.active svg.tab-icon{
   stroke:#5a1e1e!important;
 }
+/* ── PDF/প্রিমিয়াম/সমাধান — উপরের সাধারণ .tab-btn রুল সবগুলো বোতামকে একই
+   অস্বচ্ছ সাদা ওয়াশ দিয়ে দেয়, ফলে ওয়েবসাইটের নিজস্ব বেগুনি/মেরুন গ্রেডিয়েন্ট
+   চাপা পড়ে যায় আর #cspBtn-এর নিজস্ব মেরুন রংটা #tabNav-এর মেরুন ব্যাকগ্রাউন্ডের
+   সাথে প্রায় মিশে যায় — তিনটাকেই আলাদা, চোখে-পড়ার-মতো রঙে override করা হলো। */
+#pdfBtn{
+  background:rgba(255,215,0,0.14)!important;
+  border:1px solid rgba(255,215,0,0.55)!important;
+}
+#premiumBtn{
+  background:linear-gradient(135deg,#9b3fd4,#5c1fa0)!important;
+  border-color:rgba(255,255,255,0.35)!important;
+}
+#cspBtn{
+  background:linear-gradient(135deg,#0f9d6a,#0a6b48)!important;
+  border-color:rgba(255,255,255,0.35)!important;
+}
 /* ── Hide external-navigation tabs (যোটক, পঞ্জিকা, বর্ষফল, প্রশ্ন, রাশিফল) ── */
 .tab-btn[aria-label*="পেজে যান"],
 .tab-btn[onclick*="goToYotak"],
