@@ -142,9 +142,16 @@ export function SettingsScreen({ navigation }) {
               <>
                 <View style={s.divider} />
                 <Row
-                  icon="shield-account"
-                  label="অ্যাডমিন প্যানেল"
+                  icon="account-group-outline"
+                  label="নিবন্ধিত ব্যবহারকারী"
                   onPress={() => navigation.navigate('Admin')}
+                />
+                <View style={s.divider} />
+                <Row
+                  icon="tune-variant"
+                  label="ওয়েবসাইট Admin টুলস"
+                  sub="মূল্য, প্রিমিয়াম, কুণ্ডলী মিলন ও রিভিউ সংখ্যা"
+                  onPress={() => Linking.openURL('https://myastrology.in/admin').catch(() => {})}
                 />
               </>
             )}
