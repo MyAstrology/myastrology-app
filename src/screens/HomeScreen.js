@@ -187,7 +187,9 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
                 <View style={s.luckDivider} />
                 <View style={s.luckAdviceCol}>
                   <Text style={s.luckAdviceLabel}>প্রধান পরামর্শ:</Text>
-                  <Text style={s.luckAdviceText} numberOfLines={2}>{advice}</Text>
+                  <Text style={s.luckAdviceText} numberOfLines={2}>
+                    {advice} <Text style={s.luckAdviceLink}>বিস্তারিত ›</Text>
+                  </Text>
                 </View>
               </View>
             )}
@@ -241,6 +243,7 @@ function BlogCard({ post, onPress }) {
 }
 
 const BOOKING_BANNER_IMG = require('../../assets/booking-banner-shiva.webp');
+const REFLECTION_ICON_IMG = require('../../assets/reflection-meditation.webp');
 
 // একটামাত্র বড় ব্যানার — শিবের ছবি ব্যাকগ্রাউন্ডে (বাঁয়ে শিব দৃশ্যমান থাকে,
 // ডানদিকে অন্ধকার নক্ষত্র-আকাশের অংশে লেখা বসানো, ওপরে হালকা গ্র্যাডিয়েন্ট
@@ -301,6 +304,7 @@ function SelfReflectionTeaser({ dayIndex, onPress }) {
           name="format-quote-close" size={28} color="rgba(255,255,255,0.12)"
           style={s.reflectionQuoteDeco}
         />
+        <Image source={REFLECTION_ICON_IMG} style={s.reflectionIcon} />
         <View style={s.reflectionTextCol}>
           <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
           <Text style={s.reflectionLine} numberOfLines={2}>{line}</Text>
@@ -674,19 +678,19 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#7C4FB0', ...shadows.raised,
   },
   rashiHeroTopRow: { flexDirection: 'row' },
-  rashiHeroLeft: { width: 88, alignItems: 'center', paddingVertical: 6, paddingHorizontal: 8 },
+  rashiHeroLeft: { width: 84, alignItems: 'center', paddingVertical: 4, paddingHorizontal: 6 },
   rashiHeroAvatarWrap: {
-    width: 36, height: 36, borderRadius: radii.pill,
+    width: 32, height: 32, borderRadius: radii.pill,
     backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.gold,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 2,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 1,
   },
-  rashiHeroAvatarImg: { width: 23, height: 23 },
-  rashiHeroName: { ...typography.heading, fontSize: 12.5, color: colors.white },
-  rashiHeroEn:   { ...typography.label, fontSize: 9, color: 'rgba(255,255,255,0.75)', marginBottom: 1 },
-  rashiHeroChangeLink: { ...typography.label, fontSize: 9, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
+  rashiHeroAvatarImg: { width: 20, height: 20 },
+  rashiHeroName: { ...typography.heading, fontSize: 12, color: colors.white },
+  rashiHeroEn:   { ...typography.label, fontSize: 8.5, color: 'rgba(255,255,255,0.75)', marginBottom: 1 },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 8.5, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
 
-  rashiHeroRight: { flex: 1, paddingVertical: 6, paddingHorizontal: 10 },
-  forecastTitle: { ...typography.value, fontSize: 10, marginBottom: 3, color: '#3B2170' },
+  rashiHeroRight: { flex: 1, paddingVertical: 4, paddingHorizontal: 10 },
+  forecastTitle: { ...typography.value, fontSize: 9.5, marginBottom: 2, color: '#3B2170' },
   forecastRow: { flexDirection: 'row', gap: 4 },
   forecastCell: { flex: 1, alignItems: 'center', gap: 1, overflow: 'hidden' },
   forecastLabel: { ...typography.label, fontSize: 8, color: colors.textSecondary },
@@ -694,20 +698,23 @@ const s = StyleSheet.create({
 
   /* ভাগ্য স্কোর + প্রধান পরামর্শ — বাঁয়ের বেগুনি কলাম (অ্যাভাটার+নাম+লিংক)
      স্বাভাবিকভাবেই যে হাইট নেয়, ডান দিকে ঠিক ততটাই জায়গা 2-লাইন পরামর্শ
-     টেক্সট দিয়ে পূর্ণ ব্যবহার করা হচ্ছে — নাহলে নিচে ফাঁকা জায়গা থেকে যায়। */
+     টেক্সট দিয়ে পূর্ণ ব্যবহার করা হচ্ছে — নাহলে নিচে ফাঁকা জায়গা থেকে যায়।
+     "বিস্তারিত ›" লিংক advice টেক্সটের ভেতরেই nested Text হিসেবে (আলাদা লাইন/
+     height না নিয়ে) দেখানো হচ্ছে, যাতে ক্লিক-করার আফোর্ডেন্স স্পষ্ট থাকে। */
   luckBox: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 7,
     backgroundColor: '#F1E6FA', borderRadius: radii.sm,
-    marginTop: 4, paddingHorizontal: 8, paddingVertical: 4,
+    marginTop: 3, paddingHorizontal: 7, paddingVertical: 3,
   },
-  luckScoreCol:   { alignItems: 'center', width: 48 },
-  luckScoreLabel: { ...typography.label, fontSize: 7.5, fontWeight: '700', color: '#6B4BA8', textAlign: 'center' },
-  luckScoreValue: { ...typography.heading, fontSize: 14, color: '#3B2170', marginTop: 1 },
-  luckScoreMax:   { ...typography.label, fontSize: 8.5, color: '#6B4BA8' },
+  luckScoreCol:   { alignItems: 'center', width: 44 },
+  luckScoreLabel: { ...typography.label, fontSize: 7, fontWeight: '700', color: '#6B4BA8', textAlign: 'center' },
+  luckScoreValue: { ...typography.heading, fontSize: 13, color: '#3B2170', marginTop: 1 },
+  luckScoreMax:   { ...typography.label, fontSize: 8, color: '#6B4BA8' },
   luckDivider:    { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(107,75,168,0.25)' },
   luckAdviceCol:  { flex: 1 },
-  luckAdviceLabel:{ ...typography.label, fontSize: 8, fontWeight: '700', color: '#6B4BA8', marginBottom: 1 },
-  luckAdviceText: { ...typography.caption, fontSize: 9.5, color: '#3D2A5C', lineHeight: 13 },
+  luckAdviceLabel:{ ...typography.label, fontSize: 7.5, fontWeight: '700', color: '#6B4BA8', marginBottom: 1 },
+  luckAdviceText: { ...typography.caption, fontSize: 9, color: '#3D2A5C', lineHeight: 12.5 },
+  luckAdviceLink: { fontSize: 9, fontWeight: '700', color: '#8A4FD1' },
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -765,6 +772,7 @@ const s = StyleSheet.create({
     overflow: 'hidden', ...shadows.raised,
   },
   reflectionQuoteDeco: { position: 'absolute', top: 2, right: 6, width: 28, height: 28 },
+  reflectionIcon: { width: 38, height: 38, borderRadius: 19, flexShrink: 0 },
   reflectionTextCol: { flex: 1, minWidth: 0 },
   reflectionTag:  { ...typography.caption, fontSize: 9, color: '#FFD873', fontWeight: '700' },
   reflectionLine: { ...typography.value, fontSize: 11, color: colors.white, marginTop: 2, lineHeight: 14 },
