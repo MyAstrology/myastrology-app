@@ -292,11 +292,11 @@ function SelfReflectionTeaser({ dayIndex, onPress }) {
         style={s.reflectionCard}
       >
         <MaterialCommunityIcons
-          name="format-quote-close" size={54} color="rgba(255,255,255,0.12)"
+          name="format-quote-close" size={32} color="rgba(255,255,255,0.12)"
           style={s.reflectionQuoteDeco}
         />
         <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
-        <Text style={s.reflectionLine} numberOfLines={3}>{line}</Text>
+        <Text style={s.reflectionLine} numberOfLines={2}>{line}</Text>
         <View style={s.reflectionCta}>
           <Text style={s.reflectionCtaText}>আরও পড়ুন</Text>
           <MaterialCommunityIcons name="chevron-right" size={13} color="#3B2170" />
@@ -662,25 +662,26 @@ const s = StyleSheet.create({
      রাশি কার্ডের সাথে পিক্সেল-লেভেলে মেলানো) */
   rashiHeroWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
   rashiHeroCard: {
-    backgroundColor: colors.card, borderRadius: radii.lg, overflow: 'hidden', ...shadows.raised,
+    backgroundColor: colors.card, borderRadius: radii.lg, overflow: 'hidden',
+    borderWidth: 1.5, borderColor: '#7C4FB0', ...shadows.raised,
   },
   rashiHeroTopRow: { flexDirection: 'row' },
-  rashiHeroLeft: { width: 100, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8 },
+  rashiHeroLeft: { width: 92, alignItems: 'center', paddingVertical: 8, paddingHorizontal: 8 },
   rashiHeroAvatarWrap: {
-    width: 46, height: 46, borderRadius: radii.pill,
+    width: 40, height: 40, borderRadius: radii.pill,
     backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.gold,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 4,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 3,
   },
-  rashiHeroAvatarImg: { width: 30, height: 30 },
-  rashiHeroName: { ...typography.heading, fontSize: 13, color: colors.white },
-  rashiHeroEn:   { ...typography.label, fontSize: 9.5, color: 'rgba(255,255,255,0.75)', marginBottom: 2 },
-  rashiHeroChangeLink: { ...typography.label, fontSize: 9.5, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
+  rashiHeroAvatarImg: { width: 26, height: 26 },
+  rashiHeroName: { ...typography.heading, fontSize: 12.5, color: colors.white },
+  rashiHeroEn:   { ...typography.label, fontSize: 9, color: 'rgba(255,255,255,0.75)', marginBottom: 1 },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 9, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
 
-  rashiHeroRight: { flex: 1, paddingVertical: 12, paddingHorizontal: 12 },
-  forecastTitle: { ...typography.value, fontSize: 10.5, marginBottom: 6, color: '#3B2170' },
+  rashiHeroRight: { flex: 1, paddingVertical: 8, paddingHorizontal: 10 },
+  forecastTitle: { ...typography.value, fontSize: 10, marginBottom: 4, color: '#3B2170' },
   forecastRow: { flexDirection: 'row' },
   forecastCell: { alignItems: 'center', gap: 1, width: '25%', overflow: 'hidden' },
-  forecastLabel: { ...typography.label, fontSize: 8.5, color: colors.textSecondary },
+  forecastLabel: { ...typography.label, fontSize: 8, color: colors.textSecondary },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
 
   /* কমপ্যাক্ট এক-লাইনের ভাগ্য স্কোর — কার্ডের হাইট বৃদ্ধি এড়াতে label/text/link
@@ -688,7 +689,7 @@ const s = StyleSheet.create({
   luckBox: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F1E6FA', borderRadius: radii.sm,
-    marginTop: 8, paddingHorizontal: 8, paddingVertical: 5,
+    marginTop: 6, paddingHorizontal: 7, paddingVertical: 4,
   },
   luckBoxScore:  { ...typography.label, fontSize: 9.5, fontWeight: '700', color: '#3B2170' },
   luckBoxAdvice: { ...typography.label, fontSize: 9.5, color: '#5A3D7A', flex: 1 },
@@ -745,18 +746,18 @@ const s = StyleSheet.create({
      কোণে হালকা quote আইকন, নিচে হালকা বোতাম */
   reflectionWrap: { marginHorizontal: spacing.md, marginTop: 10, marginBottom: 2 },
   reflectionCard: {
-    borderRadius: radii.lg, paddingHorizontal: 14, paddingVertical: 13,
+    borderRadius: radii.lg, paddingHorizontal: 12, paddingVertical: 8,
     overflow: 'hidden', ...shadows.raised,
   },
-  reflectionQuoteDeco: { position: 'absolute', top: 4, right: 8 },
-  reflectionTag:  { ...typography.caption, color: '#FFD873', fontWeight: '700' },
-  reflectionLine: { ...typography.value, fontSize: 12.5, color: colors.white, marginTop: 5, lineHeight: 17.5, maxWidth: '85%' },
+  reflectionQuoteDeco: { position: 'absolute', top: 2, right: 6, width: 32, height: 32 },
+  reflectionTag:  { ...typography.caption, fontSize: 9, color: '#FFD873', fontWeight: '700' },
+  reflectionLine: { ...typography.value, fontSize: 11, color: colors.white, marginTop: 2, lineHeight: 14, maxWidth: '92%' },
   reflectionCta: {
     flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start',
     backgroundColor: '#fff', borderRadius: radii.pill,
-    paddingHorizontal: 12, paddingVertical: 6, marginTop: 10,
+    paddingHorizontal: 9, paddingVertical: 3, marginTop: 5,
   },
-  reflectionCtaText: { ...typography.label, fontSize: 10, color: '#3B2170', fontWeight: '700' },
+  reflectionCtaText: { ...typography.label, fontSize: 9, color: '#3B2170', fontWeight: '700' },
 
   blogRow: { paddingHorizontal: spacing.md, gap: 8 },
   blogCard: {
