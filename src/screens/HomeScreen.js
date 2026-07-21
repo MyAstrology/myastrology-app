@@ -442,10 +442,10 @@ export function HomeScreen() {
         <View style={s.heroWash}>
             <View style={s.card}>
               <ImageBackground source={HERO_BG} resizeMode="cover" style={s.heroImgBand}>
-                <View style={s.titleBadge}>
-                  <MaterialCommunityIcons name="star-four-points" size={11} color={colors.primary} />
+                <View style={s.cardHeaderRow}>
+                  <View style={s.dot} />
                   <Text style={s.cardTitle}>আজকের পঞ্জিকা</Text>
-                  <MaterialCommunityIcons name="star-four-points" size={11} color={colors.primary} />
+                  <View style={s.dot} />
                 </View>
 
                 <Text style={s.bnDate}>{bnDateStr}</Text>
@@ -629,13 +629,9 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingTop: 16, paddingBottom: 12,
     marginBottom: 2,
   },
-  titleBadge: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    alignSelf: 'center', marginBottom: 6,
-    backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 1, borderColor: 'rgba(184,150,12,0.4)',
-    paddingHorizontal: 12, paddingVertical: 3, borderRadius: 20,
-  },
-  cardTitle: { ...typography.sectionTitle, color: colors.text, fontWeight: '700', letterSpacing: 0.4 },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4, gap: 8 },
+  dot:           { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
+  cardTitle:     { ...typography.sectionTitle, color: colors.primary },
 
   bnDate: {
     ...typography.heading, fontSize: 20, fontWeight: '800', color: colors.text,
