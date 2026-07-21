@@ -180,9 +180,15 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
 
             {luckScore && advice && (
               <View style={s.luckBox}>
-                <Text style={s.luckBoxScore}>ভাগ্য স্কোর {toBN(luckScore)}/১০</Text>
-                <Text style={s.luckBoxAdvice} numberOfLines={1}> · {advice}</Text>
-                <Text style={s.luckBoxLink}>বিস্তারিত ›</Text>
+                <View style={s.luckScoreCol}>
+                  <Text style={s.luckScoreLabel}>ভাগ্য স্কোর</Text>
+                  <Text style={s.luckScoreValue}>{toBN(luckScore)}<Text style={s.luckScoreMax}>/১০</Text></Text>
+                </View>
+                <View style={s.luckDivider} />
+                <View style={s.luckAdviceCol}>
+                  <Text style={s.luckAdviceLabel}>প্রধান পরামর্শ:</Text>
+                  <Text style={s.luckAdviceText} numberOfLines={2}>{advice}</Text>
+                </View>
               </View>
             )}
           </View>
@@ -686,16 +692,22 @@ const s = StyleSheet.create({
   forecastLabel: { ...typography.label, fontSize: 8, color: colors.textSecondary },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
 
-  /* কমপ্যাক্ট এক-লাইনের ভাগ্য স্কোর — কার্ডের হাইট বৃদ্ধি এড়াতে label/text/link
-     সবই একই সারিতে (advice numberOfLines=1 দিয়ে ছেঁটে দেওয়া হয়) */
+  /* ভাগ্য স্কোর + প্রধান পরামর্শ — বাঁয়ের বেগুনি কলাম (অ্যাভাটার+নাম+লিংক)
+     স্বাভাবিকভাবেই যে হাইট নেয়, ডান দিকে ঠিক ততটাই জায়গা 2-লাইন পরামর্শ
+     টেক্সট দিয়ে পূর্ণ ব্যবহার করা হচ্ছে — নাহলে নিচে ফাঁকা জায়গা থেকে যায়। */
   luckBox: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#F1E6FA', borderRadius: radii.sm,
-    marginTop: 4, paddingHorizontal: 7, paddingVertical: 3,
+    marginTop: 5, paddingHorizontal: 8, paddingVertical: 5,
   },
-  luckBoxScore:  { ...typography.label, fontSize: 9.5, fontWeight: '700', color: '#3B2170' },
-  luckBoxAdvice: { ...typography.label, fontSize: 9.5, color: '#5A3D7A', flex: 1 },
-  luckBoxLink:   { ...typography.label, fontSize: 9.5, fontWeight: '700', color: '#8A4FD1', marginLeft: 4 },
+  luckScoreCol:   { alignItems: 'center', width: 48 },
+  luckScoreLabel: { ...typography.label, fontSize: 7.5, fontWeight: '700', color: '#6B4BA8', textAlign: 'center' },
+  luckScoreValue: { ...typography.heading, fontSize: 14, color: '#3B2170', marginTop: 1 },
+  luckScoreMax:   { ...typography.label, fontSize: 8.5, color: '#6B4BA8' },
+  luckDivider:    { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(107,75,168,0.25)' },
+  luckAdviceCol:  { flex: 1 },
+  luckAdviceLabel:{ ...typography.label, fontSize: 8, fontWeight: '700', color: '#6B4BA8', marginBottom: 1 },
+  luckAdviceText: { ...typography.caption, fontSize: 9.5, color: '#3D2A5C', lineHeight: 13 },
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
