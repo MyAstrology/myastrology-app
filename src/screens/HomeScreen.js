@@ -77,6 +77,18 @@ function PanchangCell({ icon, label, value, timeStart, timeEnd }) {
   );
 }
 
+// সূর্যোদয়/সূর্যাস্ত — লেবেল ও মান একই লাইনে (PanchangCell-এর ২-লাইন স্ট্যাকের
+// বদলে), যাতে এই সারিটা কম উচ্চতা নেয়
+function SunTimeCell({ icon, label, value }) {
+  return (
+    <View style={s.sunCell}>
+      <MaterialCommunityIcons name={icon} size={13} color={colors.primary} />
+      <Text style={s.sunLabel} numberOfLines={1}>{label}</Text>
+      <Text style={s.sunValue} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+    </View>
+  );
+}
+
 // আজকের শুভ-অশুভ সময়ের চিপ — সবুজ (good) বা লালচে-গোলাপি (bad) ব্যাজ,
 // horizontal scroll-এ পাশাপাশি (রেফারেন্স ডিজাইনের pill-row অনুযায়ী)
 function MuhurtaChip({ icon, label, time, tone }) {
@@ -461,8 +473,8 @@ export function HomeScreen() {
               </View>
               <View style={s.cardDivider} />
               <View style={s.cellGrid2}>
-                <PanchangCell icon="weather-sunset-up"   label="সূর্যোদয়" value={to12h(data.sunrise, 'সকাল')} />
-                <PanchangCell icon="weather-sunset-down" label="সূর্যাস্ত" value={to12h(data.sunset, 'সন্ধ্যা')}  />
+                <SunTimeCell icon="weather-sunset-up"   label="সূর্যোদয়" value={to12h(data.sunrise, 'সকাল')} />
+                <SunTimeCell icon="weather-sunset-down" label="সূর্যাস্ত" value={to12h(data.sunset, 'সন্ধ্যা')}  />
               </View>
             </View>
         </View>
@@ -635,6 +647,11 @@ const s = StyleSheet.create({
   cellLabel:  { ...typography.caption, color: colors.textSecondary },
   cellValue:  { ...typography.value, textAlign: 'center' },
   timeRange:  { fontSize: 10, color: colors.primary, textAlign: 'center', marginTop: 1, opacity: 0.85 },
+
+  /* সূর্যোদয়/সূর্যাস্ত — এক লাইনে আইকন+লেবেল+মান */
+  sunCell:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 },
+  sunLabel: { ...typography.caption, color: colors.textSecondary },
+  sunValue: { ...typography.value },
 
   /* Section row */
   sectionRow: {
