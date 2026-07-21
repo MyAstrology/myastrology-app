@@ -321,12 +321,15 @@ function QuickTile({ tab, icon, label, color, onPress }) {
   return (
     <Pressable
       onPress={() => { haptics.tap(); onPress(); }}
-      style={({ pressed }) => [s.quickBtn, pressed && s.quickBtnPressed]}
+      style={({ pressed }) => [
+        s.quickBtn, { backgroundColor: color + '12', borderColor: color + '38' },
+        pressed && { transform: [{ scale: 0.96 }], backgroundColor: color + '22' },
+      ]}
     >
-      <View style={[s.quickIconWrap, { backgroundColor: color + '1E' }]}>
-        <MenuIcon tab={tab} icon={icon} size={20} color={color} />
+      <View style={[s.quickIconWrap, { backgroundColor: color }]}>
+        <MenuIcon tab={tab} icon={icon} size={19} color={colors.white} />
       </View>
-      <Text style={s.quickLabel} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
+      <Text style={[s.quickLabel, { color }]} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
     </Pressable>
   );
 }
@@ -777,19 +780,17 @@ const s = StyleSheet.create({
   /* Quick Grid */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 8 },
   quickBtn: {
-    width: CARD_W, backgroundColor: colors.card, borderRadius: radii.lg,
-    borderWidth: 1, borderColor: colors.cardBorder,
-    alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, gap: 4,
+    width: CARD_W, borderRadius: radii.lg,
+    borderWidth: 1.5,
+    alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4, gap: 6,
     ...shadows.card,
   },
-  quickBtnPressed: {
-    backgroundColor: colors.goldWash, borderColor: colors.goldBorder, transform: [{ scale: 0.96 }],
-  },
   quickIconWrap: {
-    width: 38, height: 38, borderRadius: radii.md,
+    width: 40, height: 40, borderRadius: radii.pill,
     alignItems: 'center', justifyContent: 'center',
+    ...shadows.card,
   },
-  quickLabel: { ...typography.label, fontSize: 11, color: colors.text, fontWeight: '600', textAlign: 'center' },
+  quickLabel: { ...typography.label, fontSize: 11, fontWeight: '700', textAlign: 'center' },
 
   /* আজকের বিশেষ দিন */
   festivalCard: {
