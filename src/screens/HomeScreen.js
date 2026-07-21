@@ -451,9 +451,11 @@ export function HomeScreen() {
                 <Text style={s.bnDate}>{bnDateStr}</Text>
 
                 <View style={s.metaRow}>
-                  <View style={s.metaChip}><Text style={s.metaText}>{enDateStr}</Text></View>
-                  <View style={s.metaChip}><Text style={s.metaText}>{data.weekday}</Text></View>
-                  <View style={s.metaChip}><Text style={s.metaText}>{data.ritu}</Text></View>
+                  <Text style={s.metaText}>{enDateStr}</Text>
+                  <View style={s.metaDot} />
+                  <Text style={s.metaText}>{data.weekday}</Text>
+                  <View style={s.metaDot} />
+                  <Text style={s.metaText}>{data.ritu}</Text>
                 </View>
               </ImageBackground>
 
@@ -641,11 +643,8 @@ const s = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.12)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
   },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' },
-  metaChip: {
-    backgroundColor: 'rgba(255,255,255,0.45)', borderRadius: 10,
-    paddingHorizontal: 8, paddingVertical: 2,
-  },
-  metaText: { ...typography.label, color: colors.text, fontWeight: '600', fontSize: 11 },
+  metaText: { ...typography.label, color: colors.textSecondary, fontWeight: '500' },
+  metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textSecondary, opacity: 0.5 },
 
   cardDivider: { height: 1, backgroundColor: colors.divider },
 
