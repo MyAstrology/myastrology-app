@@ -153,7 +153,6 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
             </Pressable>
             <Text style={s.rashiHeroName}>{RASHI_NAMES[rashiIdx]}</Text>
             <Text style={s.rashiHeroEn}>({ENGLISH_RASHI_NAMES[rashiIdx]})</Text>
-            <View style={{ flex: 1 }} />
             <Pressable onPress={onChangePress} hitSlop={6}>
               <Text style={s.rashiHeroChangeLink}>রাশি পরিবর্তন করুন ›</Text>
             </Pressable>
@@ -187,10 +186,9 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
                 <View style={s.luckDivider} />
                 <View style={s.luckAdviceCol}>
                   <Text style={s.luckAdviceLabel}>প্রধান পরামর্শ:</Text>
-                  <Text style={s.luckAdviceText} numberOfLines={2}>
-                    {advice} <Text style={s.luckAdviceLink}>বিস্তারিত ›</Text>
-                  </Text>
+                  <Text style={s.luckAdviceText} numberOfLines={2}>{advice}</Text>
                 </View>
+                <Text style={s.luckAdviceLink}>বিস্তারিত ›</Text>
               </View>
             )}
           </View>
@@ -687,10 +685,10 @@ const s = StyleSheet.create({
   rashiHeroAvatarImg: { width: 20, height: 20 },
   rashiHeroName: { ...typography.heading, fontSize: 12, color: colors.white },
   rashiHeroEn:   { ...typography.label, fontSize: 8.5, color: 'rgba(255,255,255,0.75)', marginBottom: 1 },
-  rashiHeroChangeLink: { ...typography.label, fontSize: 8.5, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 8.5, color: '#FFD873', fontWeight: '700', textAlign: 'center', marginTop: 3 },
 
   rashiHeroRight: { flex: 1, paddingVertical: 4, paddingHorizontal: 10 },
-  forecastTitle: { ...typography.value, fontSize: 9.5, marginBottom: 2, color: '#3B2170' },
+  forecastTitle: { ...typography.value, fontSize: 9.5, marginTop: 3, marginBottom: 3, color: '#3B2170', textAlign: 'center' },
   forecastRow: { flexDirection: 'row', gap: 4 },
   forecastCell: { flex: 1, alignItems: 'center', gap: 1, overflow: 'hidden' },
   forecastLabel: { ...typography.label, fontSize: 8, color: colors.textSecondary },
@@ -699,8 +697,9 @@ const s = StyleSheet.create({
   /* ভাগ্য স্কোর + প্রধান পরামর্শ — বাঁয়ের বেগুনি কলাম (অ্যাভাটার+নাম+লিংক)
      স্বাভাবিকভাবেই যে হাইট নেয়, ডান দিকে ঠিক ততটাই জায়গা 2-লাইন পরামর্শ
      টেক্সট দিয়ে পূর্ণ ব্যবহার করা হচ্ছে — নাহলে নিচে ফাঁকা জায়গা থেকে যায়।
-     "বিস্তারিত ›" লিংক advice টেক্সটের ভেতরেই nested Text হিসেবে (আলাদা লাইন/
-     height না নিয়ে) দেখানো হচ্ছে, যাতে ক্লিক-করার আফোর্ডেন্স স্পষ্ট থাকে। */
+     "বিস্তারিত ›" লিংক luckAdviceText-এর বাইরে আলাদা sibling হিসেবে রাখা
+     হয়েছে (nested নয়) — নাহলে advice লম্বা হলে numberOfLines={2} পুরো
+     লিংকটাই ellipsize করে অদৃশ্য করে দিচ্ছিল। */
   luckBox: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     backgroundColor: '#F1E6FA', borderRadius: radii.sm,
@@ -714,7 +713,7 @@ const s = StyleSheet.create({
   luckAdviceCol:  { flex: 1 },
   luckAdviceLabel:{ ...typography.label, fontSize: 7.5, fontWeight: '700', color: '#6B4BA8', marginBottom: 1 },
   luckAdviceText: { ...typography.caption, fontSize: 9, color: '#3D2A5C', lineHeight: 12.5 },
-  luckAdviceLink: { fontSize: 9, fontWeight: '700', color: '#8A4FD1' },
+  luckAdviceLink: { fontSize: 9, fontWeight: '700', color: '#8A4FD1', flexShrink: 0 },
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
