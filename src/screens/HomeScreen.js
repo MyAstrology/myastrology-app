@@ -110,10 +110,10 @@ function MuhurtaChip({ icon, label, time, tone }) {
 // "আজকের ব্যক্তিগত ভবিষ্যৎ" কার্ডের ২×২ গ্রিড — প্রেম/স্বাস্থ্য উপরের সারিতে,
 // চাকরি/অর্থ নিচের সারিতে (রেফারেন্স ডিজাইনের ক্রম অনুযায়ী)
 const FORECAST_CATS = [
-  { key: 'love',    icon: 'heart',            label: 'প্রেম'   },
-  { key: 'health',  icon: 'leaf',             label: 'স্বাস্থ্য' },
-  { key: 'work',    icon: 'briefcase-outline',label: 'চাকরি'   },
-  { key: 'finance', icon: 'cash-multiple',    label: 'অর্থ'    },
+  { key: 'love',    icon: 'heart',            label: 'প্রেম',    color: '#C2185B' },
+  { key: 'health',  icon: 'leaf',             label: 'স্বাস্থ্য', color: '#6B8E23' },
+  { key: 'work',    icon: 'briefcase-outline',label: 'চাকরি',    color: '#8D5A2B' },
+  { key: 'finance', icon: 'cash-multiple',    label: 'অর্থ',     color: colors.gold },
 ];
 
 function StarRow({ score }) {
@@ -132,29 +132,32 @@ function StarRow({ score }) {
   );
 }
 
-// "আমার রাশি" সেকশন — মূল (সাদা কার্ড) সংস্করণের হাইট/কনটেন্ট অভিন্ন রেখে
-// শুধু বর্ডার/অ্যাভাটার-রিং/লিংক রঙে বেগুনি অ্যাকসেন্ট আনা হয়েছে (ওয়েবসাইটের
-// রাশি কার্ডের সাথে সামঞ্জস্যপূর্ণ — ওটাও সাদা কার্ড, পুরোপুরি বেগুনি-ভরাট না)।
-// নিচে একটামাত্র কমপ্যাক্ট লাইনে ভাগ্য স্কোর + প্রধান পরামর্শ — অতিরিক্ত হাইট
-// এড়াতে লেবেল/টেক্সট/লিংক সবই একই সারিতে।
+// "আমার রাশি" সেকশন — ওয়েবসাইটের রাশি কার্ডের সাথে হুবহু মেলাতে পিক্সেল-লেভেলে
+// রেফারেন্স ছবি যাচাই করে দেখা গেছে: বাঁয়ের অ্যাভাটার-কলাম সম্পূর্ণ বেগুনি-ভরাট
+// (শুধু বর্ডার না) এবং পুরো কার্ডের ফুল-হাইট জুড়ে বিস্তৃত (luckBox-এর পাশেও),
+// ডানের স্ট্যাটস-কলাম সাদা, আইকনগুলো রঙিন (গোলাপি/সবুজ/বাদামি/সোনালি) — সব গোল্ড
+// না। luckBox এক-লাইনে কমপ্যাক্ট রাখা হয়েছে যাতে কার্ডের হাইট না বাড়ে।
 function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
     <Pressable onPress={onRashifalPress} style={s.rashiHeroWrap}>
       <View style={s.rashiHeroCard}>
         <View style={s.rashiHeroTopRow}>
-          <View style={s.rashiHeroLeft}>
+          <LinearGradient
+            colors={['#3B2170', '#6B3D7A']}
+            start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+            style={s.rashiHeroLeft}
+          >
             <Pressable onPress={onChangePress} style={s.rashiHeroAvatarWrap}>
               <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiHeroAvatarImg} resizeMode="contain" />
             </Pressable>
             <Text style={s.rashiHeroName}>{RASHI_NAMES[rashiIdx]}</Text>
             <Text style={s.rashiHeroEn}>({ENGLISH_RASHI_NAMES[rashiIdx]})</Text>
+            <View style={{ flex: 1 }} />
             <Pressable onPress={onChangePress} hitSlop={6}>
               <Text style={s.rashiHeroChangeLink}>রাশি পরিবর্তন করুন ›</Text>
             </Pressable>
-          </View>
-
-          <View style={s.rashiHeroDivider} />
+          </LinearGradient>
 
           <View style={s.rashiHeroRight}>
             <Text style={s.forecastTitle} numberOfLines={1}>আজকের সংক্ষিপ্ত ভবিষ্যৎ</Text>
@@ -162,7 +165,7 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
               <View style={s.forecastRow}>
                 {FORECAST_CATS.map(cat => (
                   <View key={cat.key} style={s.forecastCell}>
-                    <MaterialCommunityIcons name={cat.icon} size={13} color={colors.gold} />
+                    <MaterialCommunityIcons name={cat.icon} size={13} color={cat.color} />
                     <Text style={s.forecastLabel} numberOfLines={1}>{cat.label}</Text>
                     <StarRow score={score[cat.key]} />
                   </View>
@@ -174,16 +177,16 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
                 <Text style={s.rashiDetail} numberOfLines={1}>শুভ সংখ্যা: {lucky.number} · দিক: {lucky.dir}</Text>
               </>
             )}
+
+            {luckScore && advice && (
+              <View style={s.luckBox}>
+                <Text style={s.luckBoxScore}>ভাগ্য স্কোর {toBN(luckScore)}/১০</Text>
+                <Text style={s.luckBoxAdvice} numberOfLines={1}> · {advice}</Text>
+                <Text style={s.luckBoxLink}>বিস্তারিত ›</Text>
+              </View>
+            )}
           </View>
         </View>
-
-        {luckScore && advice && (
-          <View style={s.luckBox}>
-            <Text style={s.luckBoxScore}>ভাগ্য স্কোর {toBN(luckScore)}/১০</Text>
-            <Text style={s.luckBoxAdvice} numberOfLines={1}> · {advice}</Text>
-            <Text style={s.luckBoxLink}>বিস্তারিত ›</Text>
-          </View>
-        )}
       </View>
     </Pressable>
   );
@@ -654,29 +657,26 @@ const s = StyleSheet.create({
   sectionTitle: { ...typography.sectionTitle, color: colors.textSecondary },
   sectionLink:  { ...typography.label, color: colors.gold },
 
-  /* আমার রাশি — বেগুনি গ্র্যাডিয়েন্ট কার্ড, ওপরে অ্যাভাটার+রেটিং, নিচে হালকা
-     lavender বক্সে ভাগ্য স্কোর + প্রধান পরামর্শ (ওয়েবসাইটের হোম পেজের রাশি
-     কার্ডের ডিজাইনের সাথে সামঞ্জস্যপূর্ণ) */
+  /* আমার রাশি — বাঁয়ে বেগুনি-ভরাট অ্যাভাটার-কলাম (কার্ডের ফুল-হাইট জুড়ে,
+     luckBox-এর পাশেও বিস্তৃত), ডানে সাদা স্ট্যাটস-কলাম (ওয়েবসাইটের হোম পেজের
+     রাশি কার্ডের সাথে পিক্সেল-লেভেলে মেলানো) */
   rashiHeroWrap: { marginHorizontal: spacing.md, marginBottom: 2 },
   rashiHeroCard: {
-    backgroundColor: colors.card, borderRadius: radii.lg, borderWidth: 1.5, borderColor: '#7C4FB0',
-    padding: 10, ...shadows.raised,
+    backgroundColor: colors.card, borderRadius: radii.lg, overflow: 'hidden', ...shadows.raised,
   },
-  rashiHeroTopRow: { flexDirection: 'row', alignItems: 'center' },
-  rashiHeroLeft: { width: 96, alignItems: 'center' },
+  rashiHeroTopRow: { flexDirection: 'row' },
+  rashiHeroLeft: { width: 100, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8 },
   rashiHeroAvatarWrap: {
     width: 46, height: 46, borderRadius: radii.pill,
-    backgroundColor: 'rgba(124,79,176,0.12)', borderWidth: 1.5, borderColor: '#7C4FB0',
+    backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.gold,
     alignItems: 'center', justifyContent: 'center', marginBottom: 4,
   },
   rashiHeroAvatarImg: { width: 30, height: 30 },
-  rashiHeroName: { ...typography.heading, fontSize: 13, color: '#3B2170' },
-  rashiHeroEn:   { ...typography.label, fontSize: 9.5, color: colors.textSecondary, marginBottom: 2 },
-  rashiHeroChangeLink: { ...typography.label, fontSize: 9.5, color: '#8A4FD1', fontWeight: '700', textAlign: 'center' },
+  rashiHeroName: { ...typography.heading, fontSize: 13, color: colors.white },
+  rashiHeroEn:   { ...typography.label, fontSize: 9.5, color: 'rgba(255,255,255,0.75)', marginBottom: 2 },
+  rashiHeroChangeLink: { ...typography.label, fontSize: 9.5, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
 
-  rashiHeroDivider: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(124,79,176,0.2)', marginHorizontal: 8 },
-
-  rashiHeroRight: { flex: 1 },
+  rashiHeroRight: { flex: 1, paddingVertical: 12, paddingHorizontal: 12 },
   forecastTitle: { ...typography.value, fontSize: 10.5, marginBottom: 6, color: '#3B2170' },
   forecastRow: { flexDirection: 'row' },
   forecastCell: { alignItems: 'center', gap: 1, width: '25%', overflow: 'hidden' },
