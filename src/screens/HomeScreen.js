@@ -442,20 +442,18 @@ export function HomeScreen() {
         <View style={s.heroWash}>
             <View style={s.card}>
               <ImageBackground source={HERO_BG} resizeMode="cover" style={s.heroImgBand}>
-                <View style={s.cardHeaderRow}>
-                  <View style={s.dot} />
+                <View style={s.titleBadge}>
+                  <MaterialCommunityIcons name="star-four-points" size={11} color={colors.primary} />
                   <Text style={s.cardTitle}>আজকের পঞ্জিকা</Text>
-                  <View style={s.dot} />
+                  <MaterialCommunityIcons name="star-four-points" size={11} color={colors.primary} />
                 </View>
 
                 <Text style={s.bnDate}>{bnDateStr}</Text>
 
                 <View style={s.metaRow}>
-                  <Text style={s.metaText}>{enDateStr}</Text>
-                  <View style={s.metaDot} />
-                  <Text style={s.metaText}>{data.weekday}</Text>
-                  <View style={s.metaDot} />
-                  <Text style={s.metaText}>{data.ritu}</Text>
+                  <View style={s.metaChip}><Text style={s.metaText}>{enDateStr}</Text></View>
+                  <View style={s.metaChip}><Text style={s.metaText}>{data.weekday}</Text></View>
+                  <View style={s.metaChip}><Text style={s.metaText}>{data.ritu}</Text></View>
                 </View>
               </ImageBackground>
 
@@ -629,14 +627,25 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingTop: 16, paddingBottom: 12,
     marginBottom: 2,
   },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4, gap: 8 },
-  dot:           { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.gold },
-  cardTitle:     { ...typography.sectionTitle, color: colors.primary },
+  titleBadge: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    alignSelf: 'center', marginBottom: 6,
+    backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 1, borderColor: 'rgba(184,150,12,0.4)',
+    paddingHorizontal: 12, paddingVertical: 3, borderRadius: 20,
+  },
+  cardTitle: { ...typography.sectionTitle, color: colors.text, fontWeight: '700', letterSpacing: 0.4 },
 
-  bnDate:  { ...typography.heading, fontSize: 19, color: colors.text, textAlign: 'center', marginBottom: 2 },
+  bnDate: {
+    ...typography.heading, fontSize: 20, fontWeight: '800', color: colors.text,
+    textAlign: 'center', marginBottom: 6, letterSpacing: 0.2,
+    textShadowColor: 'rgba(0,0,0,0.12)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
+  },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' },
-  metaText:{ ...typography.label, color: colors.textSecondary, fontWeight: '500' },
-  metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textSecondary, opacity: 0.5 },
+  metaChip: {
+    backgroundColor: 'rgba(255,255,255,0.45)', borderRadius: 10,
+    paddingHorizontal: 8, paddingVertical: 2,
+  },
+  metaText: { ...typography.label, color: colors.text, fontWeight: '600', fontSize: 11 },
 
   cardDivider: { height: 1, backgroundColor: colors.divider },
 
