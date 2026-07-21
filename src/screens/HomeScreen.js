@@ -133,11 +133,10 @@ function StarRow({ score }) {
 }
 
 // "আমার রাশি" সেকশন — বেগুনি গ্র্যাডিয়েন্ট কার্ড (ওয়েবসাইটের হোম পেজের রাশি
-// কার্ডের সাথে সামঞ্জস্যপূর্ণ)। ওপরে: বাঁয়ে অ্যাভাটার+নাম, ডানে আজকের
-// প্রেম/স্বাস্থ্য/চাকরি/অর্থ স্টার রেটিং। নিচে: হালকা lavender বক্সে ভাগ্য
-// স্কোর (বিদ্যমান ৪টা স্টার রেটিং-এর গড় থেকে বের করা, নতুন ডেটার দরকার নেই)
-// ও আজকের সংক্ষিপ্ত রাশিফল-টেক্সট (আগে থেকেই থাকা summary পুল থেকে)।
-function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRashifalPress }) {
+// কার্ডের কালার-স্কিমের সাথে সামঞ্জস্যপূর্ণ)। বাঁয়ে অ্যাভাটার+নাম, ডানে আজকের
+// প্রেম/স্বাস্থ্য/চাকরি/অর্থ স্টার রেটিং — মূল (সাদা কার্ড) সংস্করণের সাথে
+// হাইট/কনটেন্ট অভিন্ন রাখা হয়েছে, শুধু রঙ বদলানো হয়েছে।
+function RashiHeroRow({ rashiIdx, score, onChangePress, onRashifalPress }) {
   const lucky = RashiLucky[rashiIdx];
   return (
     <Pressable onPress={onRashifalPress} style={s.rashiHeroWrap}>
@@ -180,21 +179,6 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
             )}
           </View>
         </View>
-
-        {luckScore && advice && (
-          <View style={s.luckBox}>
-            <View style={s.luckScoreCol}>
-              <Text style={s.luckScoreLabel}>ভাগ্য স্কোর</Text>
-              <Text style={s.luckScoreValue}>{toBN(luckScore)}<Text style={s.luckScoreMax}>/১০</Text></Text>
-            </View>
-            <View style={s.luckDivider} />
-            <View style={s.luckAdviceCol}>
-              <Text style={s.luckAdviceLabel}>প্রধান পরামর্শ:</Text>
-              <Text style={s.luckAdviceText} numberOfLines={2}>{advice}</Text>
-              <Text style={s.luckAdviceLink}>বিস্তারিত রাশিফল ›</Text>
-            </View>
-          </View>
-        )}
       </LinearGradient>
     </Pressable>
   );
@@ -387,13 +371,6 @@ export function HomeScreen() {
     catch (_) { return null; }
   }, [userRashi, iso]);
   const todayRashiScore = todayRashiEntry?.score || null;
-  // ভাগ্য স্কোর (/১০) — প্রেম/স্বাস্থ্য/চাকরি/অর্থ ৪টা ৫-স্টার রেটিং-এর গড়, ×২ করে
-  // ১০-এর স্কেলে আনা হচ্ছে (নতুন কোনো ডেটা ছাড়াই, বিদ্যমান স্কোর থেকেই বের করা)।
-  const todayLuckScore = useMemo(() => {
-    if (!todayRashiScore) return null;
-    const { love = 0, health = 0, work = 0, finance = 0 } = todayRashiScore;
-    return (((love + health + work + finance) / 4) * 2).toFixed(1);
-  }, [todayRashiScore]);
 
   const data = useMemo(() => {
     try {
@@ -489,8 +466,6 @@ export function HomeScreen() {
             <RashiHeroRow
               rashiIdx={userRashi}
               score={todayRashiScore}
-              luckScore={todayLuckScore}
-              advice={todayRashiEntry?.summary}
               onChangePress={() => { haptics.tap(); setRashiModal(true); }}
               onRashifalPress={() => { haptics.tap(); navigation.navigate('RashifalDetail', { rashiIndex: userRashi }); }}
             />
@@ -692,21 +667,6 @@ const s = StyleSheet.create({
   forecastCell: { alignItems: 'center', gap: 1, width: '25%', overflow: 'hidden' },
   forecastLabel: { ...typography.label, fontSize: 8.5, color: 'rgba(255,255,255,0.8)' },
   rashiDetail: { ...typography.label, color: 'rgba(255,255,255,0.8)', lineHeight: 16, fontSize: 11 },
-
-  luckBox: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F1EAFB', borderRadius: radii.md,
-    marginTop: 10, padding: 10, gap: 10,
-  },
-  luckScoreCol: { alignItems: 'center', width: 62 },
-  luckScoreLabel: { ...typography.label, fontSize: 8.5, color: '#6B4BA8', fontWeight: '700' },
-  luckScoreValue: { ...typography.heading, fontSize: 17, color: '#3B2170', marginTop: 1 },
-  luckScoreMax: { ...typography.label, fontSize: 10, color: '#6B4BA8' },
-  luckDivider: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(107,75,168,0.25)' },
-  luckAdviceCol: { flex: 1 },
-  luckAdviceLabel: { ...typography.label, fontSize: 9, color: '#6B4BA8', fontWeight: '700', marginBottom: 1 },
-  luckAdviceText: { ...typography.caption, fontSize: 10.5, color: '#3D2A5C', lineHeight: 14.5 },
-  luckAdviceLink: { ...typography.label, fontSize: 9.5, color: '#8A4FD1', fontWeight: '700', marginTop: 3 },
 
   rashiPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
