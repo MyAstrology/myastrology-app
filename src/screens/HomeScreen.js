@@ -292,14 +292,16 @@ function SelfReflectionTeaser({ dayIndex, onPress }) {
         style={s.reflectionCard}
       >
         <MaterialCommunityIcons
-          name="format-quote-close" size={32} color="rgba(255,255,255,0.12)"
+          name="format-quote-close" size={28} color="rgba(255,255,255,0.12)"
           style={s.reflectionQuoteDeco}
         />
-        <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
-        <Text style={s.reflectionLine} numberOfLines={2}>{line}</Text>
+        <View style={s.reflectionTextCol}>
+          <Text style={s.reflectionTag}>আজকের আত্মপর্যালোচনা</Text>
+          <Text style={s.reflectionLine} numberOfLines={2}>{line}</Text>
+        </View>
         <View style={s.reflectionCta}>
           <Text style={s.reflectionCtaText}>আরও পড়ুন</Text>
-          <MaterialCommunityIcons name="chevron-right" size={13} color="#3B2170" />
+          <MaterialCommunityIcons name="chevron-right" size={12} color="#3B2170" />
         </View>
       </LinearGradient>
     </Pressable>
@@ -677,10 +679,10 @@ const s = StyleSheet.create({
   rashiHeroEn:   { ...typography.label, fontSize: 9, color: 'rgba(255,255,255,0.75)', marginBottom: 1 },
   rashiHeroChangeLink: { ...typography.label, fontSize: 9, color: '#FFD873', fontWeight: '700', textAlign: 'center' },
 
-  rashiHeroRight: { flex: 1, paddingVertical: 8, paddingHorizontal: 10 },
-  forecastTitle: { ...typography.value, fontSize: 10, marginBottom: 4, color: '#3B2170' },
-  forecastRow: { flexDirection: 'row' },
-  forecastCell: { alignItems: 'center', gap: 1, width: '25%', overflow: 'hidden' },
+  rashiHeroRight: { flex: 1, paddingVertical: 7, paddingHorizontal: 10 },
+  forecastTitle: { ...typography.value, fontSize: 10, marginBottom: 3, color: '#3B2170' },
+  forecastRow: { flexDirection: 'row', gap: 4 },
+  forecastCell: { flex: 1, alignItems: 'center', gap: 1, overflow: 'hidden' },
   forecastLabel: { ...typography.label, fontSize: 8, color: colors.textSecondary },
   rashiDetail: { ...typography.label, color: colors.textSecondary, lineHeight: 16, fontSize: 11 },
 
@@ -689,7 +691,7 @@ const s = StyleSheet.create({
   luckBox: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F1E6FA', borderRadius: radii.sm,
-    marginTop: 6, paddingHorizontal: 7, paddingVertical: 4,
+    marginTop: 4, paddingHorizontal: 7, paddingVertical: 3,
   },
   luckBoxScore:  { ...typography.label, fontSize: 9.5, fontWeight: '700', color: '#3B2170' },
   luckBoxAdvice: { ...typography.label, fontSize: 9.5, color: '#5A3D7A', flex: 1 },
@@ -747,15 +749,17 @@ const s = StyleSheet.create({
   reflectionWrap: { marginHorizontal: spacing.md, marginTop: 10, marginBottom: 2 },
   reflectionCard: {
     borderRadius: radii.lg, paddingHorizontal: 12, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     overflow: 'hidden', ...shadows.raised,
   },
-  reflectionQuoteDeco: { position: 'absolute', top: 2, right: 6, width: 32, height: 32 },
+  reflectionQuoteDeco: { position: 'absolute', top: 2, right: 6, width: 28, height: 28 },
+  reflectionTextCol: { flex: 1, minWidth: 0 },
   reflectionTag:  { ...typography.caption, fontSize: 9, color: '#FFD873', fontWeight: '700' },
-  reflectionLine: { ...typography.value, fontSize: 11, color: colors.white, marginTop: 2, lineHeight: 14, maxWidth: '92%' },
+  reflectionLine: { ...typography.value, fontSize: 11, color: colors.white, marginTop: 2, lineHeight: 14 },
   reflectionCta: {
-    flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start',
+    flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 0,
     backgroundColor: '#fff', borderRadius: radii.pill,
-    paddingHorizontal: 9, paddingVertical: 3, marginTop: 5,
+    paddingHorizontal: 9, paddingVertical: 5,
   },
   reflectionCtaText: { ...typography.label, fontSize: 9, color: '#3B2170', fontWeight: '700' },
 
