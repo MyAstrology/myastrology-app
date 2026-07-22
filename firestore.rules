@@ -38,5 +38,18 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // ওয়েবসাইটের প্রিমিয়াম চেকআউট (kundali.html ইত্যাদি) — গ্রাহক লগইন ছাড়াই
+    // অর্ডার তৈরি করেন (শুধু ইমেইল/ফোন দিয়ে), তাই create-এ auth লাগবে না।
+    // কিন্তু অর্ডারে জন্মকুষ্ঠি/প্রশ্নের মতো ব্যক্তিগত তথ্য থাকে বলে read/list
+    // শুধু অ্যাডমিনের জন্য — অন্য কেউ অন্যের অর্ডার পড়তে/সম্পাদনা করতে পারবে না।
+    // hasAll চেকটা ন্যূনতম ফর্ম-জাঙ্ক/স্প্যাম আটকানোর জন্য, নিরাপত্তার মূল
+    // স্তর read-restriction-ই।
+    match /orders/{orderId} {
+      allow create: if request.resource.data.keys().hasAll(['pid', 'email', 'ts'])
+                    && request.resource.data.email is string
+                    && request.resource.data.ts is number;
+      allow read, list, update, delete: if isAdmin();
+    }
   }
 }
