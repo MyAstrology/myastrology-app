@@ -14,9 +14,14 @@ import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 // app screen with a "wa.me" landing page that has no history back to the
 // report, so the hardware back button falls through to React Navigation
 // and exits to Home instead of going back to the report.
+// The sample-kundali PDFs (_openSamplePdf in the kundali bundle) are the same
+// case: Android's WebView cannot render a PDF, so letting it navigate leaves a
+// blank screen where the chart used to be. Hand the URL to the OS instead —
+// the browser/PDF viewer opens it and the calculator page stays put.
 function isExternalHandoffUrl(url) {
   return /^(tel:|mailto:)/i.test(url) ||
-    /^https?:\/\/(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com)\//i.test(url);
+    /^https?:\/\/(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com)\//i.test(url) ||
+    /^https?:\/\/([a-z0-9-]+\.)*myastrology\.in\/[^?#]*\.pdf(\?|#|$)/i.test(url);
 }
 
 const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
