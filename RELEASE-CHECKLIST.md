@@ -34,26 +34,67 @@ Play Console → Dashboard → "Create and publish a release" তালিকা
 নাম/ইমেইল Firestore-এ যায়), আর সবই HTTPS/TLS দিয়ে যায়।
 **ভুল ঘোষণা Play-তে অ্যাপ সরিয়ে দেওয়ার কারণ হতে পারে।**
 
-প্রথম প্রশ্নে বেছে নিন: **"Yes, our app collects or shares user data"**
+প্রশ্নমালাটা ৫ ধাপের। ধাপে ধাপে হুবহু কী দেবেন —
 
-তারপর এইগুলো টিক দিন —
+### ধাপ ১/৫ — Overview
 
-| বিভাগ | কী | উদ্দেশ্য (Purpose) | Required? |
-|---|---|---|---|
-| Personal info | Name, Email address, User IDs | App functionality, Account management | Optional |
-| Personal info | Other info (জন্ম তারিখ/সময়/স্থান) | App functionality | Optional |
-| Location | Approximate location, Precise location | App functionality | Optional |
-| App activity | App interactions | Analytics | Optional |
-| Device or other IDs | Device or other IDs | App functionality, Analytics | Optional |
+শুধু পড়ার পাতা, ভরার কিছু নেই। **Next** চাপুন।
 
-- প্রতিটিতে → **Collected: Yes** / **Shared: No**
-- "Optional" কারণ সাইন-ইন ছাড়াও অ্যাপের সব কাজ চলে
+### ধাপ ২/৫ — Data collection and security
 
-**Security practices** — দুটোই এখন সত্যি, দুটোই টিক দিন:
+| প্রশ্ন | উত্তর |
+|---|---|
+| Does your app collect or share any of the required user data types? | **Yes** |
+| Is all of the user data collected by your app encrypted in transit? | **Yes** |
+| Do you provide a way for users to request that their data is deleted? | **Yes** |
 
-- ✅ **Data is encrypted in transit**
-- ✅ **Users can request that their data be deleted**
-  URL: `https://www.myastrology.in/account-deletion`
+তৃতীয়টায় Yes দিলে URL চাইবে →
+`https://www.myastrology.in/account-deletion`
+
+*(এখানে URL-এর ঘর না দেখলে App content-এর আলাদা "Data deletion" অংশে
+চাইবে — একই URL দেবেন।)*
+
+### ধাপ ৩/৫ — Data types
+
+লম্বা চেকবক্স-তালিকা। **শুধু এই ৭টা** টিক দিন, বাকি সব খালি:
+
+**Location** — ☑ Approximate location · ☑ Precise location
+**Personal info** — ☑ Name · ☑ Email address · ☑ User IDs · ☑ Other info
+**App activity** — ☑ App interactions
+**Device or other IDs** — ☑ Device or other IDs
+
+> ❌ টিক দেবেন না: Financial info · Health and fitness · Messages ·
+> Photos and videos · Audio · Files and docs · Calendar · Contacts ·
+> Web browsing · App info and performance · Phone number · Address
+> (Crashlytics ইনস্টল করা নেই, তাই Crash logs/Diagnostics-ও নয়)
+
+### ধাপ ৪/৫ — Data usage and handling
+
+প্রতিটা টিক-করা টাইপের জন্য আলাদা বাক্স খুলবে। **সবগুলোতেই একই:**
+
+- ☑ **Collected**
+- ☐ **Shared** — টিক দেবেন **না**
+- Processed ephemerally? → **No**
+- Is this data required? → **Users can choose whether this data is collected**
+
+শুধু **Purpose** আলাদা:
+
+| ডেটা টাইপ | Purpose |
+|---|---|
+| Name | App functionality · Account management |
+| Email address | App functionality · Account management |
+| User IDs | App functionality · Account management |
+| Other info | App functionality |
+| Approximate location | App functionality |
+| Precise location | App functionality |
+| App interactions | **Analytics** |
+| Device or other IDs | App functionality · Analytics |
+
+> ⚠️ **Advertising or marketing** কোথাও টিক দেবেন না।
+
+### ধাপ ৫/৫ — Preview
+
+সারসংক্ষেপ মিলিয়ে নিয়ে **Save**।
 
 > **Advertising ID ঘোষণা বদলাবেন না** — "doesn't use advertising ID"-ই
 > থাকুক। কোডে `plugins/withDisableAdId.js` যোগ করা হয়েছে যাতে ঘোষণাটা
