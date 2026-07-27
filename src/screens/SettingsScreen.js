@@ -13,6 +13,7 @@ import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
 import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 import { getNotificationPreference, setNotificationsEnabled } from '../utils/onesignal';
 import { ADMIN_EMAILS } from '../config/adminEmails';
 
@@ -43,9 +44,11 @@ function Row({ icon, label, sub, onPress, right, danger }) {
 }
 
 export function SettingsScreen({ navigation }) {
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signInWithGoogle, signOut, deleteAccount } = useAuth();
+  const { clearUser } = useUser();
   const [notifOn, setNotifOn] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     getNotificationPreference().then(setNotifOn).catch(() => {});
@@ -77,6 +80,55 @@ export function SettingsScreen({ navigation }) {
       Alert.alert('ত্রুটি', 'সাইন-ইন করা যায়নি। আবার চেষ্টা করুন।');
     }
   }, [user, signInWithGoogle, signOut]);
+
+  // Google Play-র Data deletion নীতি অনুযায়ী অ্যাপের ভেতরেই অ্যাকাউন্ট ও
+  // ডেটা মোছার পথ থাকতে হয়। দুই ধাপের নিশ্চিতকরণ রাখা হয়েছে — কাজটা
+  // অপরিবর্তনীয়, আর "লগআউট" সারির ঠিক নিচেই থাকায় ভুল ট্যাপের ঝুঁকি আছে।
+  const confirmDeleteAccount = useCallback(() => {
+    Alert.alert(
+      'অ্যাকাউন্ট মুছে ফেলবেন?',
+      'আপনার নাম, ইমেইল, প্রোফাইল ছবি ও ক্লাউডে সংরক্ষিত কুণ্ডলীগুলো স্থায়ীভাবে মুছে যাবে। এটি ফিরিয়ে আনা যাবে না।',
+      [
+        { text: 'বাতিল', style: 'cancel' },
+        {
+          text: 'এগিয়ে যান',
+          style: 'destructive',
+          onPress: () => Alert.alert(
+            'শেষ নিশ্চিতকরণ',
+            'সত্যিই অ্যাকাউন্ট মুছে ফেলতে চান?',
+            [
+              { text: 'না', style: 'cancel' },
+              {
+                text: 'হ্যাঁ, মুছে ফেলুন',
+                style: 'destructive',
+                onPress: async () => {
+                  setDeleting(true);
+                  try {
+                    await deleteAccount();
+                    // ডিভাইসে রাখা জন্ম-তথ্যও মুছি — ব্যবহারকারী "সব মুছে
+                    // যাক" বুঝেই এটা চাপেন, শুধু সার্ভারের কপি মুছলে
+                    // প্রতিশ্রুতিটা অর্ধেক পালন করা হতো।
+                    await clearUser().catch(() => {});
+                    haptics.success();
+                    Alert.alert('মুছে ফেলা হয়েছে', 'আপনার অ্যাকাউন্ট ও সংরক্ষিত তথ্য মুছে ফেলা হয়েছে।');
+                  } catch (e) {
+                    haptics.error();
+                    Alert.alert(
+                      'মুছে ফেলা যায়নি',
+                      'নিরাপত্তার কারণে আবার সাইন-ইন করে চেষ্টা করতে হতে পারে। সমস্যা থাকলে ' +
+                      SUPPORT_PHONE + ' নম্বরে যোগাযোগ করুন।',
+                    );
+                  } finally {
+                    setDeleting(false);
+                  }
+                },
+              },
+            ],
+          ),
+        },
+      ],
+    );
+  }, [deleteAccount, clearUser]);
 
   const shareApp = useCallback(async () => {
     haptics.tap();
@@ -155,6 +207,18 @@ export function SettingsScreen({ navigation }) {
                 />
               </>
             )}
+            {user && (
+              <>
+                <View style={s.divider} />
+                <Row
+                  icon="account-remove-outline"
+                  label="অ্যাকাউন্ট মুছে ফেলুন"
+                  sub={deleting ? 'মুছে ফেলা হচ্ছে…' : 'অ্যাকাউন্ট ও সংরক্ষিত তথ্য স্থায়ীভাবে মুছে যাবে'}
+                  onPress={deleting ? undefined : confirmDeleteAccount}
+                  danger
+                />
+              </>
+            )}
           </View>
         </View>
 
@@ -225,6 +289,17 @@ export function SettingsScreen({ navigation }) {
               icon="shield-check-outline"
               label="প্রাইভেসি পলিসি"
               onPress={() => Linking.openURL('https://www.myastrology.in/privacy-policy.html').catch(() => {})}
+            />
+            <View style={s.divider} />
+            {/* সাইন-ইন করা না থাকলে উপরের "অ্যাকাউন্ট মুছে ফেলুন" সারিটা
+                দেখা যায় না, অথচ অ্যাপ আনইনস্টল করে ফেলা বা সাইন-ইন করতে না
+                পারা ব্যবহারকারীরও মোছার পথ থাকা Play-র শর্ত — তাই ওয়েব
+                পাতার লিংকটা এখানে সবসময় থাকে। */}
+            <Row
+              icon="account-remove-outline"
+              label="অ্যাকাউন্ট মোছার নিয়ম"
+              sub="সাইন-ইন ছাড়াও অনুরোধ পাঠানোর উপায়"
+              onPress={() => Linking.openURL('https://www.myastrology.in/account-deletion').catch(() => {})}
             />
             <View style={s.divider} />
             <Row
