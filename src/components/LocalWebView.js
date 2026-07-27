@@ -21,7 +21,8 @@ import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 function isExternalHandoffUrl(url) {
   return /^(tel:|mailto:)/i.test(url) ||
     /^https?:\/\/(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com)\//i.test(url) ||
-    /^https?:\/\/([a-z0-9-]+\.)*myastrology\.in\/[^?#]*\.pdf(\?|#|$)/i.test(url);
+    /^https?:\/\/([a-z0-9-]+\.)*myastrology\.in\/[^?#]*\.pdf(\?|#|$)/i.test(url) ||
+    /^https?:\/\/[^/?#]+\/[^?#]*\.pdf(\?|#|$)/i.test(url);
 }
 
 const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
