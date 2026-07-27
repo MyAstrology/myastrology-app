@@ -562,7 +562,10 @@ export function HomeScreen() {
                 <Text style={s.festivalTag}>আজকের বিশেষ দিন</Text>
                 <Text style={s.festivalName} numberOfLines={1}>{todaysFestival.name}</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textSecondary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Text style={s.festivalMore}>বিস্তারিত</Text>
+                <MaterialCommunityIcons name="chevron-right" size={18} color={colors.gold} />
+              </View>
             </Pressable>
           )}
 
@@ -832,10 +835,14 @@ const s = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 8,
     ...shadows.card,
   },
-  festivalImg: { width: 54, height: 54, borderRadius: radii.md },
+  /* assets/panjika/*.webp ছবিগুলো আসলে ~1.84:1 (landscape) — আগে 54x54 বর্গক্ষেত্রে
+     জোর করে বসানো হতো বলে resizeMode:cover ডিফল্টে ছবির বেশিরভাগ পাশ কেটে যেত।
+     height অক্ষত রেখে (কার্ডের উচ্চতা না বাড়িয়ে) width বাড়ানো হলো আসল অনুপাত ধরে। */
+  festivalImg: { width: 100, height: 54, borderRadius: radii.md },
   festivalImgFallback: { backgroundColor: colors.goldWash, alignItems: 'center', justifyContent: 'center' },
   festivalTag:  { ...typography.caption, color: colors.goldLight, fontWeight: '700' },
   festivalName: { ...typography.value, fontSize: 14, marginTop: 1 },
+  festivalMore: { ...typography.label, fontSize: 11, fontWeight: '700', color: colors.gold },
 
   infoStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 6, paddingVertical: 4 },
   infoText:  { ...typography.label, color: colors.textSecondary },
