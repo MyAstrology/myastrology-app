@@ -25,7 +25,18 @@ Play Console → Dashboard → "Create and publish a release" তালিকা
 
 ---
 
-## ✅ ধাপ ১ — আজই করা যায় (বিল্ড লাগে না)
+## ✅ ধাপ ১ — **সম্পন্ন (২৭ জুলাই ২০২৬)** — আবার করার দরকার নেই
+
+> Data safety প্রশ্নমালা পূরণ করে Save ও "Submit 1 change for review"
+> করা হয়েছে। Preview-তে যাচাই হয়েছে: No data shared with third parties ·
+> Personal info (Name, Email, User IDs, Other info) · Location
+> (Approximate, Precise) · App activity (App interactions) · Device or
+> other IDs · Delete app account ও Manage app data দুটো URL-ই বসেছে ·
+> Data is encrypted in transit।
+>
+> নিচের বিবরণটা রেফারেন্স হিসেবে রইল — ভবিষ্যতে অ্যাপে নতুন কোনো তথ্য
+> সংগ্রহ যোগ হলে (যেমন Crashlytics বসালে Crash logs) এই ঘোষণা হালনাগাদ
+> করতে হবে।
 
 ### Play Console → App content → **Data safety** → Manage
 
