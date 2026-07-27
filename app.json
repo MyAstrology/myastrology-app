@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "in.myastrology.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
