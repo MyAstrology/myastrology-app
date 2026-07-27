@@ -1,0 +1,179 @@
+# MyAstrology অ্যাপ — প্রকাশের চেকলিস্ট
+
+> সর্বশেষ হালনাগাদ: ২৭ জুলাই ২০২৬
+> অ্যাপ: **MyAstrology** · প্যাকেজ: `in.myastrology.app`
+> Play Console-এ ড্রাফট আছে **versionCode 3 / v1.0.1** (১২ জুলাইয়ের পুরনো বিল্ড)
+> রেপোতে প্রস্তুত আছে **versionCode 3 → পরের বিল্ডে 4 / v1.0.2**
+
+---
+
+## ⛔ এই মুহূর্তে যা করবেন না
+
+Play Console → Dashboard → "Create and publish a release" তালিকার
+**বাকি ৩টি ধাপ এখন করবেন না**:
+
+- ⬜ Preview and confirm the release
+- ⬜ Send the release to Google for review
+- ⬜ Publish your app on Google Play
+
+**কারণ:** ড্রাফটে থাকা বান্ডলটা (versionCode 3 / v1.0.1) ১২ জুলাইয়ের।
+তাতে নিচের কোনো কাজই নেই — বিশেষ করে **অ্যাকাউন্ট মোছার ব্যবস্থা**, যেটা
+ছাড়া Google Play নীতি অনুযায়ী রিভিউতে আটকে যেতে পারে।
+
+ড্রাফটটা যেমন আছে তেমনই থাকুক। ১ আগস্টে নতুন বিল্ড হলে তখন
+"Discard draft release" দিয়ে বাতিল করে নতুন করে শুরু করবেন।
+
+---
+
+## ✅ ধাপ ১ — আজই করা যায় (বিল্ড লাগে না)
+
+### Play Console → App content → **Data safety** → Manage
+
+বর্তমানে ভুল ঘোষণা করা আছে: *"App doesn't collect or share data"* ও
+*"Data isn't encrypted"*। বাস্তবে অ্যাপ তথ্য সংগ্রহ করে (সাইন-ইন করলে
+নাম/ইমেইল Firestore-এ যায়), আর সবই HTTPS/TLS দিয়ে যায়।
+**ভুল ঘোষণা Play-তে অ্যাপ সরিয়ে দেওয়ার কারণ হতে পারে।**
+
+প্রথম প্রশ্নে বেছে নিন: **"Yes, our app collects or shares user data"**
+
+তারপর এইগুলো টিক দিন —
+
+| বিভাগ | কী | উদ্দেশ্য (Purpose) | Required? |
+|---|---|---|---|
+| Personal info | Name, Email address, User IDs | App functionality, Account management | Optional |
+| Personal info | Other info (জন্ম তারিখ/সময়/স্থান) | App functionality | Optional |
+| Location | Approximate location, Precise location | App functionality | Optional |
+| App activity | App interactions | Analytics | Optional |
+| Device or other IDs | Device or other IDs | App functionality, Analytics | Optional |
+
+- প্রতিটিতে → **Collected: Yes** / **Shared: No**
+- "Optional" কারণ সাইন-ইন ছাড়াও অ্যাপের সব কাজ চলে
+
+**Security practices** — দুটোই এখন সত্যি, দুটোই টিক দিন:
+
+- ✅ **Data is encrypted in transit**
+- ✅ **Users can request that their data be deleted**
+  URL: `https://www.myastrology.in/account-deletion`
+
+> **Advertising ID ঘোষণা বদলাবেন না** — "doesn't use advertising ID"-ই
+> থাকুক। কোডে `plugins/withDisableAdId.js` যোগ করা হয়েছে যাতে ঘোষণাটা
+> সত্যি হয়। নতুন বিল্ডের পর এটা কার্যকর হবে।
+
+---
+
+## 📦 ধাপ ২ — ১ আগস্ট, কোটা রিসেট হলে
+
+কোটা সীমিত, তাই **একটাই বিল্ড** করে যাচাই ও প্রকাশ দুটোই সারবেন।
+
+```bash
+eas build --profile production --platform android
+```
+
+`eas.json`-এ `autoIncrement: true` আছে, রেপোতে versionCode 3 বসানো —
+তাই নতুন বিল্ড **versionCode 4 / v1.0.2** হবে (Play ৩ আগেই ব্যবহার করেছে,
+তাই ৩ দিলে আপলোড প্রত্যাখ্যাত হতো)।
+
+### বিল্ড শেষ হলে
+
+1. তৈরি হওয়া `.aab` ফাইলটা **Internal testing** ট্র্যাকে আপলোড করুন
+   (**Production-এ নয়**)
+2. Testers-এ নিজের Gmail যোগ করুন
+3. পাওয়া লিংক থেকে ফোনে ইনস্টল করুন — Internal testing রিভিউ ছাড়াই
+   কয়েক মিনিটে চালু হয়
+
+---
+
+## 📱 ধাপ ৩ — ফোনে যা যা মিলিয়ে দেখবেন
+
+### ক) অ্যাকাউন্ট মোছা (সবচেয়ে জরুরি — এটাই নতুন)
+
+- [ ] সেটিংস → **Google দিয়ে সাইন-ইন করুন** কাজ করছে
+- [ ] সেটিংস → অ্যাকাউন্ট অংশে **"অ্যাকাউন্ট মুছে ফেলুন"** সারিটা দেখা যাচ্ছে (লাল)
+- [ ] চাপলে দুই ধাপের নিশ্চিতকরণ আসছে
+- [ ] মোছার পর Firebase Console-এ মিলিয়ে দেখুন —
+      **Authentication** থেকে ব্যবহারকারী গেছে, **Firestore → users/{uid}** ডকও গেছে
+- [ ] সেটিংস → "অ্যাকাউন্ট মোছার নিয়ম" চাপলে ওয়েব পাতাটা খুলছে
+
+> Firebase পুরনো সেশনে মুছতে দেয় না — মোছার আগে আবার সাইন-ইন করতে বলা
+> হতে পারে। **এটা স্বাভাবিক**, ত্রুটি নয়।
+
+### খ) সব স্ক্রিন খুলে দেখা (lazy-loading পরিবর্তনের কারণে)
+
+স্ক্রিনগুলো এখন প্রথম ট্যাপে লোড হয়, আগের মতো চালুর সময় নয়।
+**প্রতিটা ট্যাব ও মেনু-আইটেম একবার খুলে সাদা পর্দা আসছে কিনা দেখুন:**
+
+- [ ] হোম · পঞ্জিকা · রাশিফল · কুণ্ডলী · আরও (৫টি ট্যাব)
+- [ ] কুণ্ডলী মিলন · নামকরণ · বর্ষফল · প্রশ্ন জ্যোতিষ · সংখ্যাতত্ত্ব
+- [ ] ব্লগ · খবর · বুকিং · হস্তরেখা · বাস্তু · শিক্ষা · রত্ন · ভিডিও
+- [ ] সেটিংস · জ্যোতিষী সম্পর্কে
+
+### গ) তারিখ/সময় ঘর
+
+- [ ] কুণ্ডলী/মিলন/নামকরণ/বর্ষফল — তারিখ ও সময়ের ঘর **পাশাপাশি** আছে
+- [ ] রিফ্রেশের সময় "দিন/মাস/বছর" ড্রপডাউনের ঝলকানি **আর নেই**
+
+### ঘ) সাধারণ
+
+- [ ] অ্যাপ চালু হতে আগের চেয়ে দ্রুত লাগছে
+- [ ] নোটিফিকেশন টগল কাজ করছে
+- [ ] হোম স্ক্রিনের "আজকের বিশেষ দিন" কার্ডের ছবি ঠিক অনুপাতে দেখাচ্ছে
+
+---
+
+## 🚀 ধাপ ৪ — কয়েকদিন ব্যবহারের পর প্রকাশ
+
+সব ঠিক থাকলে:
+
+1. Play Console → Production → পুরনো ড্রাফট থাকলে **Discard draft release**
+2. Internal testing ট্র্যাক থেকে ওই **একই বান্ডল Production-এ Promote** করুন
+3. Release notes লিখে **Send for review**
+
+> **Promote করতে নতুন বিল্ড লাগে না** — তাই এক কোটাতেই সব হয়ে যায়।
+
+---
+
+## 🙈 যেগুলো উপেক্ষা করবেন
+
+| স্ক্রিন | বার্তা | কেন উপেক্ষা |
+|---|---|---|
+| Expert Approved | "Not eligible" | এটা **শিশুদের অ্যাপের** প্রোগ্রাম। আপনার টার্গেট বয়স 18+, তাই প্রযোজ্য নয়। ভুল নয়। |
+| Create production release | "There is no deobfuscation file…" | R8/ProGuard চালুই নেই (যাচাই করা), তাই ম্যাপিং ফাইল দরকার নেই। Google প্রতিটা AAB-তে এই বার্তা দেখায়। |
+| Dashboard | "Production: Inactive" | এখনো কিছু লাইভ হয়নি — প্রত্যাশিত। |
+
+---
+
+## 📝 এই বিল্ডে যা যা বদলেছে
+
+### অ্যাপ (`myastrology-app`)
+
+| কমিট | কী |
+|---|---|
+| তারিখ/সময় ফিক্স পোর্ট | চারটি WebView বান্ডলে লেআউট-শিফট শূন্য |
+| স্ক্রিন lazy লোড | চালুর সময় ~১০.২MB আর হিপে ওঠে না (`BottomTabs.js`) |
+| versionCode 2 → 3 | পরের বিল্ড 4 হবে, Play প্রত্যাখ্যান এড়াতে |
+| অ্যাকাউন্ট মোছা + AdId বন্ধ | Play নীতির দুই শর্ত পূরণ |
+
+নতুন যাচাই-স্ক্রিপ্ট: `npm run check:lazy`
+(নতুন স্ক্রিন ভুলে static import করলে ধরবে)
+
+### ওয়েবসাইট (`services`)
+
+| কমিট | কী |
+|---|---|
+| তারিখ/সময় CLS ফিক্স | kundali 0.0996→0.0005 · match-making 0.1426→0.0077 · namakaran 0.0533→0.0011 · varshaphala 0.1139→0.0184 |
+| account-deletion পাতা | Play-র বাধ্যতামূলক পাবলিক URL |
+
+নতুন যাচাই-স্ক্রিপ্ট: `npm run test:dt-layout`
+
+---
+
+## 🔮 পরে করার মতো (এখন জরুরি নয়)
+
+- **R8/ProGuard চালু করা** — অ্যাপের সাইজ কমত (এখন 34.7MB), কিন্তু
+  Firebase + OneSignal + Google Sign-In একসাথে থাকায় নিয়ম ঠিক না হলে
+  **কেবল রিলিজ বিল্ডেই** ক্র্যাশ হয়। আলাদা internal testing রাউন্ড দরকার।
+- **WebView-এ নেভিগেশন myastrology.in-এ সীমাবদ্ধ করা** — নিরাপত্তা-কড়াকড়ি,
+  বর্তমান আচরণে বাগ নেই।
+- **`result.js`-এর ৬৭১KB base64 ছবি** ফাইলে সরানো — lazy-loading-এর পর
+  চালুর সময় আর লোডই হয় না, তাই লাভ কম।
+- **ওয়েবসাইটে `font-display: swap`** — অবশিষ্ট CLS ~0.036, সব পাতাই এখন সবুজ।
