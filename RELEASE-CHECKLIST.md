@@ -46,13 +46,28 @@ Play Console → Dashboard → "Create and publish a release" তালিকা
 |---|---|
 | Does your app collect or share any of the required user data types? | **Yes** |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** |
-| Do you provide a way for users to request that their data is deleted? | **Yes** |
 
-তৃতীয়টায় Yes দিলে URL চাইবে →
+তারপর **"Which of the following methods of account creation does your
+app support?"** — শুধু ☑ **OAuth** টিক দিন (Google সাইন-ইন = OAuth;
+ইউজারনেম-পাসওয়ার্ড ব্যবস্থা নেই)। "My app does not allow users to create
+an account" বাছবেন না — অ্যাকাউন্ট তৈরি হয়ই।
+
+OAuth টিক দিলে **Delete account URL**-এর ঘর খুলবে →
 `https://www.myastrology.in/account-deletion`
 
-*(এখানে URL-এর ঘর না দেখলে App content-এর আলাদা "Data deletion" অংশে
-চাইবে — একই URL দেবেন।)*
+শেষে একটা ঐচ্ছিক প্রশ্ন: *"Do you provide a way for users to request that
+some or all of their data be deleted, **without requiring them to delete
+their account**?"* → **Yes**
+
+> কেন Yes: কুণ্ডলী ও কুণ্ডলী মিলন পাতায় "সেভ করা প্রোফাইল" তালিকার প্রতিটা
+> প্রোফাইলের পাশে ✕ "মুছুন" বোতাম আছে (`js/mya-profiles.js`), আর মুছলে
+> `mya-cloud-sync.js` সেটা Firestore-এর `users/{uid}/data/kundaliProfiles`
+> থেকেও সরিয়ে দেয়। অ্যাপের বান্ডলেও এটা আছে — যাচাই করা।
+> "No, but user data is automatically deleted within 90 days" **নয়** —
+> স্বয়ংক্রিয় মেয়াদ-ভিত্তিক মোছা নেই।
+
+**Additional badges** (Independent security review · UPI payments verified)
+— দুটোই ঐচ্ছিক ও অপ্রযোজ্য, খালি রাখুন।
 
 ### ধাপ ৩/৫ — Data types
 
