@@ -4,7 +4,8 @@
   "main": "App.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android"
+    "android": "expo run:android",
+    "check:lazy": "node scripts/check-lazy-screens.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
