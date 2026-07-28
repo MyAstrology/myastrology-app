@@ -1,6 +1,6 @@
 # MyAstrology অ্যাপ — প্রকাশের চেকলিস্ট
 
-> সর্বশেষ হালনাগাদ: ২৭ জুলাই ২০২৬
+> সর্বশেষ হালনাগাদ: ২৮ জুলাই ২০২৬
 > অ্যাপ: **MyAstrology** · প্যাকেজ: `in.myastrology.app`
 > Play Console-এ ড্রাফট আছে **versionCode 3 / v1.0.1** (১২ জুলাইয়ের পুরনো বিল্ড)
 > রেপোতে প্রস্তুত আছে **versionCode 3 → পরের বিল্ডে 4 / v1.0.2**
@@ -25,7 +25,7 @@ Play Console → Dashboard → "Create and publish a release" তালিকা
 
 ---
 
-## ✅ ধাপ ১ — **সম্পন্ন (২৭ জুলাই ২০২৬)** — আবার করার দরকার নেই
+## ✅ ধাপ ১ — **সম্পন্ন (২৮ জুলাই ২০২৬)** — আবার করার দরকার নেই
 
 > Data safety প্রশ্নমালা পূরণ করে Save ও "Submit 1 change for review"
 > করা হয়েছে। Preview-তে যাচাই হয়েছে: No data shared with third parties ·
@@ -70,6 +70,16 @@ OAuth টিক দিলে **Delete account URL**-এর ঘর খুলব�
 some or all of their data be deleted, **without requiring them to delete
 their account**?"* → **Yes**
 
+Yes দিলে আরেকটা **Delete data URL**-এর ঘর খুলবে (উপরের Delete account
+URL থেকে আলাদা ঘর) → এখানে দেবেন:
+`https://www.myastrology.in/account-deletion#data`
+
+> কেন `#data` অ্যাঙ্করসহ আলাদা URL: Google দুটো ভিন্ন জিনিস চায় — পুরো
+> অ্যাকাউন্ট মোছা বনাম অ্যাকাউন্ট রেখে শুধু কিছু ডেটা মোছা। একই পাতার
+> `#data`-চিহ্নিত অংশে (account-deletion.html-এর "৪. Delete only some
+> data") গেলে সেই ধাপগুলো দেখায়, তাই দুটো আলাদা URL না বানিয়ে একই পাতায়
+> অ্যাঙ্কর দিয়ে সমাধান করা হয়েছে।
+>
 > কেন Yes: কুণ্ডলী ও কুণ্ডলী মিলন পাতায় "সেভ করা প্রোফাইল" তালিকার প্রতিটা
 > প্রোফাইলের পাশে ✕ "মুছুন" বোতাম আছে (`js/mya-profiles.js`), আর মুছলে
 > `mya-cloud-sync.js` সেটা Firestore-এর `users/{uid}/data/kundaliProfiles`
