@@ -24,12 +24,24 @@ const FLAGS = {
 
 module.exports = function withDisableAdId(config) {
   return withAndroidManifest(config, (config) => {
+    // tools:replace ব্যবহার করতে <manifest> রুটে xmlns:tools ঘোষণা লাগে।
+    // এক্সপোর ডিফল্ট টেমপ্লেটে এটা সবসময় থাকে না (শুধু নির্দিষ্ট কিছু
+    // প্লাগিন, যেমন blockedPermissions, চাইলে যোগ করে) — তাই ধরে না নিয়ে
+    // নিজেই নিশ্চিত করা হলো।
+    config.modResults = AndroidConfig.Manifest.ensureToolsAvailable(config.modResults);
     const app = AndroidConfig.Manifest.getMainApplicationOrThrow(config.modResults);
     app['meta-data'] = app['meta-data'] || [];
     for (const [name, value] of Object.entries(FLAGS)) {
       // একই meta-data দুবার থাকলে Gradle merge-এ সংঘর্ষ হয়, তাই আগে সরিয়ে নিই
       app['meta-data'] = app['meta-data'].filter(m => m.$['android:name'] !== name);
-      app['meta-data'].push({ $: { 'android:name': name, 'android:value': value } });
+      // @react-native-firebase/analytics-এর নিজস্ব manifest-এও এই একই তিনটা
+      // key ডিফল্টভাবে "true" বসিয়ে দেয় (২০২৬-০৮-০১-এ প্যাকেজটা যোগ হওয়ার
+      // পর প্রথম ধরা পড়ে) — দুই মানই থাকায় manifest merger সংঘর্ষে আটকে
+      // build failed হচ্ছিল। tools:replace দিয়ে স্পষ্ট করে দেওয়া হলো এই
+      // অ্যাপের মানই (false) চূড়ান্ত, লাইব্রেরির ডিফল্ট নয়।
+      app['meta-data'].push({
+        $: { 'android:name': name, 'android:value': value, 'tools:replace': 'android:value' },
+      });
     }
     return config;
   });
