@@ -1,3 +1,9 @@
+# node_modules কখনো এখানে ছিল না (এই রেপোর কোনো sandbox session-এ আগে
+# npm install চালানো যায়নি), তাই এই এন্ট্রিটা এতদিন লেখা হয়নি। ২০২৬-০৮-০১-এ
+# package-lock.json সিঙ্ক করতে গিয়ে প্রথমবার তৈরি হলো (667MB) — কমিট করার
+# জিনিস না, dependency-গুলো lock ফাইল থেকেই পুনর্গঠন হয়।
+node_modules/
+
 # The repo root .gitignore excludes package-lock.json globally, but this
 # app needs its dependency versions pinned for reproducible EAS builds —
 # without a lockfile, npm/yarn resolved slightly different transitive
