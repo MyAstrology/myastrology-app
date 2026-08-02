@@ -186,6 +186,7 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   // দিয়ে পুনরায় গণনা করে override করা — এই ফাইলের sunrise/sunset আসে ভিন্ন
   // জ্যোতির্বিজ্ঞান ইঞ্জিন (vsop87-planets) থেকে, যার ফলে ২-৩ মিনিট পার্থক্য
   // থাকতে পারত। ব্যর্থ হলে (কোনো তারিখে) উপরের হিসাবই থেকে যায়, ক্র্যাশ করে না।
+  let peSunriseHM = null, peSunsetHM = null;
   try {
     const peSunrise = PEph.getSunrise(dateStr);
     const peSunset  = PEph.getSunset(dateStr);
@@ -196,6 +197,16 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
       if (peR) rahuKala = { start: peR.startStr, end: peR.endStr };
       if (peG) gulika   = { start: peG.startStr, end: peG.endStr };
       if (peA) abhijit  = { start: peA.startStr, end: peA.endStr };
+      // দেখানো সূর্যোদয়/সূর্যাস্তও এখান থেকেই — আগে এগুলো vsop87 থেকে আসত,
+      // আর PEph কেবল রাহুকাল হিসাব করতে ব্যবহার হতো। দুই ইঞ্জিনের ফল ~৪
+      // মিনিট আলাদা (২০২৬-০৮-০২: vsop87 ০৫:০৮, PEph ০৫:১২:০৭) — ফলে হোম
+      // স্ক্রিন ও পঞ্জিকা ট্যাব দুই রকম সময় দেখাত। PEph-ই পঞ্জিকা পাতার
+      // (panjika.html) ইঞ্জিন, তাই সেটাকে সত্যের উৎস ধরা হলো।
+      // সীমা: PEph.getSunrise() শুধু তারিখ নেয়, অবস্থান নয় — তাই এটা সবসময়
+      // PEph-এর নিজস্ব অবস্থানেরই (LAT ২৩.১৬৭৭) সময় দেয়। পঞ্জিকা ট্যাবে
+      // অন্য শহর বাছলে সেখানে সময় বদলাবে, হোমে বদলাবে না।
+      peSunriseHM = PEph.hm ? PEph.hm(peSunrise) : null;
+      peSunsetHM  = PEph.hm ? PEph.hm(peSunset)  : null;
     }
   } catch (_) { /* keep the vsop87-based fallback computed above */ }
 
@@ -247,8 +258,8 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     nakshatraStart: nSt,  nakshatraEnd: nEn,
     yogaStart:      ySt,  yogaEnd:      yEn,
     karanaStart:    kSt,  karanaEnd:    kEn,
-    sunrise:  p.sunrise  ? p.sunrise.substring(0,5)  : '—',
-    sunset:   p.sunset   ? p.sunset.substring(0,5)   : '—',
+    sunrise:  peSunriseHM || (p.sunrise ? p.sunrise.substring(0,5) : '—'),
+    sunset:   peSunsetHM  || (p.sunset  ? p.sunset.substring(0,5)  : '—'),
     transit:  p.transit  ? p.transit.substring(0,5)  : '—',
     tithi:        TITHI_NAMES[tIdx]                    || '—',
     tithiIdx:     tIdx,

@@ -62,10 +62,13 @@ const formatBlogDate = (iso) => {
   return (y && m && d) ? `${d} ${EN_MONTHS[m - 1]} ${y}` : '';
 };
 
-function PanchangCell({ icon, label, value, timeStart, timeEnd }) {
-  const timeStr = (timeStart && timeEnd)
-    ? `${timeStart} – ${timeEnd}`
-    : timeEnd || timeStart || null;
+// পঞ্জিকা পাতার মতোই কেবল *শেষ* সময় দেখানো হয় ("→ ১১:১৫ পর্যন্ত")।
+// আগে "শুরু – শেষ" দেখানো হতো, কিন্তু তিথি/যোগ/করণ প্রায়ই আগের দিন শুরু
+// হয় — ফলে "২৩:২৪ – ২২:৩১"-এর মতো উল্টো-দেখতে লাগা সময় আসত, যা ভাঙা মনে
+// হতো। কোন তিথি কখন *শেষ* হচ্ছে সেটাই জ্যোতিষে দরকারি তথ্য, আর পঞ্জিকা
+// পাতাও ঠিক সেভাবেই দেখায় — দুই জায়গার চেহারাও এতে এক হয়ে গেল।
+function PanchangCell({ icon, label, value, timeEnd }) {
+  const timeStr = timeEnd ? `→ ${timeEnd}` : null;
   return (
     <View style={s.cell}>
       <View style={s.cellHeader}>
@@ -496,13 +499,13 @@ export function HomeScreen() {
 
               <View style={s.cellGrid4}>
                 <PanchangCell icon="moon-waning-crescent" label="তিথি"    value={data.tithi}
-                  timeStart={data.tithiStart}     timeEnd={data.tithiEnd} />
+                  timeEnd={data.tithiEnd} />
                 <PanchangCell icon="star-four-points"     label="নক্ষত্র" value={data.nakshatra}
-                  timeStart={data.nakshatraStart} timeEnd={data.nakshatraEnd} />
+                  timeEnd={data.nakshatraEnd} />
                 <PanchangCell icon="infinity"        label="যোগ"      value={data.yoga}
-                  timeStart={data.yogaStart} timeEnd={data.yogaEnd} />
+                  timeEnd={data.yogaEnd} />
                 <PanchangCell icon="hexagon-outline" label="করণ"      value={data.karana}
-                  timeStart={data.karanaStart} timeEnd={data.karanaEnd} />
+                  timeEnd={data.karanaEnd} />
               </View>
               <View style={s.cardDivider} />
               <View style={s.cellGrid2}>
