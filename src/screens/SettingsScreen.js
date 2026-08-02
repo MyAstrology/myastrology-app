@@ -31,10 +31,10 @@ function Row({ icon, label, sub, onPress, right, danger }) {
       onPress={onPress ? () => { haptics.tap(); onPress(); } : undefined}
     >
       <View style={[s.iconWrap, danger && s.iconWrapDanger]}>
-        <MaterialCommunityIcons name={icon} size={20} color={danger ? '#B71C1C' : colors.gold} />
+        <MaterialCommunityIcons name={icon} size={20} color={danger ? colors.danger : colors.gold} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[s.itemLabel, danger && { color: '#B71C1C' }]}>{label}</Text>
+        <Text style={[s.itemLabel, danger && { color: colors.danger }]}>{label}</Text>
         {sub ? <Text style={s.itemSub}>{sub}</Text> : null}
       </View>
       {right}
@@ -357,9 +357,9 @@ const s = StyleSheet.create({
     backgroundColor: colors.goldLight,
     alignItems: 'center', justifyContent: 'center',
   },
-  iconWrapDanger: { backgroundColor: '#FCE4EC' },
+  iconWrapDanger: { backgroundColor: colors.dangerWash },
   itemLabel: { ...typography.body, fontSize: 15, color: colors.text, fontWeight: '500' },
   itemSub:   { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
-  signOutText: { ...typography.label, color: '#B71C1C', fontWeight: '600' },
+  signOutText: { ...typography.label, color: colors.danger, fontWeight: '600' },
   divider:   { height: 1, backgroundColor: colors.divider, marginLeft: 62 },
 });

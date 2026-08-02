@@ -102,10 +102,10 @@ function MuhurtaChip({ icon, label, time, tone }) {
       <MaterialCommunityIcons
         name={icon}
         size={15}
-        color={good ? '#2E7D32' : '#B71C1C'}
+        color={good ? colors.good : colors.danger}
         style={{ marginBottom: 3 }}
       />
-      <Text style={[s.muhurtaChipLabel, { color: good ? '#2E7D32' : '#B71C1C' }]} numberOfLines={1}>{label}</Text>
+      <Text style={[s.muhurtaChipLabel, { color: good ? colors.good : colors.danger }]} numberOfLines={1}>{label}</Text>
       <Text style={s.muhurtaChipTime} numberOfLines={1}>{time}</Text>
     </View>
   );
@@ -840,8 +840,8 @@ const s = StyleSheet.create({
     width: 92, borderRadius: radii.lg, borderWidth: 1,
     alignItems: 'center', paddingVertical: 10, paddingHorizontal: 6,
   },
-  muhurtaChipGood: { backgroundColor: '#E8F5E9', borderColor: '#8FCB93' },
-  muhurtaChipBad:  { backgroundColor: '#FCE4EC', borderColor: '#EF9AB5' },
+  muhurtaChipGood: { backgroundColor: colors.goodWash, borderColor: colors.goodBorder },
+  muhurtaChipBad:  { backgroundColor: colors.dangerWash, borderColor: colors.dangerBorder },
   muhurtaChipLabel: { ...typography.value, fontSize: 11, fontWeight: '700', marginBottom: 2 },
   muhurtaChipTime:  { ...typography.label, fontSize: 9.5, color: colors.textSecondary },
 

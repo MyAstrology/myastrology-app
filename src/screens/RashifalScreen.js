@@ -32,11 +32,11 @@ try { data = getTodayRashifal(); } catch (_) {
 }
 
 const TAG_COLOR = {
-  'অতিশুভ':  { bg: '#E8F5E9', text: '#2E7D32', border: '#A5D6A7' },
+  'অতিশুভ':  { bg: colors.goodWash, text: colors.good, border: '#A5D6A7' },
   'বিশেষ শুভ':{ bg: '#E3F2FD', text: '#1565C0', border: '#90CAF9' },
   'শুভ':      { bg: '#FFF8E1', text: '#F57F17', border: '#FFE082' },
   'মিশ্র':    { bg: '#FFF3E0', text: '#E65100', border: '#FFCC80' },
-  'সতর্কতা':  { bg: '#FCE4EC', text: '#B71C1C', border: '#F48FB1' },
+  'সতর্কতা':  { bg: colors.dangerWash, text: colors.danger, border: '#F48FB1' },
 };
 
 function RashiGrid({ onSelect }) {

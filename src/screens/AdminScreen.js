@@ -66,7 +66,7 @@ function UserRow({ item, selfUid, onBlock, onDelete, busy }) {
             style={({ pressed }) => [s.actionBtn, s.deleteBtn, pressed && s.actionBtnPressed]}
           >
             <MaterialCommunityIcons name="trash-can-outline" size={14} color="#B71C1C" />
-            <Text style={[s.actionText, { color: '#B71C1C' }]}>ডিলিট</Text>
+            <Text style={[s.actionText, { color: colors.danger }]}>ডিলিট</Text>
           </Pressable>
         </View>
       )}
@@ -214,7 +214,7 @@ const s = StyleSheet.create({
   email: { ...typography.caption, color: colors.textSecondary, marginTop: 1 },
   date:  { ...typography.caption, color: colors.textSecondary },
   divider: { height: 10 },
-  errorText: { ...typography.body, color: '#B71C1C', textAlign: 'center', marginTop: 40, paddingHorizontal: 24 },
+  errorText: { ...typography.body, color: colors.danger, textAlign: 'center', marginTop: 40, paddingHorizontal: 24 },
   emptyText: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: 40 },
 
   blockedTag: {
@@ -222,7 +222,7 @@ const s = StyleSheet.create({
     backgroundColor: '#FDECEA', borderRadius: radii.pill,
     paddingHorizontal: 8, paddingVertical: 2, marginTop: 8,
   },
-  blockedTagText: { ...typography.caption, color: '#B71C1C', fontWeight: '700' },
+  blockedTagText: { ...typography.caption, color: colors.danger, fontWeight: '700' },
   actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
