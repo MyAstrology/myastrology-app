@@ -40,9 +40,20 @@ export function buildBuyOnWebJS(page) {
       });
       return p.toString();
     }
+    /* পঞ্জিকা পাতা ?by=<বাংলা সন> পড়ে সরাসরি ওই বছরের বার্ষিক পঞ্জিকা খুলে
+       দেয় (পাতার নিজের কোডেই আছে — history.pushState('/panjika?by='+bnY))।
+       সনটা সঙ্গে না পাঠালে ব্রাউজারে গিয়ে আবার "পুরনো বছরের পঞ্জিকা" ট্যাব
+       খুঁজে, সন লিখে, খুলে, তারপর আবার PDF বোতাম চাপতে হতো। */
+    function panjikaQuery(){
+      var e=document.getElementById('yrBnInput');
+      var y=e?parseInt(String(e.value||'').trim(),10):NaN;
+      if(!(y>=1200&&y<=2000)) return '';
+      return 'by='+y;
+    }
     function ask(){
       var q='';
-      try{ q=${page === 'kundali' ? 'kundaliQuery()' : "''"}; }catch(e){}
+      try{ q=${page === 'kundali' ? 'kundaliQuery()'
+              : page === 'panjika' ? 'panjikaQuery()' : "''"}; }catch(e){}
       if(window.ReactNativeWebView){
         window.ReactNativeWebView.postMessage(JSON.stringify({
           __rn:'buyOnWeb', page:${JSON.stringify(page)}, query:q
@@ -98,7 +109,9 @@ export function buildBuyOnWebJS(page) {
 export function handleBuyOnWeb(msg) {
   const PAGES = {
     'match-making': 'match-making.html',
-    'panjika':      'panjika.html',
+    // panjika.html একটা 301 রিডাইরেক্ট (→ /panjika, query অক্ষত থাকে) —
+    // সরাসরি পরিষ্কার ঠিকানাই দেওয়া হচ্ছে, একটা কম ধাপ।
+    'panjika':      'panjika',
     'kundali':      'kundali.html',
   };
   const page = PAGES[msg?.page] || 'kundali.html';
@@ -107,7 +120,8 @@ export function handleBuyOnWeb(msg) {
   Alert.alert(
     'ওয়েবসাইটে কিনুন',
     msg?.page === 'panjika'
-      ? 'বার্ষিক পঞ্জিকা PDF এখন myastrology.in ওয়েবসাইট থেকে সংরক্ষণ করা যাবে।'
+      ? 'বার্ষিক পঞ্জিকা PDF এখন myastrology.in ওয়েবসাইট থেকে সংরক্ষণ করা যাবে। '
+        + 'আপনি যে সনের পঞ্জিকা দেখছেন, সেটাই খুলে যাবে।'
       : 'এই রিপোর্টটি এখন myastrology.in ওয়েবসাইট থেকে কেনা যাবে। '
         + 'আপনার দেওয়া তথ্য সেখানে নিয়ে যাওয়া হবে, আবার লিখতে হবে না।',
     [
