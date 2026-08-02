@@ -5,6 +5,7 @@ import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/result';
 import { colors } from '../theme/colors';
+import { WEB_SHARE_JS } from '../utils/webShareBridge';
 
 // numerology.html's "বিশ্লেষণ করুন" button navigates to result.html?q=... — this
 // screen renders that bundled page. The website itself ships a @media print
@@ -12,7 +13,7 @@ import { colors } from '../theme/colors';
 // the app either, so that list doubles as our hide-list here.
 const APP_CSS = `
 /* ── Hide website chrome (mirrors result.html's own @media print rule) ── */
-.site-header,.nav,.nav-ov,.wa-float,#btt,.share-buttons,.back-btn,
+.site-header,.nav,.nav-ov,.wa-float,#btt,.back-btn,
 .cta-wrap,.sp-strip,.blog-wrap,.try-own-card,.seo-wrap,.phi-hero,
 .site-footer{display:none!important;}
 /* ── Hide external "আমাদের পরিষেবা" service-scroll strip — links to other
@@ -42,7 +43,7 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS);
+const INJECTED_JS = buildInjectedJS(APP_CSS) + WEB_SHARE_JS;
 
 export function NumerologyResultScreen() {
   const route = useRoute();

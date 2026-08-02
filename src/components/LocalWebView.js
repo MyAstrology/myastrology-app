@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { handleShareText } from '../utils/webShareBridge';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -191,6 +192,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       return;
     }
     if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
+    if (msg.__rn === 'shareText') { handleShareText(msg); return; }
     if (msg.__rn !== 'open') return;
 
     const page = parsePageName(msg.url || '');

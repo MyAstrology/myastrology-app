@@ -27,6 +27,7 @@ function App() {
   });
   const [showSplash, setShowSplash] = useState(true);
   const splashOpacity = useRef(new Animated.Value(1)).current;
+  const splashScale   = useRef(new Animated.Value(1)).current;
   const routeNameRef = useRef();
   const navigationRef = useRef();
 
@@ -35,7 +36,13 @@ function App() {
   useEffect(() => {
     if (!fontsLoaded) return;
     SplashScreen.hideAsync();
-    // ব্র্যান্ডেড ছবিটা অন্তত কিছুক্ষণ পুরোপুরি দেখার সময় দেওয়া, তারপর fade
+    // ব্র্যান্ডেড ছবিটা অন্তত কিছুক্ষণ পুরোপুরি দেখার সময় দেওয়া, তারপর fade।
+    // পুরোটা সময় ছবিটা মৃদু জুম করে (১ → ১.০৮) — স্থির ছবি হঠাৎ উধাও হওয়ার
+    // চেয়ে এটা "খুলে যাওয়ার" অনুভূতি দেয়। মোট সময় আগের মতোই (৮৫০ms),
+    // অর্থাৎ ব্যবহারকারীর অপেক্ষা এক বিন্দুও বাড়েনি।
+    Animated.timing(splashScale, {
+      toValue: 1.08, duration: 850, useNativeDriver: true,
+    }).start();
     const t = setTimeout(() => {
       Animated.timing(splashOpacity, { toValue: 0, duration: 350, useNativeDriver: true })
         .start(() => setShowSplash(false));
@@ -69,7 +76,7 @@ function App() {
           )}
         </AuthProvider>
       </UserProvider>
-      {showSplash && <SplashOverlay opacity={splashOpacity} />}
+      {showSplash && <SplashOverlay opacity={splashOpacity} scale={splashScale} />}
     </SafeAreaProvider>
   );
 }
