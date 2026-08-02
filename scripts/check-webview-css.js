@@ -50,9 +50,33 @@ function parseRules(css) {
   return rules;
 }
 
-const DARK_BG = /background(?:-color)?\s*:\s*(#(?:0|1|2|3|4|5|6|7)[0-9a-f]{5}|#(?:0|1|2|3|4)[0-9a-f]{2}\b)/i;
+// একটা হেক্স রঙ "গাঢ়" কিনা — আনুমানিক উজ্জ্বলতা দিয়ে
+function isDarkHex(hex) {
+  let h = hex.slice(1);
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  if (h.length !== 6) return false;
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 110;
+}
+
+// গাঢ় ব্যাকগ্রাউন্ড ধরা। আগে শুধু `background:#0a192f` ধরনের সরাসরি হেক্স
+// ধরত — কিন্তু এই প্রকল্পের প্রায় সব গাঢ় কার্ড gradient দিয়ে বানানো
+// (`background:linear-gradient(135deg,#2d0060,#1a0040)`), সেগুলো পুরোপুরি
+// বাদ পড়ে যেত। বিবাহ-মিলনের বিজ্ঞাপন কার্ডের আইকন অদৃশ্য হওয়ার বাগটা
+// (২ অগাস্ট) এই অন্ধ জায়গাতেই লুকিয়ে ছিল — নিয়মটা এই স্ক্রিপ্ট পড়েও
+// দেখেনি। এখন gradient-ও ধরা হয়: ঘোষণার সব হেক্স রঙ গাঢ় হলে গাঢ় ধরা হয়।
+function darkBg(body) {
+  const m = body.match(/(?:^|;)\s*background(?:-color|-image)?\s*:([^;]+)/i);
+  if (!m) return false;
+  const hexes = m[1].match(/#[0-9a-f]{3,8}\b/gi);
+  if (!hexes || !hexes.length) return false;
+  return hexes.every(isDarkHex);
+}
+
 const hasColour = b => /(^|;|\s)color\s*:/.test(b);
 const hasStroke = b => /(^|;|\s)(stroke|fill)\s*:/.test(b);
+// আইকন রাখার ঘর — নামে icon/ico আছে, বা সরাসরি svg-কে লক্ষ্য করে
+const isIconSel = s => /(^|[.#\-\s>])(icon|ico)\b|-icon\b|\bsvg\b/i.test(s);
 
 // যাচাই করে অনুমোদিত — এগুলো গাঢ় ব্যাকগ্রাউন্ড দেয় ঠিকই, কিন্তু ভিতরের
 // উপাদানের রঙ আলাদা *ক্লাসে* দেওয়া আছে (নামের মিল না থাকায় স্ক্রিপ্ট
@@ -60,7 +84,17 @@ const hasStroke = b => /(^|;|\s)(stroke|fill)\s*:/.test(b);
 // নাহলে এই ছাড়টাই একদিন আসল বাগ লুকিয়ে দেবে।
 //   #tabNav      → ভিতরে .tab-btn    { color: rgba(255,255,255,0.8)  }
 //   .mm-tabbar   → ভিতরে .mm-tab-btn { color: rgba(255,255,255,0.75) }
-const VERIFIED_OK = new Set(['#tabNav', '.mm-tabbar']);
+//   #premiumBtn  → এটা একটা .tab-btn; রঙ ও আইকনের stroke .tab-btn ও
+//   #cspBtn        .tab-btn svg.tab-icon নিয়মে আগেই দেওয়া আছে
+//   .ds-cur-md-box>.ds-ad-box-hdr → শুধু background override করে;
+//                  .ds-ad-box-hdr{color:#fff} মূল নিয়মেই আছে
+//   .nc-header-band → ভিতরে .nc-eyebrow / .nc-name হালকা সোনালি রঙ দেয়
+const VERIFIED_OK = new Set([
+  '#tabNav', '.mm-tabbar',
+  '#premiumBtn', '#cspBtn',
+  '.ds-cur-md-box>.ds-ad-box-hdr',
+  '.nc-header-band',
+]);
 
 let problems = [];
 
@@ -97,7 +131,7 @@ for (const file of fs.readdirSync(SCREENS_DIR).filter(f => f.endsWith('.js'))) {
 
     // ② গাঢ় ব্যাকগ্রাউন্ড বসানো হয়েছে কিন্তু লেখা/আইকনের রঙ দেওয়া হয়নি
     for (const r of rules) {
-      if (!DARK_BG.test(r.body)) continue;
+      if (!darkBg(r.body)) continue;
       if (VERIFIED_OK.has(r.sel)) continue;
       if (hasColour(r.body) || hasStroke(r.body)) continue;
       // একই সিলেক্টরের অন্য কোনো নিয়মে রঙ থাকলে গ্রহণযোগ্য
@@ -107,12 +141,24 @@ for (const file of fs.readdirSync(SCREENS_DIR).filter(f => f.endsWith('.js'))) {
       // করে কিন্তু "#tabNav .tab-btn{color:#fff}" আলাদা নিয়মে রঙ দেয়, বা
       // ".mm-gps-btn svg{stroke:#fff}" আইকনের রঙ দেয়। এগুলো বৈধ প্যাটার্ন,
       // এদের সতর্কতা দেখালে স্ক্রিপ্টটা "সবসময় লাল" হয়ে অকেজো হয়ে যেত।
-      const bases = r.sel.split(',').map(x => x.trim()).filter(Boolean);
+      // যৌগিক সিলেক্টরের (".mm-promo-mini.mm-promo-prem") ক্ষেত্রে প্রথম
+      // ক্লাসটাও একটা বৈধ ভিত্তি — সন্তানের রঙ সাধারণত ওই মূল ক্লাসের
+      // নামেই লেখা থাকে (".mm-promo-mini-title")।
+      const bases = [];
+      for (const b of r.sel.split(',').map(x => x.trim()).filter(Boolean)) {
+        bases.push(b);
+        const first = b.match(/^[.#][A-Za-z0-9_-]+/);
+        if (first && first[0] !== b) bases.push(first[0]);
+      }
       const coveredByChild = rules.some(o =>
         (hasColour(o.body) || hasStroke(o.body)) &&
         o.sel.split(',').map(x => x.trim()).some(os =>
+          // "-" যোগ করা হলো BEM-ধাঁচের সন্তান-ক্লাসের জন্য:
+          // ".premium-promo" গাঢ়, আর ".premium-promo-title{color:…}"
+          // ভিতরের লেখার রঙ দেয় — এটা এই প্রকল্পের প্রধান প্যাটার্ন।
           bases.some(b => os !== b && (os.startsWith(b + ' ') || os.startsWith(b + '.') ||
-                                       os.startsWith(b + '[') || os.startsWith(b + '>')))
+                                       os.startsWith(b + '[') || os.startsWith(b + '>') ||
+                                       os.startsWith(b + '-')))
         )
       );
       if (coveredByChild) continue;

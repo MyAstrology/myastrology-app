@@ -46,28 +46,37 @@ html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important
 body{height:auto!important;min-height:100vh!important;background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
-/* ── Tab bar ── */
+/* ── Tab bar ──
+   আগে ট্যাবগুলো ছিল ফ্যাকাসে সাদা-ঘষা বোতাম, সক্রিয়টা সাদা — নেভি
+   পটভূমিতে কোনটা বাছা আছে তা চট করে বোঝা যেত না, আর সাইটের সোনালি-নেভি
+   পরিচয়ের সাথেও মিলত না। এখন সক্রিয় ট্যাব সোনালি গ্রেডিয়েন্ট (সাইটের
+   .premium-promo-btn-এর মতোই), নিষ্ক্রিয়গুলো সোনালি-আভাযুক্ত রূপরেখা। ── */
 .mm-tabbar{
   position:sticky!important;top:0!important;z-index:100!important;
-  background:#0a192f!important;border-bottom:2px solid #b8860b!important;
-  display:flex!important;gap:5px!important;flex-wrap:nowrap!important;
-  overflow-x:auto!important;padding:8px 8px!important;
-  scrollbar-width:none!important;box-shadow:0 2px 8px rgba(0,0,0,.25)!important;
+  background:linear-gradient(180deg,#0f2647,#0a192f)!important;
+  border-bottom:2px solid #b8860b!important;
+  display:flex!important;gap:6px!important;flex-wrap:nowrap!important;
+  overflow-x:auto!important;padding:9px 10px!important;
+  scrollbar-width:none!important;box-shadow:0 3px 12px rgba(0,0,0,.3)!important;
 }
 .mm-tabbar::-webkit-scrollbar{display:none!important;}
 .mm-tab-btn{
-  background:rgba(255,255,255,0.1)!important;
-  color:rgba(255,255,255,0.75)!important;
-  border:1px solid rgba(255,255,255,0.18)!important;
-  padding:6px 11px!important;border-radius:16px!important;
-  font-size:0.71rem!important;font-weight:600!important;
+  background:rgba(255,215,0,.07)!important;
+  color:rgba(255,232,160,.82)!important;
+  border:1px solid rgba(255,215,0,.28)!important;
+  padding:7px 13px!important;border-radius:20px!important;
+  font-size:0.72rem!important;font-weight:700!important;
+  letter-spacing:.01em!important;
   white-space:nowrap!important;cursor:pointer!important;
   flex-shrink:0!important;font-family:inherit!important;
   outline:none!important;-webkit-appearance:none!important;
+  transition:none!important;
 }
 .mm-tab-btn.active,.mm-tab-btn[aria-selected="true"]{
-  background:rgba(255,255,255,0.92)!important;
-  color:#0a192f!important;border-color:transparent!important;
+  background:linear-gradient(135deg,#ffd700,#e8a300)!important;
+  color:#0a192f!important;border-color:#ffd700!important;
+  font-weight:900!important;
+  box-shadow:0 2px 10px rgba(255,215,0,.35)!important;
 }
 /* ── Outer container ── */
 .k-wrap{padding:8px 12px 20px!important;}
@@ -199,7 +208,15 @@ svg{max-width:100%!important;}
    app is always phone-sized). ── */
 .premium-promo{position:relative!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:10px!important;background:linear-gradient(135deg,#2d0060,#1a0040)!important;border:1px solid rgba(255,215,0,.35)!important;border-radius:14px!important;padding:16px 14px 12px!important;}
 .premium-promo-badge{position:absolute!important;top:-8px!important;right:10px!important;background:#ffd700!important;color:#1a0040!important;font-size:.6rem!important;font-weight:800!important;padding:2px 8px!important;border-radius:20px!important;box-shadow:0 2px 8px rgba(0,0,0,.25)!important;white-space:nowrap!important;}
-.premium-promo-icon{font-size:1.5rem!important;flex-shrink:0!important;}
+/* ── বিজ্ঞাপন কার্ডের চিহ্ন ──
+   এই আইকনগুলো আগে ইমোজি ছিল (💎 ইত্যাদি), পরে inline SVG-তে বদলানো হয়েছে।
+   SVG-গুলো stroke="currentColor" ব্যবহার করে, কিন্তু কোনো নিয়মেই এই দুটো
+   ঘরে color দেওয়া ছিল না — তাই পাতার গাঢ় লেখার রং উত্তরাধিকারে পেত, আর
+   কার্ডের গাঢ় বেগুনি/মেরুন পটভূমিতে কালোর উপর কালো হয়ে অদৃশ্য থাকত।
+   ইমোজির সময় সমস্যা হয়নি, কারণ ইমোজির নিজের রং আছে।
+   (একই ত্রুটি ওয়েবসাইটেও ছিল — সেখানেও ঠিক করা হয়েছে।) */
+.premium-promo-icon{font-size:1.5rem!important;flex-shrink:0!important;color:#ffd700!important;}
+.premium-promo-icon svg,.mm-promo-mini-icon svg{stroke:#ffd700!important;}
 .premium-promo-text{flex:1!important;min-width:0!important;}
 .premium-promo-title{color:#ffd700!important;font-weight:800!important;font-size:.85rem!important;margin-bottom:2px!important;line-height:1.4!important;}
 .premium-promo-sub{font-size:.74rem!important;color:rgba(255,255,255,.75)!important;line-height:1.55!important;}
@@ -214,7 +231,7 @@ svg{max-width:100%!important;}
 .mm-promo-mini{display:flex!important;align-items:center!important;gap:12px!important;border-radius:14px!important;padding:14px 16px!important;cursor:pointer!important;border:1px solid rgba(255,215,0,.3)!important;}
 .mm-promo-mini.mm-promo-prem{background:linear-gradient(135deg,#2d0060,#1a0040)!important;}
 .mm-promo-mini.mm-promo-spec{background:linear-gradient(135deg,#7a2e2e,#4a1414)!important;}
-.mm-promo-mini-icon{font-size:1.6rem!important;flex-shrink:0!important;}
+.mm-promo-mini-icon{font-size:1.6rem!important;flex-shrink:0!important;color:#ffd700!important;}
 .mm-promo-mini-text{flex:1!important;min-width:0!important;}
 .mm-promo-mini-title{color:#ffd700!important;font-weight:800!important;font-size:.84rem!important;line-height:1.4!important;}
 .mm-promo-mini-sub{font-size:.74rem!important;color:rgba(255,255,255,.75)!important;margin-top:2px!important;}

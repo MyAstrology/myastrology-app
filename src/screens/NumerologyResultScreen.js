@@ -25,6 +25,22 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
 #main,main{padding:8px 12px 20px!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
+/* ── ফলাফলের নিচের বোতাম সারি — অ্যাপে শুধু "শেয়ার করুন" ──
+   ওয়েবসাইটে তিনটে বোতাম: কপি · শেয়ার · প্রিন্ট। ফোনে "কপি" আর "প্রিন্ট"
+   দুটোই অর্থহীন — অ্যান্ড্রয়েডের শেয়ার-শিটেই কপি, WhatsApp, PDF সব আছে,
+   আর তিনটে বোতাম পাশাপাশি থাকায় আসল কাজটা (শেয়ার) হারিয়ে যাচ্ছিল।
+   বোতামগুলোর কোনো id নেই, তাই ক্রম ধরে লুকানো হচ্ছে — DOM-এ সারিটা
+   সবসময় ঠিক এই ক্রমে বসে: ১ কপি · ২ শেয়ার · ৩ প্রিন্ট। */
+.share-buttons .share-btn:nth-child(1),
+.share-buttons .share-btn:nth-child(3){display:none!important;}
+.share-buttons{margin-top:22px!important;}
+.share-buttons .share-btn:nth-child(2){
+  background:linear-gradient(135deg,#f5b800,#e08a00)!important;
+  border:none!important;color:#0a1233!important;
+  font-weight:800!important;font-size:.92rem!important;
+  padding:12px 30px!important;
+  box-shadow:0 3px 14px rgba(245,184,0,.32)!important;
+}
 /* ── Tables (if any appear in the analysis) ── */
 table{display:table!important;width:100%!important;border-collapse:collapse!important;font-size:.82rem!important;}
 thead{display:table-header-group!important;}tbody{display:table-row-group!important;}

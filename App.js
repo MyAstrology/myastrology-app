@@ -1,6 +1,6 @@
 import './src/polyfills';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { registerRootComponent } from 'expo';
@@ -36,16 +36,19 @@ function App() {
   useEffect(() => {
     if (!fontsLoaded) return;
     SplashScreen.hideAsync();
-    // ব্র্যান্ডেড ছবিটা অন্তত কিছুক্ষণ পুরোপুরি দেখার সময় দেওয়া, তারপর fade।
-    // পুরোটা সময় ছবিটা মৃদু জুম করে (১ → ১.০৮) — স্থির ছবি হঠাৎ উধাও হওয়ার
-    // চেয়ে এটা "খুলে যাওয়ার" অনুভূতি দেয়। মোট সময় আগের মতোই (৮৫০ms),
-    // অর্থাৎ ব্যবহারকারীর অপেক্ষা এক বিন্দুও বাড়েনি।
+    // ছবিটা OS স্প্ল্যাশের ঠিক যে মাপে ছিল সেখান থেকেই শুরু হয় (কোনো লাফ নেই),
+    // তারপর ধীরে বড় হতে হতে মিলিয়ে যায় — যেন অ্যাপটা ছবির ভিতর থেকে খুলছে।
+    // Easing.out(cubic): শুরুতে দ্রুত, শেষে ধীর — হঠাৎ থেমে যাওয়ার বদলে
+    // স্বাভাবিক গতি। মোট সময় আগের মতোই (~৮৫০ms), অপেক্ষা বাড়েনি।
     Animated.timing(splashScale, {
-      toValue: 1.08, duration: 850, useNativeDriver: true,
+      toValue: 1.18, duration: 880,
+      easing: Easing.out(Easing.cubic), useNativeDriver: true,
     }).start();
     const t = setTimeout(() => {
-      Animated.timing(splashOpacity, { toValue: 0, duration: 350, useNativeDriver: true })
-        .start(() => setShowSplash(false));
+      Animated.timing(splashOpacity, {
+        toValue: 0, duration: 380,
+        easing: Easing.in(Easing.quad), useNativeDriver: true,
+      }).start(() => setShowSplash(false));
     }, 500);
     return () => clearTimeout(t);
   }, [fontsLoaded]);

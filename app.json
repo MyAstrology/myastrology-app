@@ -31,8 +31,8 @@
       "@react-native-google-signin/google-signin",
       ["onesignal-expo-plugin", { "mode": "production" }],
       ["expo-splash-screen", {
-        "image": "./assets/splash.png",
-        "imageWidth": 320,
+        "image": "./assets/splash-full.png",
+        "imageWidth": 300,
         "resizeMode": "contain",
         "backgroundColor": "#FEFAF2"
       }],

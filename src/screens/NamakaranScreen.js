@@ -44,16 +44,12 @@ header.site-header,nav.nav,#navMenu,#navOverlay,.nav-overlay{display:none!import
 .hero-rule span{color:rgba(184,134,11,.75)!important;font-size:.55rem!important;letter-spacing:.2em!important;}
 .hero .subtitle{font-size:.8rem!important;color:#5c3d2e!important;line-height:1.65!important;margin-bottom:.55rem!important;}
 .hero-eyebrow{font-size:.62rem!important;color:rgba(122,74,0,.7)!important;letter-spacing:.1em!important;text-transform:uppercase!important;}
-/* ── গণেশ প্রণাম কার্ড — এটাও অস্টাইল করা ছিল, সাদামাটা লেখা দেখাচ্ছিল ── */
-.ganesh-card{display:flex!important;align-items:center!important;background:#FFFCF8!important;border:1.5px solid #D4AF37!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 2px 16px rgba(180,140,30,.22)!important;margin-bottom:10px!important;position:relative!important;}
-.gc-left{background:linear-gradient(160deg,#FEF9F0,#FDF0DE)!important;padding:.9rem .8rem!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:.25rem!important;min-width:70px!important;flex-shrink:0!important;border-right:1px dashed #D4AF37!important;}
-.gc-om{font-size:1.8rem!important;color:#7B241C!important;line-height:1!important;}
-.gc-lotus{width:34px!important;height:34px!important;border-radius:50%!important;background:radial-gradient(circle,#fff8ee,#f5cba7)!important;border:1.5px solid #D4AF37!important;display:flex!important;align-items:center!important;justify-content:center!important;margin-top:.2rem!important;}
-.gc-right{padding:.8rem 1rem!important;flex:1!important;min-width:0!important;}
-.gc-title{font-size:.95rem!important;font-weight:700!important;color:#7B241C!important;margin-bottom:.18rem!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.gc-sub{font-size:.78rem!important;font-weight:700!important;color:#B9770E!important;margin-bottom:.18rem!important;}
-.gc-attr{font-size:.72rem!important;color:#6E2C00!important;line-height:1.4!important;margin-bottom:.25rem!important;}
-.gc-sans{font-size:.8rem!important;color:#9C640C!important;font-weight:700!important;letter-spacing:.12em!important;}
+/* ── গণেশ প্রণাম কার্ড — মালিকের অনুরোধে অ্যাপে পুরোপুরি বাদ ──
+   ওয়েবসাইটে কার্ডটা থাকছে; ফোনের ছোট পর্দায় নাম-প্রস্তাবনার আগে
+   একটা পুরো কার্ড জুড়ে প্রণাম-মন্ত্র আসল কাজটাকে নিচে ঠেলে দিচ্ছিল।
+   আগে এখানে .gc-* ঘরগুলোর সাজসজ্জা ছিল — কার্ডটাই না দেখালে
+   সেগুলোর আর দরকার নেই। */
+.ganesh-card{display:none!important;}
 .related-links{display:none!important;}
 .cta-box{display:none!important;}
 .disclaimer{display:none!important;}
@@ -75,6 +71,16 @@ footer,.site-footer{display:none!important;}
    না থাকাটা একটা বড় ঘাটতি ছিল। */
 .card:has(.share-row){display:block!important;}
 .share-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;justify-content:center!important;}
+/* সারিতে তিনটে বোতাম আছে: WhatsApp শেয়ার · কপি · প্রিন্ট। ফোনে শেষ দুটো
+   অর্থহীন — অ্যান্ড্রয়েডের শেয়ারেই কপি ও PDF দুটোই পাওয়া যায়, আর তিনটে
+   পাশাপাশি থাকায় আসল কাজটা (পরিবারকে নাম পাঠানো) চোখে পড়ত না। */
+.share-row .btn-share.copy,.share-row .btn-share.prt{display:none!important;}
+.share-row .btn-share.wa{
+  background:linear-gradient(135deg,#25d366,#1ea952)!important;color:#fff!important;
+  border:none!important;border-radius:11px!important;padding:12px 26px!important;
+  font-size:.92rem!important;font-weight:800!important;
+  box-shadow:0 3px 12px rgba(37,211,102,.3)!important;
+}
 /* ── Hide SEO article & disclaimer ── */
 article.seo-article{display:none!important;}
 /* ── Hide booking/payment overlays (outside main) ── */
