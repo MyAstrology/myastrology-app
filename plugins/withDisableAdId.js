@@ -16,6 +16,15 @@ const { withAndroidManifest, AndroidConfig } = require('@expo/config-plugins');
 //
 // একই সাথে ssaid/সংকেত-ভিত্তিক ব্যক্তিগতকরণও বন্ধ — না হলে AAID ছাড়াও
 // Analytics বিজ্ঞাপন-উদ্দেশ্যে সংকেত পাঠাতে পারত।
+// Firebase Analytics-এর লাইব্রেরি-manifest নিজে থেকেই এই অনুমতিটা ঘোষণা করে,
+// আর manifest merger সেটা অ্যাপের manifest-এ জুড়ে দেয় — আমরা না চাইলেও।
+// উপরের FLAGS দিয়ে AAID *সংগ্রহ* বন্ধ হয়, কিন্তু *অনুমতিটা* থেকেই যায়।
+// ফলে Play Console-এ ঘোষণা "No" থাকলেও অ্যাপের ভিতরে অনুমতিটা দেখা যায় —
+// একটা অসামঞ্জস্য। তাই merger-এর নিজস্ব নিয়ম tools:node="remove" দিয়ে
+// অনুমতিটাও মুছে দেওয়া হচ্ছে, যাতে ঘোষণা আর অ্যাপ হুবহু মেলে।
+// (developer.android.com/build/manage-manifests#merge-manifests)
+const AD_ID_PERMISSION = 'com.google.android.gms.permission.AD_ID';
+
 const FLAGS = {
   google_analytics_adid_collection_enabled: 'false',
   google_analytics_ssaid_collection_enabled: 'false',
@@ -43,6 +52,17 @@ module.exports = function withDisableAdId(config) {
         $: { 'android:name': name, 'android:value': value, 'tools:replace': 'android:value' },
       });
     }
+
+    // অনুমতিটা মুছে ফেলা। আগে একই নামের কোনো এন্ট্রি থাকলে সরিয়ে নেওয়া হয় —
+    // দুটো থাকলে merger সংঘর্ষে আটকে বিল্ড ব্যর্থ হতো।
+    const manifest = config.modResults.manifest;
+    manifest['uses-permission'] = (manifest['uses-permission'] || []).filter(
+      (p) => p.$ && p.$['android:name'] !== AD_ID_PERMISSION,
+    );
+    manifest['uses-permission'].push({
+      $: { 'android:name': AD_ID_PERMISSION, 'tools:node': 'remove' },
+    });
+
     return config;
   });
 };
