@@ -17,6 +17,7 @@ import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
+import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -396,7 +397,7 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS);
+const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('kundali');
 
 // injectedJavaScript (উপরের INJECTED_JS) পেজ লোড হওয়ার পরে চলে, ততক্ষণে
 // ওয়েবসাইটের নিজস্ব (ডেস্কটপ-সাইট) স্টাইলে header/nav/footer-সহ পুরো পেজ
@@ -516,6 +517,7 @@ export function KundaliScreen() {
               onMessage={(event) => {
                 try {
                   const msg = JSON.parse(event.nativeEvent.data);
+                  if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
                   if (msg.type === 'generatePdf') {
                     if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
                       Alert.alert('ত্রুটি', 'কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।');

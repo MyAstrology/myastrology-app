@@ -10,6 +10,7 @@ import html from '../web-html/match-making';
 import PRINT_HTML from '../web-html/match-making-print';
 import { colors } from '../theme/colors';
 import { haptics } from '../utils/haptics';
+import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 
 // Injects the print data directly into the HTML so it doesn't need localStorage.
 function buildPrintHtml(rawJson) {
@@ -323,7 +324,7 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(MM_CSS);
+const INJECTED_JS = buildInjectedJS(MM_CSS) + buildBuyOnWebJS('match-making');
 
 // Polls the hidden pre-render WebView until match-making-print.js has finished
 // building #printRoot (it waits on document.fonts.ready + a setTimeout before
