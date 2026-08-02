@@ -18,6 +18,7 @@ import { haptics } from '../utils/haptics';
 import { RASHI_SIGNS } from '../data/rashifalSigns';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { savePanjikaCity } from '../utils/panjikaCity';
+import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -327,6 +328,10 @@ setTimeout(function(){
 // পঞ্জিকা পেজের বেছে নেওয়া শহর ('pjk_city' localStorage) নেটিভ দিকে পাঠায়,
 // যাতে হোম স্ক্রিনও একই শহরের সূর্যোদয়/তিথি দেখাতে পারে। লোডের সময় একবার,
 // আর শহর বদলালে (setItem হুক করে) আবার — ইন্টারভ্যাল-পোলিং ছাড়াই।
+// বার্ষিক পঞ্জিকা PDF-এর ₹২১ অনুদান-পেমেন্টও অ্যাপে বন্ধ (কুণ্ডলী/যোটকের
+// মতোই) — বান্ডল শুধু একটা টোস্ট দেখাত, যা বন্ধ গলি। এখন ওয়েবসাইটে নিয়ে যায়।
+const BUY_ON_WEB_JS = buildBuyOnWebJS('panjika');
+
 const CITY_REPORT_JS = `
   (function(){
     function send(){
@@ -363,6 +368,7 @@ function makeJS(tabId, extraCSS, extraJS) {
   st.textContent=${JSON.stringify(css)};
   ${FIX_IMAGES_JS}
   ${CITY_REPORT_JS}
+  ${BUY_ON_WEB_JS}
   function t(){${switchCall}${extraJS || ''}}
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',t);}else{t();}
 })();true;`;
@@ -494,7 +500,8 @@ export function PanchangScreen() {
   const handleWebMessage = (event) => {
     let msg;
     try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
-    if (msg?.__rn === 'pjCity') { savePanjikaCity(msg); return; }
+    if (msg?.__rn === 'pjCity')    { savePanjikaCity(msg); return; }
+    if (msg?.__rn === 'buyOnWeb')  { handleBuyOnWeb(msg); return; }
     handleOldTabMessage(event);
   };
 

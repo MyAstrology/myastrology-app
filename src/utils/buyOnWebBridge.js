@@ -22,10 +22,6 @@ const SITE = 'https://myastrology.in/';
 export function buildBuyOnWebJS(page) {
   return `
   (function(){
-    /* এই স্ক্রিপ্ট প্রতিটা onLoadEnd-এ আবার চলে — একই ফাংশন বারবার মুড়ে
-       ফেলা এড়াতে একবারই চালানো হয়। */
-    if(window.__myaBuyWrapped) return;
-    window.__myaBuyWrapped=1;
     function val(id){var e=document.getElementById(id);return e?String(e.value||''):'';}
     function pad(v){return String(v).padStart(2,'0');}
     function kundaliQuery(){
@@ -66,13 +62,23 @@ export function buildBuyOnWebJS(page) {
       return typeof m==='string' && m.indexOf('myastrology.in')>-1
              && m.indexOf('ওয়েবসাইট ব্যবহার করুন')>-1;
     }
+    /* এই স্ক্রিপ্ট একাধিকবার চলে: LocalWebView একে পেজ লোডের *আগে* একবার
+       আর *পরে* একবার ইনজেক্ট করে। আগে একটা গ্লোবাল "একবারই চালাও" পাহারা
+       ছিল — কিন্তু প্রথম (লোডের আগের) দফায় পেজের ফাংশনগুলো এখনও তৈরিই হয়
+       না, অথচ পাহারাটা বসে যেত, ফলে পরের দফায় আর মোড়া হতো না। যোটক বিচারে
+       ₹৫১ বোতাম কাজ না করার আসল কারণ এটাই ছিল (কুণ্ডলী নিজের WebView
+       ব্যবহার করে, তাই সেখানে ধরা পড়েনি)।
+       এখন প্রতিটা ফাংশনে নিজস্ব চিহ্ন বসানো হয় — বারবার চালালেও দুবার
+       মোড়া হয় না, আর ফাংশন পরে তৈরি হলেও ধরা পড়ে। */
     function wrap(name){
       var orig=window[name];
-      if(typeof orig!=='function') return;
-      window[name]=function(msg){
+      if(typeof orig!=='function' || orig.__myaWrapped) return;
+      var w=function(msg){
         if(isBuyMsg(msg)){ ask(); return; }
         return orig.apply(this, arguments);
       };
+      w.__myaWrapped=1;
+      window[name]=w;
     }
     ['showToast','_mmShowFormError','alert'].forEach(wrap);
   })();
@@ -82,13 +88,20 @@ export function buildBuyOnWebJS(page) {
 // ফোনের ব্রাউজারে খোলার আগে একবার জানিয়ে দেওয়া — হঠাৎ অ্যাপ ছেড়ে বেরিয়ে
 // যাওয়াটা যেন অপ্রত্যাশিত না লাগে।
 export function handleBuyOnWeb(msg) {
-  const page = msg?.page === 'match-making' ? 'match-making.html' : 'kundali.html';
+  const PAGES = {
+    'match-making': 'match-making.html',
+    'panjika':      'panjika.html',
+    'kundali':      'kundali.html',
+  };
+  const page = PAGES[msg?.page] || 'kundali.html';
   const q = msg?.query ? '?' + msg.query : '';
   const url = SITE + page + q;
   Alert.alert(
     'ওয়েবসাইটে কিনুন',
-    'এই রিপোর্টটি এখন myastrology.in ওয়েবসাইট থেকে কেনা যাবে। '
-    + 'আপনার দেওয়া তথ্য সেখানে নিয়ে যাওয়া হবে, আবার লিখতে হবে না।',
+    msg?.page === 'panjika'
+      ? 'বার্ষিক পঞ্জিকা PDF এখন myastrology.in ওয়েবসাইট থেকে সংরক্ষণ করা যাবে।'
+      : 'এই রিপোর্টটি এখন myastrology.in ওয়েবসাইট থেকে কেনা যাবে। '
+        + 'আপনার দেওয়া তথ্য সেখানে নিয়ে যাওয়া হবে, আবার লিখতে হবে না।',
     [
       { text: 'বাতিল', style: 'cancel' },
       { text: 'ওয়েবসাইটে যান', onPress: () => { Linking.openURL(url).catch(() => {}); } },

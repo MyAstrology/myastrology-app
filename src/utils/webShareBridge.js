@@ -11,9 +11,12 @@ import { Share } from 'react-native';
 
 export const WEB_SHARE_JS = `
 (function(){
-  if(window.__myaShareWrapped) return;
-  window.__myaShareWrapped=1;
-
+  /* গ্লোবাল "একবারই চালাও" পাহারা ইচ্ছাকৃতভাবে নেই। LocalWebView এই স্ক্রিপ্ট
+     পেজ লোডের *আগে* একবার আর *পরে* একবার চালায়। আগে পাহারা ছিল, ফলে প্রথম
+     (লোডের আগের) দফাতেই পাহারা বসে যেত, তারপর পেজের নিজের স্ক্রিপ্ট চলে
+     window.shareResult আবার নিজের সংস্করণে ফিরিয়ে দিত — আর দ্বিতীয় দফা
+     পাহারার কারণে চলত না। ফলাফল: "শেয়ার" চাপলে পেজের আসল কোড চলত, যেটা
+     navigator.share না পেয়ে কপি করে ফেলত। প্রতিবার নতুন করে বসানোই সঠিক। */
   function resultText(){
     var el=document.querySelector('#resultContent');
     return el ? (el.innerText||'') : '';
