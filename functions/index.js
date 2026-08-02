@@ -41,8 +41,13 @@ exports.mintWebViewToken = onCall({ region: 'asia-south1' }, async (request) => 
 const ADMIN_EMAILS = ['prodyutacharya7@gmail.com', 'bipulbala64@gmail.com'];
 
 function assertAdmin(request) {
-  const email = ((request.auth && request.auth.token && request.auth.token.email) || '').toLowerCase();
-  if (!request.auth || !ADMIN_EMAILS.includes(email)) {
+  const tok = (request.auth && request.auth.token) || {};
+  const email = (tok.email || '').toLowerCase();
+  // email_verified-ও দেখা হয়: শুধু ঠিকানা মিলিয়ে দেখা যথেষ্ট নয়। আজ অ্যাপে
+  // কেবল Google Sign-In চালু (সেখানে ঠিকানা সবসময় যাচাইকৃত), কিন্তু ভবিষ্যতে
+  // ইমেইল/পাসওয়ার্ড বা অন্য কোনো প্রোভাইডার যোগ করলে কেউ অ্যাডমিনের ঠিকানা
+  // দিয়ে অ্যাকাউন্ট খুলে (যাচাই না করেই) সরাসরি অ্যাডমিন হয়ে যেতে পারত।
+  if (!request.auth || tok.email_verified !== true || !ADMIN_EMAILS.includes(email)) {
     throw new HttpsError('permission-denied', 'অ্যাডমিন অনুমতি নেই।');
   }
 }

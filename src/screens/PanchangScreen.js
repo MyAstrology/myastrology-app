@@ -426,11 +426,15 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
         ref={ref}
         source={{ uri }}
         style={s.wv}
-        originWhitelist={['file://*', 'about:*', 'https://*', 'http://*']}
+        // নিরাপত্তা: http:// ইচ্ছাকৃতভাবে বাদ, আর mixedContentMode="never" —
+        // অন্যথায় শত্রুভাবাপন্ন ওয়াই-ফাইতে কেউ সাদা-টেক্সট HTTP রিসোর্স বদলে
+        // দিয়ে পেজে কোড ঢোকাতে পারত। যাচাই করা হয়েছে: বান্ডল করা কোনো পেজই
+        // http:// রিসোর্স ব্যবহার করে না, তাই এতে কিছু ভাঙে না।
+        originWhitelist={['file://*', 'about:*', 'https://*']}
         allowFileAccess={true}
         allowFileAccessFromFileURLs={true}
         allowUniversalAccessFromFileURLs={true}
-        mixedContentMode="always"
+        mixedContentMode="never"
         javaScriptEnabled={true}
         domStorageEnabled={true}
         cacheEnabled={false}
