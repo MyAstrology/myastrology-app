@@ -58,10 +58,26 @@ Firebase Analytics-এ কেবল **স্ক্রিনের নাম** �
 কেউ অ্যাডমিনের ঠিকানা দিয়ে অ্যাকাউন্ট খুলে সরাসরি অ্যাডমিন হয়ে যেতে
 পারত। এখন `email_verified` না থাকলে অনুমতি মেলে না।
 
-⚠️ এটা Cloud Function-এ, তাই **deploy না করা পর্যন্ত কার্যকর হবে না**:
+✅ **deploy সম্পন্ন — ২ অগাস্ট ২০২৬।** এখন কার্যকর।
+
+Termux থেকে হয়নি (`env: 'node': Permission denied` — অ্যান্ড্রয়েডে
+`/usr/bin/env` অন্য জায়গায় থাকে, তাই Firebase CLI-র ভিতরের প্রক্রিয়াটা
+node খুঁজে পায় না; `termux-exec` ও `proot` দুটোতেই হয়নি)।
+
+**যেটায় হয়েছে — Google Cloud Shell** (shell.cloud.google.com), ব্রাউজার
+থেকেই, ফোনে:
 ```
+git clone https://github.com/MyAstrology/myastrology-app
+cd myastrology-app
+npm install -g firebase-tools
 firebase deploy --only functions
 ```
+পরেরবার Cloud Function বদলালে এই পথেই যাবেন — Termux-এ সময় নষ্ট করবেন না।
+
+⚠️ **ভবিষ্যতের সময়সীমা:** deploy-এর সময় Google সতর্ক করেছে —
+Node.js 20 রানটাইম **৩০ অক্টোবর ২০২৬**-এ বন্ধ হয়ে যাবে, তারপর আর
+deploy করা যাবে না। তার আগে `functions/package.json`-এ
+`"engines": {"node": "22"}` করে একবার deploy করতে হবে।
 
 ---
 
