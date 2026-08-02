@@ -131,8 +131,8 @@ input[type=number]{
 .pred-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.85rem!important;line-height:1.7!important;color:#3a2218!important;}
 /* ── গ্রহ-বিচার (কারণসমূহ) তালিকা ──
    এখানে বাঁ দিকের padding কমানো যাবে না। ওয়েবসাইটের পাতা প্রতিটা লাইনের
-   আগে একটা ✦ চিহ্ন বসায় `position:absolute;left:8px` দিয়ে, আর লেখাটাকে
-   `padding-left:30px` দিয়ে সরিয়ে রাখে। আগে এখানে `padding:5px 0` লেখা
+   আগে একটা ✦ চিহ্ন বসায় position:absolute;left:8px দিয়ে, আর লেখাটাকে
+   padding-left:30px দিয়ে সরিয়ে রাখে। আগে এখানে padding:5px 0 লেখা
    ছিল — চিহ্নটা তবু বাঁ দিকেই বসত, ফলে **চিহ্নটা লেখার উপরে চেপে বসে
    প্রথম অক্ষরগুলো ঢেকে দিত** ("মঙ্গল ৭ম ভাবে" → "ম✦ল ৭ম ভাবে")। */
 .reasons-list{padding-left:0!important;list-style:none!important;}

@@ -8,9 +8,10 @@
     "check:lazy": "node scripts/check-lazy-screens.js",
     "check:css": "node scripts/check-webview-css.js",
     "check:sync": "node scripts/check-bundle-sync.js",
-    "check:all": "npm run check:css && npm run check:lazy && npm run check:sync && npm run check:panchang && npm run check:splash",
+    "check:all": "npm run check:parse && npm run check:css && npm run check:lazy && npm run check:sync && npm run check:panchang && npm run check:splash",
     "check:panchang": "node scripts/check-panchang.js",
-    "check:splash": "node scripts/check-splash.js"
+    "check:splash": "node scripts/check-splash.js",
+    "check:parse": "node scripts/check-parse.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
