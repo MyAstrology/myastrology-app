@@ -10,7 +10,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // দেখাত (২০২৬-০৮-০২: হোমে ৫:১০, পঞ্জিকায় ৫:১২:০৭)।
 const KEY = 'mya_panjika_city';
 
-export const KOLKATA = { lat: 22.5726, lon: 88.3639, tz: 5.5, label: 'কলকাতা' };
+// panjika.html-এর নিজস্ব ডিফল্ট (`let LAT=23.1677, LNG=88.5808`)-এর হুবহু একই
+// মান — শহর বেছে না নিলে হোম ও পঞ্জিকা যেন একই হিসাব দেখায়।
+// panchang_full.js-এর DEF_LAT/DEF_LON-ও এই একই মান; দুটো একসাথে বদলাতে হবে।
+export const DEFAULT_CITY = { lat: 23.1677, lon: 88.5808, tz: 5.5, label: 'রানাঘাট' };
 
 // panchang_full.js-এর getPanchangForDate() শুধু lat/lon নেয়, টাইমজোন নেয় না —
 // ভিতরে IST ধরাই আছে। তাই ভারতের বাইরের শহর সেভ থাকলে সেটা প্রয়োগ করা হয় না
@@ -32,12 +35,12 @@ export async function savePanjikaCity(city) {
 export async function loadPanjikaCity() {
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    if (!raw) return KOLKATA;
+    if (!raw) return DEFAULT_CITY;
     const c = JSON.parse(raw);
-    if (c?.lat == null || c?.lon == null) return KOLKATA;
-    if (Number(c.tz) !== IST) return KOLKATA;
-    return { lat: c.lat, lon: c.lon, tz: c.tz, label: c.label || KOLKATA.label };
+    if (c?.lat == null || c?.lon == null) return DEFAULT_CITY;
+    if (Number(c.tz) !== IST) return DEFAULT_CITY;
+    return { lat: c.lat, lon: c.lon, tz: c.tz, label: c.label || DEFAULT_CITY.label };
   } catch (_) {
-    return KOLKATA;
+    return DEFAULT_CITY;
   }
 }

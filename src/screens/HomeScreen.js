@@ -18,7 +18,7 @@ import { radii } from '../theme/radii';
 import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
-import { loadPanjikaCity, KOLKATA } from '../utils/panjikaCity';
+import { loadPanjikaCity, DEFAULT_CITY } from '../utils/panjikaCity';
 
 const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
@@ -372,7 +372,7 @@ export function HomeScreen() {
   // একই দিনের সূর্যোদয় দুই জায়গায় দুরকম দেখাত। ট্যাব বদলে ফিরে এলে যেন
   // সাথে সাথেই নতুন শহর ধরা পড়ে, তাই focus-এ আবার পড়া হচ্ছে।
   const isFocused = useIsFocused();
-  const [city, setCity] = useState(KOLKATA);
+  const [city, setCity] = useState(DEFAULT_CITY);
   useEffect(() => {
     if (!isFocused) return;
     let cancelled = false;

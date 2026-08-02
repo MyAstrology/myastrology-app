@@ -22,6 +22,10 @@ const SITE = 'https://myastrology.in/';
 export function buildBuyOnWebJS(page) {
   return `
   (function(){
+    /* এই স্ক্রিপ্ট প্রতিটা onLoadEnd-এ আবার চলে — একই ফাংশন বারবার মুড়ে
+       ফেলা এড়াতে একবারই চালানো হয়। */
+    if(window.__myaBuyWrapped) return;
+    window.__myaBuyWrapped=1;
     function val(id){var e=document.getElementById(id);return e?String(e.value||''):'';}
     function pad(v){return String(v).padStart(2,'0');}
     function kundaliQuery(){
@@ -40,7 +44,7 @@ export function buildBuyOnWebJS(page) {
       });
       return p.toString();
     }
-    window.openRzp=function(){
+    function ask(){
       var q='';
       try{ q=${page === 'kundali' ? 'kundaliQuery()' : "''"}; }catch(e){}
       if(window.ReactNativeWebView){
@@ -48,8 +52,29 @@ export function buildBuyOnWebJS(page) {
           __rn:'buyOnWeb', page:${JSON.stringify(page)}, query:q
         }));
       }
-    };
-    window.proceedToRazorpay=window.openRzp;
+    }
+    window.openRzp=ask;
+    window.proceedToRazorpay=ask;
+
+    /* আসল আটকে যাওয়ার জায়গাটা openRzp নয়। কুণ্ডলী/যোটক পাতা নিজেই ভিতরে
+       _inApp() পরীক্ষা করে, এবং অ্যাপ হলে showToast/alert/_mmShowFormError
+       দিয়ে "ওয়েবসাইট ব্যবহার করুন" লিখে return করে দেয় — openRzp পর্যন্ত
+       পৌঁছায়ই না। তাই ওই তিনটে বার্তা-ফাংশনও ধরা হচ্ছে: বার্তাটা যদি
+       "myastrology.in ওয়েবসাইট ব্যবহার করুন" জাতীয় হয়, টোস্ট না দেখিয়ে
+       সরাসরি কেনার প্রস্তাব তোলা হয়। অন্য সব বার্তা আগের মতোই যায়। */
+    function isBuyMsg(m){
+      return typeof m==='string' && m.indexOf('myastrology.in')>-1
+             && m.indexOf('ওয়েবসাইট ব্যবহার করুন')>-1;
+    }
+    function wrap(name){
+      var orig=window[name];
+      if(typeof orig!=='function') return;
+      window[name]=function(msg){
+        if(isBuyMsg(msg)){ ask(); return; }
+        return orig.apply(this, arguments);
+      };
+    }
+    ['showToast','_mmShowFormError','alert'].forEach(wrap);
   })();
   `;
 }
