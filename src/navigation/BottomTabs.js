@@ -72,6 +72,12 @@ export function BottomTabs() {
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
+      /* backBehavior="history" — ব্যাক চাপলে **আগের দেখা স্ক্রিনে** ফেরে।
+         ডিফল্ট ('firstRoute') সবসময় সোজা হোমে ফিরিয়ে আনত: সংখ্যাজ্যোতিষের
+         ফলাফল থেকে ব্যাক করলে ফর্মে না ফিরে হোম, মেনু থেকে খোলা যেকোনো
+         স্ক্রিন থেকে ব্যাক করলেও হোম। অ্যাপের প্রতিটা স্ক্রিনই আসলে একটা
+         ট্যাব (কিছু লুকোনো), তাই সমস্যাটা সব জায়গায় ছিল। */
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         animation: 'fade',

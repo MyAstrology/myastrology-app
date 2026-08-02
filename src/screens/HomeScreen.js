@@ -268,8 +268,11 @@ function BookingBanner({ onPress }) {
         >
           <View style={s.bookingBannerSpacer} />
           <View style={{ flex: 1 }}>
-            <Text style={s.bookingBannerTitle} maxFontSizeMultiplier={1.25} numberOfLines={2}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
-            <Text style={s.bookingBannerSub} maxFontSizeMultiplier={1.25} numberOfLines={1}>অভিজ্ঞ জ্যোতিষী প্রদ্যুৎ আচার্যের সাথে কথা বলুন</Text>
+            {/* হস্তরেখা পরামর্শও এই কার্ডেই — কার্ডের উচ্চতা এক রেখে, শুধু
+                লেখা দুটো পুনর্বিন্যাস করে। শিরোনাম আগেও দু-লাইন পর্যন্ত
+                জায়গা নিতে পারত, তাই নতুন কিছু যোগ হয়নি। */}
+            <Text style={s.bookingBannerTitle} maxFontSizeMultiplier={1.25} numberOfLines={2}>ব্যক্তিগত কুণ্ডলী ও হস্তরেখা বিশ্লেষণ</Text>
+            <Text style={s.bookingBannerSub} maxFontSizeMultiplier={1.25} numberOfLines={1}>প্রদ্যুৎ আচার্যের সরাসরি পরামর্শ নিন</Text>
             <View style={s.bookingBannerCta}>
               <Text style={s.bookingBannerCtaText}>এখনই বুক করুন</Text>
               <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
@@ -557,9 +560,16 @@ export function HomeScreen() {
           </View>
 
           {/* ── আত্মপর্যালোচনা টিজার ── */}
+          {/* কার্ডটা পঞ্জিকার "আজ" ট্যাবের আত্মপর্যালোচনা অংশটাই দেখাচ্ছে —
+              তাই সেখানেই নিয়ে যেতে হবে। শুধু navigate('Panchang') দিলে
+              পঞ্জিকা আগে যে ট্যাবে খোলা ছিল সেটাই দেখাত (যেমন "উৎসব খোঁজা"),
+              আত্মপর্যালোচনা নয়। */}
           <SelfReflectionTeaser
             dayIndex={today.getDate()}
-            onPress={() => { haptics.tap(); navigation.navigate('Panchang'); }}
+            onPress={() => {
+              haptics.tap();
+              navigation.navigate('Panchang', { tab: 'today', scrollTo: 'srCard' });
+            }}
           />
 
           {/* ── আজকের শুভ-অশুভ সময় ── */}

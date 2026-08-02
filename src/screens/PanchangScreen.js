@@ -6,7 +6,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -404,7 +404,7 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 // earlyJS আলাদা প্রপ — কারণ ডিফল্ট EARLY_CSS_JS-এ পঞ্জিকা পাতার জন্য লেখা
 // `body>*:not(main):not(...)` ব্ল্যাঙ্কেট রুল আছে। উৎসব-হাব পাতার গঠন আলাদা,
 // ওখানে ওই রুল চাপালে প্রায় পুরো পাতাটাই লুকিয়ে যেত।
-const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS }, ref) {
+const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS, onReady }, ref) {
   const navigation = useNavigation();
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
 
@@ -451,7 +451,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
         // পাতার ভিতরের লিংকে গেলে (যেমন উৎসব-হাব থেকে কোনো উৎসবের নিজস্ব
         // পাতায়) injectedJavaScript আপনাআপনি আর চলে না — তখন সাইটের হেডার/
         // ফুটার ফিরে আসত। তাই প্রতি লোডের শেষে আবার বসানো হচ্ছে।
-        onLoadEnd={() => { ref?.current?.injectJavaScript(injectedJavaScript); }}
+        onLoadEnd={() => { ref?.current?.injectJavaScript(injectedJavaScript); if (onReady) onReady(); }}
         onMessage={onMessage}
         onShouldStartLoadWithRequest={handleNavRequest}
         onLoadStart={onLoadStart}
@@ -474,6 +474,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
 
 export function PanchangScreen() {
   const navigation = useNavigation();
+  const route      = useRoute();
   const insets     = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('today');
   const [menuOpen,  setMenuOpen]  = useState(false);
@@ -483,6 +484,47 @@ export function PanchangScreen() {
   const webViewRef   = useRef(null);  // shared across tabs — only one PjWebView is mounted at a time
 
   const pjUri = usePjUri();
+
+  // হোম স্ক্রিন থেকে নির্দিষ্ট ট্যাব চেয়ে আসা যায় — যেমন আত্মপর্যালোচনা
+  // কার্ডে চাপ দিলে navigate('Panchang',{tab:'today',scrollTo:'srCard'})।
+  // আগে কোনো প্যারামিটার আসত না, তাই পঞ্জিকা আগেরবার যে ট্যাবে খোলা ছিল
+  // সেটাই দেখাত। `key` বদলালেই আবার চলে, তাই একই কার্ডে বারবার চাপ দিলেও কাজ করে।
+  const wantTab    = route.params?.tab;
+  const wantScroll = route.params?.scrollTo;
+  const navKey     = route.key;
+  const pendingScrollRef = useRef(null);
+  useEffect(() => {
+    if (!wantTab && !wantScroll) return;
+    if (wantTab) setActiveTab(wantTab);
+    if (wantScroll) {
+      // পাতাটা এখনও লোড হয়নি এমনও হতে পারে — তাই মনে রেখে onReady-তে চালানো
+      pendingScrollRef.current = wantScroll;
+      // আর যদি ইতিমধ্যেই ঠিক ট্যাবে থাকি, WebView নতুন করে লোড হবে না
+      // (onReady আসবে না) — তখন সরাসরি চেষ্টা করাই একমাত্র উপায়।
+      if (!wantTab || activeTab === wantTab) scrollToSection(wantScroll);
+    }
+  }, [wantTab, wantScroll, navKey]);
+
+  const handleTabReady = () => {
+    const id = pendingScrollRef.current;
+    if (!id) return;
+    pendingScrollRef.current = null;
+    scrollToSection(id);
+  };
+
+  // ট্যাবটা যে পাতা দেখায় সেটা লোড হওয়ার পর ওই অংশে স্ক্রল করা।
+  // পাতাটা লাইভ সাইট থেকে আসে, তাই এলিমেন্টটা সঙ্গে সঙ্গে না-ও থাকতে পারে —
+  // অল্প সময় ধরে খোঁজা হয়, পেলেই থেমে যায়।
+  const scrollToSection = (id) => {
+    webViewRef.current?.injectJavaScript(`(function(){
+      var n=0;
+      var t=setInterval(function(){
+        var el=document.getElementById(${JSON.stringify(id)});
+        if(el){clearInterval(t);el.scrollIntoView({behavior:'smooth',block:'center'});}
+        else if(++n>40){clearInterval(t);}
+      },150);
+    })();true;`);
+  };
 
   // পঞ্জিকা বান্ডেলের নিজস্ব শহর/দেশ-ভিত্তিক টাইমজোন সিলেক্টর (openCityModal) আছে,
   // কিন্তু এটার ট্রিগার বাটন ওয়েবসাইটের নিজস্ব টপ-বারে থাকে যেটা আমাদের নেটিভ
@@ -593,7 +635,7 @@ export function PanchangScreen() {
 
       {/* ── Content ── */}
       <View style={s.content}>
-        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} />}
+        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} onReady={handleTabReady} />}
         {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} />}
         {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} />}
         {activeTab === 'utsab'    && <PjWebView ref={webViewRef} uri={UTSAB_URL} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} />}

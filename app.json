@@ -3,19 +3,27 @@
     "name": "MyAstrology",
     "slug": "myastrology",
     "scheme": "myastrology",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "assetBundlePatterns": ["assets/fonts/**", "assets/panjika/**"],
-    "runtimeVersion": { "policy": "appVersion" },
+    "assetBundlePatterns": [
+      "assets/fonts/**",
+      "assets/panjika/**"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "updates": {
       "url": "https://u.expo.dev/2678cdd7-fa10-4b80-8aa5-f276b88a51a3"
     },
     "android": {
       "package": "in.myastrology.app",
-      "versionCode": 6,
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "versionCode": 7,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8DFCB"
@@ -29,13 +37,21 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-google-signin/google-signin",
-      ["onesignal-expo-plugin", { "mode": "production" }],
-      ["expo-splash-screen", {
-        "image": "./assets/splash-full.png",
-        "imageWidth": 300,
-        "resizeMode": "contain",
-        "backgroundColor": "#FEFAF2"
-      }],
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-full.png",
+          "imageWidth": 300,
+          "resizeMode": "contain",
+          "backgroundColor": "#FEFAF2"
+        }
+      ],
       "./plugins/withDisableAdId.js",
       "./plugins/withGradleMemory.js",
       "./plugins/withFixReactGradleProps.js",

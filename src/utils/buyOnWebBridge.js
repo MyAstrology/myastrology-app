@@ -51,6 +51,14 @@ export function buildBuyOnWebJS(page) {
     }
     window.openRzp=ask;
     window.proceedToRazorpay=ask;
+    /* পঞ্জিকার বার্ষিক PDF (₹২১) বোতামটা openRzp ব্যবহারই করে না — সে নিজে
+       new Razorpay(...) বানায়। আর তার আগে একটা পাহারা আছে:
+         if(typeof Razorpay==='undefined'){closePdfPromo();_doPrint();return;}
+       WebView-এ Razorpay-র চেকআউট চলে না, আর _doPrint() শেষমেশ
+       window.print() ডাকে — যেটা WebView-এ কিছুই করে না। ফলে বোতামটা
+       চাপলে পপআপ বন্ধ হয়ে যেত, আর কিছুই হতো না — একেবারে মরা বোতাম।
+       এখন সেটাও ব্রাউজারে পাঠানো হয়, যেখানে পেমেন্ট সত্যিই কাজ করে। */
+    window.pdfPayAndPrint=ask;
 
     /* আসল আটকে যাওয়ার জায়গাটা openRzp নয়। কুণ্ডলী/যোটক পাতা নিজেই ভিতরে
        _inApp() পরীক্ষা করে, এবং অ্যাপ হলে showToast/alert/_mmShowFormError
