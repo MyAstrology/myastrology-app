@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "check:lazy": "node scripts/check-lazy-screens.js",
-    "check:css": "node scripts/check-webview-css.js"
+    "check:css": "node scripts/check-webview-css.js",
+    "check:sync": "node scripts/check-bundle-sync.js",
+    "check:all": "npm run check:css && npm run check:lazy && npm run check:sync"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

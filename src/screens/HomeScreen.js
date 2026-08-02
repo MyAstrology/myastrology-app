@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Image, Modal, ImageBackground,
+  View, Text, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -265,8 +265,8 @@ function BookingBanner({ onPress }) {
         >
           <View style={s.bookingBannerSpacer} />
           <View style={{ flex: 1 }}>
-            <Text style={s.bookingBannerTitle}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
-            <Text style={s.bookingBannerSub}>অভিজ্ঞ জ্যোতিষী প্রদ্যুৎ আচার্যের সাথে কথা বলুন</Text>
+            <Text style={s.bookingBannerTitle} maxFontSizeMultiplier={1.25} numberOfLines={2}>ব্যক্তিগত কুণ্ডলী বিশ্লেষণ ও পরামর্শ নিন</Text>
+            <Text style={s.bookingBannerSub} maxFontSizeMultiplier={1.25} numberOfLines={1}>অভিজ্ঞ জ্যোতিষী প্রদ্যুৎ আচার্যের সাথে কথা বলুন</Text>
             <View style={s.bookingBannerCta}>
               <Text style={s.bookingBannerCtaText}>এখনই বুক করুন</Text>
               <MaterialCommunityIcons name="arrow-right" size={12} color={colors.text} />
@@ -344,12 +344,12 @@ const QUICK_TILE_COLORS = {
 // ছায়াটা কার্ডের ভিতর দিয়ে দেখা যায় — আইকনের পিছনে যে ফ্যাকাশে চৌকোটা
 // দেখা যাচ্ছিল সেটা এটাই। তাই ভিতরের বৃত্ত থেকে ছায়া সরানো হলো, আর কার্ডের
 // ব্যাকগ্রাউন্ড অস্বচ্ছ সাদা করা হলো।
-function QuickTile({ tab, icon, label, color, onPress }) {
+function QuickTile({ tab, icon, label, color, onPress, width }) {
   return (
     <Pressable
       onPress={() => { haptics.tap(); onPress(); }}
       style={({ pressed }) => [
-        s.quickBtn,
+        s.quickBtn, { width },
         pressed && { transform: [{ scale: 0.96 }], backgroundColor: colors.goldWash },
       ]}
     >
@@ -371,6 +371,12 @@ export function HomeScreen() {
   // পঞ্জিকা ট্যাবে বেছে নেওয়া শহর — আগে হোম স্ক্রিন সবসময় কলকাতা ধরত, ফলে
   // একই দিনের সূর্যোদয় দুই জায়গায় দুরকম দেখাত। ট্যাব বদলে ফিরে এলে যেন
   // সাথে সাথেই নতুন শহর ধরা পড়ে, তাই focus-এ আবার পড়া হচ্ছে।
+  // কার্ডের প্রস্থ প্রতিবার রেন্ডারে হিসাব হয়, একবার import-এর সময় নয় —
+  // নাহলে ট্যাবলেট, স্ক্রিন ঘোরানো বা স্প্লিট-স্ক্রিনে মাপ ভুল থেকে যেত
+  // (অ্যাপ চালুর মুহূর্তের প্রস্থেই আটকে থাকত)।
+  const { width: winW } = useWindowDimensions();
+  const cardW = (winW - spacing.md * 2 - 10 * 3) / 4;
+
   const isFocused = useIsFocused();
   const [city, setCity] = useState(DEFAULT_CITY);
   useEffect(() => {
@@ -541,6 +547,7 @@ export function HomeScreen() {
                 icon={q.icon}
                 label={q.label}
                 color={QUICK_TILE_COLORS[q.tab] || colors.gold}
+                width={cardW}
                 onPress={() => navigation.navigate(q.tab)}
               />
             ))}
@@ -640,7 +647,6 @@ export function HomeScreen() {
   );
 }
 
-const CARD_W = (Dimensions.get('window').width - spacing.md * 2 - 10 * 3) / 4;
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
@@ -822,7 +828,7 @@ const s = StyleSheet.create({
     backgroundColor: '#3b3178', borderRadius: 20, paddingHorizontal: 6, paddingVertical: 2,
   },
   blogNewsBadgeText: { fontSize: 9, fontWeight: '700', color: '#fff' },
-  blogTitle: { ...typography.value, fontSize: 11, lineHeight: 14, marginHorizontal: 7, marginTop: 6, height: 28 },
+  blogTitle: { ...typography.value, fontSize: 11, lineHeight: 14, marginHorizontal: 7, marginTop: 6, minHeight: 28 },
   blogDate:  { ...typography.caption, color: colors.textSecondary, marginHorizontal: 7, marginTop: 3, marginBottom: 6 },
 
   /* আজকের শুভ-অশুভ সময় — pill চিপ, horizontal scroll */
@@ -839,7 +845,7 @@ const s = StyleSheet.create({
   /* Quick Grid */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 8 },
   quickBtn: {
-    width: CARD_W, borderRadius: radii.lg,
+    borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.cardBorder,
     backgroundColor: colors.card,
     alignItems: 'center', paddingVertical: 9, paddingHorizontal: 3, gap: 5,
