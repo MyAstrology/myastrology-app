@@ -436,7 +436,7 @@ export function KundaliScreen() {
 
   const kUri = useKUri();
   const [sourceUri, setSourceUri] = useState(null);
-  const { webError, onLoadStart, onError, onHttpError, retry } = useWebViewError(webViewRef);
+  const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(webViewRef);
 
   // Coming from another screen (e.g. "কুষ্ঠি দেখুন" in match-making) with birth
   // details in route.params — load kundali.html with those as a query string so
@@ -512,6 +512,7 @@ export function KundaliScreen() {
               onLoadStart={onLoadStart}
               onError={onError}
               onHttpError={onHttpError}
+              renderError={renderError}
               onMessage={(event) => {
                 try {
                   const msg = JSON.parse(event.nativeEvent.data);

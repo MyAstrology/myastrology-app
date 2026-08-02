@@ -17,6 +17,7 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { RASHI_SIGNS } from '../data/rashifalSigns';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
+import { savePanjikaCity } from '../utils/panjikaCity';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -299,6 +300,34 @@ setTimeout(function(){
 
 // ── injectedJavaScript builders ───────────────────────────────────────────────
 
+// পঞ্জিকা পেজের বেছে নেওয়া শহর ('pjk_city' localStorage) নেটিভ দিকে পাঠায়,
+// যাতে হোম স্ক্রিনও একই শহরের সূর্যোদয়/তিথি দেখাতে পারে। লোডের সময় একবার,
+// আর শহর বদলালে (setItem হুক করে) আবার — ইন্টারভ্যাল-পোলিং ছাড়াই।
+const CITY_REPORT_JS = `
+  (function(){
+    function send(){
+      try{
+        var s=localStorage.getItem('pjk_city');
+        if(!s) return;
+        var o=JSON.parse(s);
+        if(o.lat==null||o.lng==null) return;
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          __rn:'pjCity', lat:o.lat, lon:o.lng, tz:o.tz,
+          label:o.bn||o.label||o.n||''
+        }));
+      }catch(e){}
+    }
+    send();
+    try{
+      var _set=localStorage.setItem;
+      localStorage.setItem=function(k){
+        _set.apply(localStorage,arguments);
+        if(k==='pjk_city'){setTimeout(send,0);}
+      };
+    }catch(e){}
+  })();
+`;
+
 function makeJS(tabId, extraCSS, extraJS) {
   var css = APP_CSS + (extraCSS || '');
   var switchCall = tabId
@@ -309,6 +338,7 @@ function makeJS(tabId, extraCSS, extraJS) {
   if(!st){st=document.createElement('style');st.id='__appNative__';document.head.appendChild(st);}
   st.textContent=${JSON.stringify(css)};
   ${FIX_IMAGES_JS}
+  ${CITY_REPORT_JS}
   function t(){${switchCall}${extraJS || ''}}
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',t);}else{t();}
 })();true;`;
@@ -343,7 +373,7 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 
 const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage }, ref) {
   const navigation = useNavigation();
-  const { webError, onLoadStart, onError, onHttpError, retry } = useWebViewError(ref);
+  const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
 
   const handleNavRequest = (request) => {
     const url = request.url || '';
@@ -386,6 +416,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
         onLoadStart={onLoadStart}
         onError={onError}
         onHttpError={onHttpError}
+        renderError={renderError}
         renderLoading={() => (
           <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
             <ActivityIndicator size="large" color={colors.gold} />
@@ -421,6 +452,15 @@ export function PanchangScreen() {
     webViewRef.current?.injectJavaScript(
       `(function(){if(typeof openCityModal==='function'){openCityModal();}})();true;`
     );
+  };
+
+  // চারটে ট্যাবেই বসানো — শহর-বার্তা সব ট্যাব থেকেই আসতে পারে; বাকি বার্তা
+  // (বছরের PDF চাংক) শুধু 'পুরোনো বছর' ট্যাবের হ্যান্ডলারে যায়।
+  const handleWebMessage = (event) => {
+    let msg;
+    try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
+    if (msg?.__rn === 'pjCity') { savePanjikaCity(msg); return; }
+    handleOldTabMessage(event);
   };
 
   const handleOldTabMessage = async (event) => {
@@ -511,10 +551,10 @@ export function PanchangScreen() {
 
       {/* ── Content ── */}
       <View style={s.content}>
-        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY} />}
-        {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} />}
-        {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS} />}
-        {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD} onMessage={handleOldTabMessage} />}
+        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} />}
+        {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} />}
+        {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} />}
+        {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} />}
       </View>
 
       {/* ── PDF generation overlay — otherwise the wait (rendering a whole

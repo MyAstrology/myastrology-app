@@ -48,12 +48,14 @@ export const MENU_ITEMS = [
   { tab: 'More',           icon: 'dots-horizontal-circle',  label: 'আরও'             },
 ];
 
-// হোম স্ক্রিনের ছোট quick-access গ্রিডের জন্য — সবচেয়ে বেশি ব্যবহৃত ৮টা
-// (2×4 গ্রিড পূর্ণ করার জন্য ঠিক ৮টা — 'More' বাদ, কারণ সেটা নিচের ট্যাব বারেই
-// সবসময় দেখা যায়, এখানে ডুপ্লিকেট করার দরকার নেই)
+// হোম স্ক্রিনের quick-access গ্রিড — ৩ সারি × ৪টা = ঠিক ১২টা, যাতে কোনো সারি
+// আধা-খালি না থাকে। ('More' বাদ — সেটা নিচের ট্যাব বারেই সবসময় থাকে।)
+// হস্তরেখা আগে শুধু মেনুতে ছিল, হোমে কোনো চিহ্ন ছিল না — একটা পূর্ণ পরিষেবা
+// হওয়া সত্ত্বেও চোখেই পড়ত না, তাই এখানে যোগ করা হলো।
 export const QUICK_ACCESS_TABS = [
-  'Kundali', 'MatchMaking', 'Panchang', 'Numerology',
-  'Rashifal', 'Namakaran', 'Prashna', 'Booking',
+  'Kundali', 'MatchMaking', 'Panchang', 'Rashifal',
+  'Numerology', 'Namakaran', 'Prashna', 'Palmistry',
+  'Varshaphala', 'Gemstone', 'Vastu', 'Booking',
 ];
 
 export const QUICK_ACCESS_ITEMS = QUICK_ACCESS_TABS.map(

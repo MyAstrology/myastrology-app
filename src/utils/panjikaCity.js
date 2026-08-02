@@ -1,0 +1,43 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// পঞ্জিকা ট্যাবের শহর-নির্বাচক (panjika.html-এর openCityModal) নিজের পছন্দ
+// WebView-এর localStorage-এ 'pjk_city' নামে রাখে। হোম স্ক্রিন নেটিভ কোড, সে
+// ওই localStorage সরাসরি পড়তে পারে না — তাই পঞ্জিকা পেজ থেকে শহরটা RN-এ
+// পাঠিয়ে এখানে AsyncStorage-এ রাখা হয়, আর হোম স্ক্রিন এখান থেকে পড়ে।
+//
+// কেন দরকার: হোম স্ক্রিন আগে সবসময় কলকাতা ধরে হিসাব করত, আর পঞ্জিকা ট্যাব
+// ব্যবহারকারীর বেছে নেওয়া শহর ধরে — ফলে একই দিনের সূর্যোদয় দুই জায়গায় দুরকম
+// দেখাত (২০২৬-০৮-০২: হোমে ৫:১০, পঞ্জিকায় ৫:১২:০৭)।
+const KEY = 'mya_panjika_city';
+
+export const KOLKATA = { lat: 22.5726, lon: 88.3639, tz: 5.5, label: 'কলকাতা' };
+
+// panchang_full.js-এর getPanchangForDate() শুধু lat/lon নেয়, টাইমজোন নেয় না —
+// ভিতরে IST ধরাই আছে। তাই ভারতের বাইরের শহর সেভ থাকলে সেটা প্রয়োগ করা হয় না
+// (নাহলে সময়গুলো ভুল টাইমজোনে দেখাত); তখন কলকাতাই থাকে।
+const IST = 5.5;
+
+export async function savePanjikaCity(city) {
+  if (!city || city.lat == null || city.lon == null) return;
+  try {
+    await AsyncStorage.setItem(KEY, JSON.stringify({
+      lat: Number(city.lat),
+      lon: Number(city.lon),
+      tz: Number.isFinite(Number(city.tz)) ? Number(city.tz) : IST,
+      label: city.label || '',
+    }));
+  } catch (_) {}
+}
+
+export async function loadPanjikaCity() {
+  try {
+    const raw = await AsyncStorage.getItem(KEY);
+    if (!raw) return KOLKATA;
+    const c = JSON.parse(raw);
+    if (c?.lat == null || c?.lon == null) return KOLKATA;
+    if (Number(c.tz) !== IST) return KOLKATA;
+    return { lat: c.lat, lon: c.lon, tz: c.tz, label: c.label || KOLKATA.label };
+  } catch (_) {
+    return KOLKATA;
+  }
+}

@@ -46,11 +46,34 @@ export function useWebViewError(webViewRef) {
     webViewRef.current?.reload();
   }, [webViewRef]);
 
-  return { webError, onLoadStart, onError, onHttpError, retry };
+  // মূল ফ্রেম লোড ব্যর্থ হলে react-native-webview নিজেই viewState-কে 'ERROR'
+  // করে দেয় এবং `renderError` (না দিলে defaultRenderError) দিয়ে WebView-এর
+  // *জায়গায়* একটা ভিউ বসায় — ওটাই "Error loading page / Domain: undefined /
+  // Error Code: -2" ইংরেজি পাতাটা। আগে শুধু WebViewErrorOverlay-কে WebView-এর
+  // পরে sibling হিসেবে বসানো হতো, কিন্তু লাইব্রেরির নিজের ভিউটা তাতে সরত না।
+  // তাই এখন renderError দিয়ে সরাসরি সেটার বদলেই আমাদের বাংলা স্ক্রিন দেওয়া হয়।
+  const renderError = useCallback((_domain, _code, description) => (
+    <ErrorView
+      webError={{
+        noInternet: NO_INTERNET_PATTERN.test(description || ''),
+        description: description || '',
+      }}
+      onRetry={retry}
+    />
+  ), [retry]);
+
+  return { webError, onLoadStart, onError, onHttpError, retry, renderError };
 }
 
 export function WebViewErrorOverlay({ webError, onRetry }) {
   if (!webError) return null;
+  return <ErrorView webError={webError} onRetry={onRetry} />;
+}
+
+// দেখার অংশটা আলাদা — একই চেহারা দুই পথে ব্যবহার হয়: renderError (মূল ফ্রেম
+// ব্যর্থ) ও WebViewErrorOverlay (HTTP 4xx/5xx, যেখানে লাইব্রেরি viewState
+// বদলায় না বলে renderError ডাকা হয় না)।
+function ErrorView({ webError, onRetry }) {
   return (
     <View style={s.errOverlay}>
       <View style={s.errIconWrap}>

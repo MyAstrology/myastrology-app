@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
 import { getPanchangForDate } from '../engine/panchang_full';
 import { getTodayRashifal } from '../engine/rashifal';
@@ -18,6 +18,7 @@ import { radii } from '../theme/radii';
 import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
+import { loadPanjikaCity, KOLKATA } from '../utils/panjikaCity';
 
 const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
 const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
@@ -324,26 +325,38 @@ const QUICK_TILE_COLORS = {
   Kundali:     '#6C63C7', // ইন্ডিগো
   MatchMaking: '#D6577A', // গোলাপি
   Panchang:    '#2E9E8F', // টিল
-  Numerology:  '#E08A3C', // কমলা
   Rashifal:    '#3E7FC1', // আকাশি নীল
+  Numerology:  '#E08A3C', // কমলা
   Namakaran:   '#4FA57A', // সবুজ
   Prashna:     '#9457B0', // বেগুনি
+  Palmistry:   '#B07A3C', // বাদামি
+  Varshaphala: '#4E8CA8', // নীলচে ধূসর
+  Gemstone:    '#C0518F', // ম্যাজেন্টা
+  Vastu:       '#7A8B45', // জলপাই
   Booking:     '#C1543D', // টেরাকোটা
 };
 
+// কার্ডটা সাদা ও লেখা গাঢ় বাদামি — রঙ শুধু আইকনের বৃত্তে। আগে কার্ড, বর্ডার
+// ও লেখা তিনটেই আলাদা রঙে ছিল বলে ১২টা টাইল একসাথে চোখে বিশৃঙ্খল লাগত এবং
+// অ্যাপের বাকি সাদা-কার্ড + সোনালি-বর্ডার ভাষার সাথে মিলত না।
+//
+// Android-এ elevation (shadows.card) + স্বচ্ছ ব্যাকগ্রাউন্ড একসাথে থাকলে
+// ছায়াটা কার্ডের ভিতর দিয়ে দেখা যায় — আইকনের পিছনে যে ফ্যাকাশে চৌকোটা
+// দেখা যাচ্ছিল সেটা এটাই। তাই ভিতরের বৃত্ত থেকে ছায়া সরানো হলো, আর কার্ডের
+// ব্যাকগ্রাউন্ড অস্বচ্ছ সাদা করা হলো।
 function QuickTile({ tab, icon, label, color, onPress }) {
   return (
     <Pressable
       onPress={() => { haptics.tap(); onPress(); }}
       style={({ pressed }) => [
-        s.quickBtn, { backgroundColor: color + '12', borderColor: color + '38' },
-        pressed && { transform: [{ scale: 0.96 }], backgroundColor: color + '22' },
+        s.quickBtn,
+        pressed && { transform: [{ scale: 0.96 }], backgroundColor: colors.goldWash },
       ]}
     >
       <View style={[s.quickIconWrap, { backgroundColor: color }]}>
-        <MenuIcon tab={tab} icon={icon} size={19} color={colors.white} />
+        <MenuIcon tab={tab} icon={icon} size={18} color={colors.white} />
       </View>
-      <Text style={[s.quickLabel, { color }]} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
+      <Text style={s.quickLabel} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
     </Pressable>
   );
 }
@@ -354,6 +367,18 @@ export function HomeScreen() {
   const [rashiModal, setRashiModal] = useState(false);
   const [blogPosts, setBlogPosts]   = useState([]);
   const userRashi = user?.rashi ?? null;
+
+  // পঞ্জিকা ট্যাবে বেছে নেওয়া শহর — আগে হোম স্ক্রিন সবসময় কলকাতা ধরত, ফলে
+  // একই দিনের সূর্যোদয় দুই জায়গায় দুরকম দেখাত। ট্যাব বদলে ফিরে এলে যেন
+  // সাথে সাথেই নতুন শহর ধরা পড়ে, তাই focus-এ আবার পড়া হচ্ছে।
+  const isFocused = useIsFocused();
+  const [city, setCity] = useState(KOLKATA);
+  useEffect(() => {
+    if (!isFocused) return;
+    let cancelled = false;
+    loadPanjikaCity().then(c => { if (!cancelled) setCity(c); });
+    return () => { cancelled = true; };
+  }, [isFocused]);
 
   useEffect(() => {
     let cancelled = false;
@@ -399,13 +424,13 @@ export function HomeScreen() {
 
   const data = useMemo(() => {
     try {
-      return getPanchangForDate(iso);
+      return getPanchangForDate(iso, city.lat, city.lon);
     } catch (_) {
       return { tithi:'—', nakshatra:'—', yoga:'—', karana:'—', sunrise:'—', sunset:'—',
                weekday:'—', weekdayNum:0, paksha:'—', bengaliDay:null,
                bengaliMonth:'—', bengaliYear:null, ritu:'—' };
     }
-  }, [iso]);
+  }, [iso, city.lat, city.lon]);
 
   const enDateStr = `${today.getDate()} ${EN_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
   const bnDateStr = data.bengaliDay
@@ -602,7 +627,7 @@ export function HomeScreen() {
 
           <View style={s.infoStrip}>
             <MaterialCommunityIcons name="information-outline" size={13} color={colors.primary} />
-            <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · Kolkata (IST)</Text>
+            <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · {city.label} (IST)</Text>
           </View>
         </ScrollView>
     </View>
@@ -815,16 +840,19 @@ const s = StyleSheet.create({
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, gap: 8 },
   quickBtn: {
     width: CARD_W, borderRadius: radii.lg,
-    borderWidth: 1.5,
-    alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4, gap: 6,
+    borderWidth: 1, borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+    alignItems: 'center', paddingVertical: 9, paddingHorizontal: 3, gap: 5,
     ...shadows.card,
   },
   quickIconWrap: {
-    width: 40, height: 40, borderRadius: radii.pill,
+    width: 38, height: 38, borderRadius: radii.pill,
     alignItems: 'center', justifyContent: 'center',
-    ...shadows.card,
   },
-  quickLabel: { ...typography.label, fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  quickLabel: {
+    ...typography.label, fontSize: 10.5, fontWeight: '700',
+    color: colors.text, textAlign: 'center', lineHeight: 13,
+  },
 
   /* আজকের বিশেষ দিন */
   festivalCard: {

@@ -67,12 +67,19 @@ label{font-size:.8rem!important;font-weight:600!important;color:#5c3d2e!importan
   background:#fefcf9!important;font-size:.85rem!important;
   color:#3a2218!important;font-family:inherit!important;outline:none!important;
 }
+/* GPS ও গিয়ার বোতাম। ভিতরের আইকন inline <svg stroke="currentColor"> আর
+   বোতামের নিজস্ব inline style-এ color:#7a2e2e (গাঢ় লাল) বসানো — নিচে
+   ব্যাকগ্রাউন্ডও গাঢ় লাল করা হয় বলে color না বদলালে চিহ্নটা ব্যাকগ্রাউন্ডে
+   মিশে সম্পূর্ণ অদৃশ্য হয়ে যায় (বর্ষফল ফর্মে দুটো ফাঁকা লাল চৌকো দেখাত)।
+   fill:none রাখা জরুরি — নাহলে stroke-আঁকা আইকনটা ভরাট চাকতি হয়ে যায়। */
 .city-wrap button{
   background:#7a2e2e!important;border:none!important;border-radius:9px!important;
   padding:0 10px!important;cursor:pointer!important;flex-shrink:0!important;
   min-width:40px!important;min-height:40px!important;font-size:1rem!important;
   display:flex!important;align-items:center!important;justify-content:center!important;
+  color:#fff!important;
 }
+.city-wrap button svg{stroke:currentColor!important;fill:none!important;}
 .suggestions{
   position:absolute!important;z-index:999!important;background:#fff!important;
   border:1.5px solid #e0cdbc!important;border-radius:10px!important;

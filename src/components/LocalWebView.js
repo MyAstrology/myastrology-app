@@ -99,7 +99,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const [error, setError] = useState(null);
   const navigation = useNavigation();
   const webViewRef = useRef(null);
-  const { webError, onLoadStart: onWebLoadStart, onError: handleWebError, onHttpError: handleHttpError, retry: handleRetry } = useWebViewError(webViewRef);
+  const { webError, onLoadStart: onWebLoadStart, onError: handleWebError, onHttpError: handleHttpError, retry: handleRetry, renderError: renderWebError } = useWebViewError(webViewRef);
   const canGoBackRef = useRef(false);
   const resultsVisibleRef = useRef(false);
   const { user, loading: authLoading } = useAuth() || {};
@@ -288,6 +288,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         onLoadEnd={() => { webViewRef.current?.injectJavaScript(fullInjectedJS); }}
         onError={handleWebError}
         onHttpError={handleHttpError}
+        renderError={renderWebError}
         renderLoading={() => (
           <View style={s.center}>
             <ActivityIndicator size="large" color={colors.gold} />
