@@ -96,10 +96,30 @@ input[type=number]{
 #resultsSection{margin-top:4px!important;}
 .timestamp{font-size:.75rem!important;color:#8a6a50!important;margin-bottom:8px!important;}
 /* ── Verdict card ── */
+/* ── ফলাফল (উত্তর) কার্ড ──
+   আগে: একটা ২.২rem ইমোজি সরাসরি কার্ডের উপর ভাসত, আর নিচের .verdict-text
+   সব ক্ষেত্রেই গাঢ় বাদামি করা হতো — ফলে ওয়েবসাইটের সবুজ/কমলা/ধূসর/লাল
+   অর্থপূর্ণ রঙগুলো (হ্যাঁ / হতে পারে / অনিশ্চিত / না) সম্পূর্ণ হারিয়ে যেত
+   এবং "অনিশ্চিত"-এর নীলচে-ধূসর অ্যাপের উষ্ণ আইভরি থিমের সাথে বেমানান লাগত।
+   এখন: ইমোজিটা একটা নরম রঙিন বৃত্তের ভিতরে বসানো (দুর্ঘটনাবশত পড়ে থাকা
+   ইমোজির বদলে ইচ্ছাকৃত ব্যাজ মনে হয়), কার্ডের উপরে একটা রঙিন পটি, আর
+   লেখাটা তার নিজস্ব অর্থপূর্ণ রঙেই — কিন্তু উষ্ণ, নরম সুরে। */
 #verdictCard{background:#fff!important;border-radius:14px!important;border:1.5px solid #e0cdbc!important;margin-bottom:10px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;overflow:hidden!important;}
-.verdict-card{padding:18px 16px!important;text-align:center!important;}
-.verdict-icon{font-size:2.2rem!important;margin-bottom:6px!important;}
-.verdict-text{font-size:1.1rem!important;font-weight:700!important;color:#3a2218!important;}
+.verdict-card{padding:16px 16px 18px!important;text-align:center!important;border:none!important;border-top:4px solid var(--vc,#c8a87a)!important;background:linear-gradient(180deg,var(--vw,#fdf8f0),#fff 62%)!important;}
+.verdict-icon{
+  font-size:1.5rem!important;line-height:1!important;
+  width:56px!important;height:56px!important;margin:0 auto 10px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:50%!important;background:#fff!important;
+  border:2px solid var(--vc,#c8a87a)!important;
+  box-shadow:0 2px 10px rgba(0,0,0,.08)!important;
+}
+.verdict-text{font-size:1.08rem!important;font-weight:700!important;line-height:1.4!important;color:var(--vc,#3a2218)!important;}
+/* প্রতিটা ধরনের নিজস্ব রঙ — --vc: মূল রঙ, --vw: কার্ডের উপরের হালকা আভা */
+.verdict-green {--vc:#1f7a4d;--vw:#eef9f2;}
+.verdict-orange{--vc:#a85f12;--vw:#fdf5e6;}
+.verdict-gray  {--vc:#7a6249;--vw:#faf6ee;}
+.verdict-red   {--vc:#a33227;--vw:#fdf0ee;}
 /* ── Score card ── */
 .score-section{text-align:center!important;}
 .score-label{margin-bottom:8px!important;}

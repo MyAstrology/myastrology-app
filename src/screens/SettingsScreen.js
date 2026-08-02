@@ -16,9 +16,11 @@ import { useAuth } from '../context/AuthContext';
 import { useUser } from '../context/UserContext';
 import { getNotificationPreference, setNotificationsEnabled } from '../utils/onesignal';
 import { ADMIN_EMAILS } from '../config/adminEmails';
+import { loadPanjikaCity } from '../utils/panjikaCity';
 
 const WEB_CACHE_DIR = FileSystem.documentDirectory + 'myastro/';
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+const BUILD_NO = Constants.expoConfig?.android?.versionCode;
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=in.myastrology.app';
 const SUPPORT_PHONE = '+919333122768';
 
@@ -48,6 +50,11 @@ export function SettingsScreen({ navigation }) {
   const { clearUser } = useUser();
   const [notifOn, setNotifOn] = useState(false);
   const [clearing, setClearing] = useState(false);
+  // পঞ্চাঙ্গ কোন শহরের হিসাবে দেখানো হচ্ছে — হোম ও পঞ্জিকা দুটোই এই একই
+  // শহর ব্যবহার করে। আগে এটা কোথাও লেখা ছিল না, ফলে সময় নিয়ে বিভ্রান্তি
+  // হতো (হোম কলকাতা ধরত, পঞ্জিকা অন্য শহর)। এখন স্পষ্ট করে দেখানো হয়।
+  const [panchangCity, setPanchangCity] = useState(null);
+  useEffect(() => { loadPanjikaCity().then(setPanchangCity).catch(() => {}); }, []);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -308,7 +315,19 @@ export function SettingsScreen({ navigation }) {
               onPress={() => Linking.openURL('https://www.myastrology.in/terms-of-use.html').catch(() => {})}
             />
             <View style={s.divider} />
-            <Row icon="information-outline" label="ভার্সন" sub={APP_VERSION} />
+            <Row
+              icon="map-marker-outline"
+              label="পঞ্চাঙ্গের অবস্থান"
+              sub={panchangCity
+                ? `${panchangCity.label} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়`
+                : 'লোড হচ্ছে…'}
+            />
+            <View style={s.divider} />
+            <Row
+              icon="information-outline"
+              label="ভার্সন"
+              sub={BUILD_NO ? `${APP_VERSION} (বিল্ড ${BUILD_NO})` : APP_VERSION}
+            />
           </View>
         </View>
 

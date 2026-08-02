@@ -33,8 +33,32 @@ const INNER_TABS = [
   { key: 'today',    label: 'আজ' },
   { key: 'calendar', label: 'পঞ্জিকা' },
   { key: 'events',   label: 'এই মাসের উৎসব' },
+  // উৎসব খোঁজা — ওয়েবসাইটের /utsab হাব পাতা, যেখানে নাম বা সাল লিখে
+  // (যেমন "দুর্গা পুজো 2028") যেকোনো উৎসবের তারিখ খোঁজা যায়। পাতাটা লাইভ
+  // লোড হয়, কারণ ওখানে ৯৬টা উৎসবের ছয় বছরের তারিখ-সূচক আছে — বান্ডলে
+  // ঢোকালে অ্যাপের আকার অনেক বেড়ে যেত, আর প্রতি মাসে নবায়নও হতো না।
+  { key: 'utsab',    label: 'উৎসব খোঁজা', needsNet: true },
   { key: 'old',      label: 'পুরনো বছরের পঞ্জিকা' },
 ];
+
+// /utsab হাব পাতা থেকে সাইটের হেডার/ফুটার/নেভিগেশন সরিয়ে শুধু খোঁজার
+// অংশ ও উৎসব-তালিকা রাখা হয় — অ্যাপের নিজস্ব হেডার ও ট্যাব বার তো
+// উপরেই আছে, ওগুলো দুবার দেখানোর মানে হয় না।
+const UTSAB_URL = 'https://myastrology.in/utsab/';
+const UTSAB_CSS = `
+.site-header,.sidenav,.sidenav-overlay,.breadcrumb,.site-footer,
+.fab-wrap,.wa-float,#btt,nav.nav,#navMenu,#navOverlay{display:none!important;}
+html{overflow-x:hidden!important;scrollbar-width:none!important;}
+body{background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
+main,#main-content{padding:8px 12px 24px!important;margin:0!important;}
+::-webkit-scrollbar{display:none!important;width:0!important;}
+*{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
+`;
+const UTSAB_JS = `(function(){
+  var st=document.getElementById('__utsabNative__');
+  if(!st){st=document.createElement('style');st.id='__utsabNative__';document.head.appendChild(st);}
+  st.textContent=${JSON.stringify(UTSAB_CSS)};
+})();true;`;
 
 // ── Local panjika.html URI (written once per session) ─────────────────────────
 
@@ -371,7 +395,10 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 
 // ── Shared WebView wrapper ────────────────────────────────────────────────────
 
-const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage }, ref) {
+// earlyJS আলাদা প্রপ — কারণ ডিফল্ট EARLY_CSS_JS-এ পঞ্জিকা পাতার জন্য লেখা
+// `body>*:not(main):not(...)` ব্ল্যাঙ্কেট রুল আছে। উৎসব-হাব পাতার গঠন আলাদা,
+// ওখানে ওই রুল চাপালে প্রায় পুরো পাতাটাই লুকিয়ে যেত।
+const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS }, ref) {
   const navigation = useNavigation();
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
 
@@ -409,8 +436,12 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
         cacheEnabled={false}
         startInLoadingState={true}
         geolocationEnabled={true}
-        injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
+        injectedJavaScriptBeforeContentLoaded={earlyJS !== undefined ? earlyJS : EARLY_CSS_JS}
         injectedJavaScript={injectedJavaScript}
+        // পাতার ভিতরের লিংকে গেলে (যেমন উৎসব-হাব থেকে কোনো উৎসবের নিজস্ব
+        // পাতায়) injectedJavaScript আপনাআপনি আর চলে না — তখন সাইটের হেডার/
+        // ফুটার ফিরে আসত। তাই প্রতি লোডের শেষে আবার বসানো হচ্ছে।
+        onLoadEnd={() => { ref?.current?.injectJavaScript(injectedJavaScript); }}
         onMessage={onMessage}
         onShouldStartLoadWithRequest={handleNavRequest}
         onLoadStart={onLoadStart}
@@ -554,6 +585,7 @@ export function PanchangScreen() {
         {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} />}
         {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} />}
         {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} />}
+        {activeTab === 'utsab'    && <PjWebView ref={webViewRef} uri={UTSAB_URL} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} />}
         {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} />}
       </View>
 
@@ -615,12 +647,16 @@ const s = StyleSheet.create({
 
   /* Inner tab bar */
   innerTabBar:      { backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.cardBorder },
-  innerTabScroll:   { paddingHorizontal: spacing.md, paddingVertical: 0 },
-  innerTab:         { paddingHorizontal: 14, paddingVertical: 10,
-                      borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  innerTabActive:   { borderBottomColor: colors.gold },
-  innerTabLabel:    { fontSize: 13, color: colors.textSecondary, fontFamily: 'NotoSerifBengali-Regular' },
-  innerTabLabelActive: { color: colors.primary, fontFamily: 'NotoSerifBengali-Bold' },
+  innerTabScroll:   { paddingHorizontal: spacing.md, paddingVertical: 7, alignItems: 'center' },
+  /* আগে ট্যাবগুলো ছিল শুধু লেখা + নিচে একটা সরু সোনালি দাগ — পাঁচটা ট্যাব
+     হওয়ার পর কোনটা নির্বাচিত তা চট করে বোঝা যেত না, আর দাগটা স্ক্রলে
+     প্রায় চোখেই পড়ত না। এখন নির্বাচিত ট্যাব একটা ভরাট সোনালি pill। */
+  innerTab:         { paddingHorizontal: 13, paddingVertical: 7, marginRight: 6,
+                      borderRadius: 999, borderWidth: 1, borderColor: 'transparent',
+                      backgroundColor: 'transparent' },
+  innerTabActive:   { backgroundColor: colors.primary, borderColor: colors.primary },
+  innerTabLabel:    { fontSize: 12.5, color: colors.textSecondary, fontFamily: 'NotoSerifBengali-Regular' },
+  innerTabLabelActive: { color: colors.white, fontFamily: 'NotoSerifBengali-Bold' },
 
   /* Content */
   content: { flex: 1 },
