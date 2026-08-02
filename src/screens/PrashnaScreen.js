@@ -129,8 +129,20 @@ input[type=number]{
 /* ── Detail & prediction cards ── */
 .detail-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;}
 .pred-box{background:#fdf8f3!important;border-radius:10px!important;border:1px solid #ede0ce!important;padding:12px!important;font-size:.85rem!important;line-height:1.7!important;color:#3a2218!important;}
+/* ── গ্রহ-বিচার (কারণসমূহ) তালিকা ──
+   এখানে বাঁ দিকের padding কমানো যাবে না। ওয়েবসাইটের পাতা প্রতিটা লাইনের
+   আগে একটা ✦ চিহ্ন বসায় `position:absolute;left:8px` দিয়ে, আর লেখাটাকে
+   `padding-left:30px` দিয়ে সরিয়ে রাখে। আগে এখানে `padding:5px 0` লেখা
+   ছিল — চিহ্নটা তবু বাঁ দিকেই বসত, ফলে **চিহ্নটা লেখার উপরে চেপে বসে
+   প্রথম অক্ষরগুলো ঢেকে দিত** ("মঙ্গল ৭ম ভাবে" → "ম✦ল ৭ম ভাবে")। */
 .reasons-list{padding-left:0!important;list-style:none!important;}
-.reasons-list li{padding:5px 0!important;border-bottom:1px solid #f0e4d4!important;font-size:.85rem!important;color:#3a2218!important;}
+.reasons-list li{
+  padding:8px 12px 8px 30px!important;position:relative!important;
+  font-size:.85rem!important;line-height:1.65!important;color:#3a2218!important;
+  background:#fdf8f2!important;border-left:3px solid #b8860b!important;
+  border-radius:0 8px 8px 0!important;margin-bottom:7px!important;
+}
+.reasons-list li::before{left:10px!important;top:9px!important;color:#b8860b!important;}
 /* ── Reset button ── */
 .btn.btn-reset{
   width:100%!important;padding:12px 20px!important;background:#fff!important;
