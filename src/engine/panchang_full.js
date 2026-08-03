@@ -82,6 +82,31 @@ const RAHU_SLOT     = [8, 2, 7, 5, 6, 4, 3];
 const GULIKA_SLOT   = [7, 6, 5, 4, 3, 2, 1];
 const YAMAGNDA_SLOT = [5, 4, 3, 2, 1, 7, 6];
 
+/* PEph-এর সূর্যোদয়/অস্ত টেবিল একটা নির্দিষ্ট সময়সীমা ঢাকে (২০২৫-০১-০১ …
+   ২০৩১-০৪-৩০)। তার বাইরের তারিখে সে সূচক **ক্ল্যাম্প** করে — আগের যেকোনো
+   দিন প্রথম সারিটাই ফেরত দেয়, পরের যেকোনো দিন শেষ সারিটা। মানটা দেখতে
+   স্বাভাবিক বলে `if (peSunrise && peSunset)` পরীক্ষায় ধরা পড়ত না, আর
+   ২০৩১-০৫-০১ থেকে হোম স্ক্রিনের সূর্যোদয়/সূর্যাস্ত/রাহুকাল একই জায়গায়
+   জমে যেত। টেবিলের সারি বাইরে থেকে দেখা যায় না, তাই দুই প্রান্তের
+   ক্ল্যাম্প-মান একবার তুলে রেখে rise ও set — দুটোই মিলিয়ে দেখা হয়;
+   সত্যিকারের কোনো দিনের দুটো মানই প্রান্তের সারির সাথে হুবহু মিলে যাওয়া
+   কার্যত অসম্ভব। টেবিল নতুন করে বানালে পরীক্ষাটা নিজেই মানিয়ে নেয়।
+   জানা পার্শ্বফল: সীমার ঠিক প্রথম ও শেষ দিনটিও (২০২৫-০১-০১, ২০৩১-০৪-৩০)
+   "বাইরে" ধরা পড়ে, কারণ ওদের মানই ক্ল্যাম্প-মান। ওই দু'দিনে VSOP87
+   ফলব্যাক চলে — নির্ভুলতা ~১০ সেকেন্ড, তাই ক্ষতি নেই। */
+let _ephEdgeCache = null;
+function _ephClamped(rise, set) {
+  if (!_ephEdgeCache) {
+    try {
+      _ephEdgeCache = [
+        { r: PEph.getSunrise('1900-01-01'), s: PEph.getSunset('1900-01-01') },
+        { r: PEph.getSunrise('2400-01-01'), s: PEph.getSunset('2400-01-01') },
+      ];
+    } catch (_) { _ephEdgeCache = []; }
+  }
+  return _ephEdgeCache.some(e => e && rise === e.r && set === e.s);
+}
+
 // IST string "HH:MM:SS" → Julian Day
 function istStrToJD(y, m, d, istStr) {
   if (!istStr) return null;
@@ -190,7 +215,7 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   try {
     const peSunrise = PEph.getSunrise(dateStr);
     const peSunset  = PEph.getSunset(dateStr);
-    if (peSunrise && peSunset) {
+    if (peSunrise && peSunset && !_ephClamped(peSunrise, peSunset)) {
       const peR = PEph.computeRahukal(peSunrise, peSunset, wd);
       const peG = PEph.computeGulikakal(peSunrise, peSunset, wd);
       const peA = PEph.computeAbhijit(peSunrise, peSunset);
