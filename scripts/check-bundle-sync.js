@@ -132,6 +132,127 @@ function checkInlinedEngines(name, bundleRaw) {
     : [];
 }
 
+/* ── পাতার নিজস্ব ফাংশন মেলানো ────────────────────────────────────────
+   উপরের পরীক্ষা কেবল ইনলাইন করা *ফাইল* ধরে। কিন্তু ওয়েবসাইটের অনেক কাজ
+   পাতার নিজের <script> ব্লকে থাকে, আর সেখানেই সবচেয়ে বেশি পোর্ট বাকি পড়ে
+   ছিল: কুণ্ডলীর "যোগের গ্রহবল", "লগ্নভিত্তিক গ্রহ-প্রকৃতি ও মারক", ভাবপতি
+   জোড়ার ১২টি যোগ, তাজিক যোগ/পুণ্য সহম, বর্ষফলের "বছরের সামগ্রিক রায়" ও
+   মুদ্দা দশা — সবই ওয়েবসাইটে ছিল, অ্যাপে ছিল না।
+
+   তাই দুই দিকের নামযুক্ত ফাংশনের শরীর তুলে এনে মেলানো হয় (কমেন্ট ও
+   সাদা-স্পেস বাদ দিয়ে — বান্ডলে কমেন্ট ছাঁটা থাকতে পারে, সেটা সমস্যা নয়)।
+
+   INTENDED_FN_DIFF: যেসব ফাংশন অ্যাপে ইচ্ছাকৃতভাবে আলাদা (PDF পাইপলাইন,
+   অফলাইন নেভিগেশন, ইনলাইন করা শহর-তালিকা, শুধু-SEO schema) — নতুন কিছু
+   আলাদা হলে তবেই সতর্কতা আসবে। */
+const INTENDED_FN_DIFF = {
+  // loadCalcScripts — অ্যাপে সব স্ক্রিপ্ট বান্ডলেই ঢোকানো, রানটাইমে লোড করার নেই।
+  // _openSamplePdf — WebView-এ নতুন ট্যাব খোলে না, তাই location.href
+  'kundali': ['loadCalcScripts', '_openSamplePdf'],
+  // PDF অ্যাপে expo-print দিয়ে হয়, ব্রাউজারের print/নতুন ট্যাব দিয়ে নয়
+  'match-making': ['_doMatchPrint', '_mmOpenSamplePdf'],
+  // অফলাইন ফাইল বলে 'result' নয়, 'result.html'-এ যেতে হয়
+  'numerology': ['nav'],
+  'result': ['doTry'],
+  // ওয়েবসাইট CITY_DB (২২৮ KB) দেরিতে নামায়, অ্যাপে সেটা বান্ডলেই আছে;
+  // schema/JSON-LD কেবল Google-এর জন্য — WebView-এ নিষ্ক্রিয়
+  'panjika': ['_applyCity', 'openCityModal', '_cityFilter', '_ensureCityDB',
+              '_cityDbResolveSel', 'renderTodayEvents', '_buildEventSchema',
+              '_writePjSchema'],
+};
+
+/* বান্ডলের অখণ্ডতা — ওয়েবসাইটের পাতা তার কোড বাইরের ফাইল থেকে <script src="…">
+   দিয়ে টানে; বান্ডলে সেসব ভিতরে ঢোকানো থাকে। তাই বান্ডলে একটাও বাইরের
+   /js/ বা /src/ স্ক্রিপ্ট-ট্যাগ থাকার কথা নয় — থাকলে বুঝতে হবে পোর্ট করতে
+   গিয়ে ওয়েবসাইটের কাঁচা HTML ঢুকে পড়েছে (একবার ঠিক তাই হয়েছিল: একটা ভুল
+   ব্রেস-ম্যাচার বান্ডলের শেষ অংশ — mya-auth/mya-profiles/mya-cloud-sync-এর
+   ইনলাইন কপি — মুছে দিয়েছিল, অথচ ফাইলটা দিব্যি পার্স হচ্ছিল)। */
+function checkBundleIntact(name, bundleRaw) {
+  let decoded;
+  try {
+    decoded = JSON.parse(bundleRaw.replace(/^[\s\S]*?export default /, '').replace(/;\s*$/, ''));
+  } catch (e) { return []; }
+  const leaked = decoded.match(/<script[^>]+src="\/(?:js|src)\/[^"]*"/g);
+  return leaked
+    ? [`${name}: বান্ডলে ওয়েবসাইটের বাইরের স্ক্রিপ্ট-ট্যাগ ঢুকে পড়েছে ` +
+       `(${leaked.length}টি) — ইনলাইন কপি মুছে গেছে, ফাইলটা আগের অবস্থায় ফেরান।`]
+    : [];
+}
+
+const FN_RE = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+
+/* ফাংশনের বডি { … } ব্যালান্সড-ব্রেস গুনে তোলে; স্ট্রিং ও কমেন্টের ভিতরের
+   ব্রেস টপকে যায়, নাহলে একটা রেগেক্স-লিটারেলেই হিসাব ঘেঁটে যেত। */
+function fnBodies(src) {
+  const out = new Map();
+  FN_RE.lastIndex = 0;
+  let m;
+  while ((m = FN_RE.exec(src))) {
+    const start = src.indexOf('{', m.index + m[0].length - 1);
+    if (start < 0) continue;
+    let depth = 0, end = -1;
+    for (let i = start; i < src.length; i++) {
+      const c = src[i];
+      if (c === '"' || c === "'" || c === '`') {
+        const q = c; i++;
+        while (i < src.length && !(src[i] === q && src[i - 1] !== '\\')) i++;
+        continue;
+      }
+      if (c === '/' && src[i + 1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+      if (c === '/' && src[i + 1] === '*') { i = src.indexOf('*/', i) + 1; continue; }
+      if (c === '{') depth++;
+      else if (c === '}') { depth--; if (depth === 0) { end = i + 1; break; } }
+    }
+    if (end < 0) continue;
+    if (!out.has(m[1])) out.set(m[1], src.slice(start, end));
+  }
+  return out;
+}
+const stripNoise = s => s
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+// বান্ডল থেকে ইনলাইন করা ইঞ্জিন-ফাইল বাদ — সেগুলো উপরে আলাদা করে মিলছে,
+// আর একই নামের ফাংশন দু'জায়গায় থাকলে ভুল জোড়া মিলে যেত
+function pageScriptOnly(decoded) {
+  let out = '', pos = 0;
+  const re = new RegExp(MARKER_RE.source, 'g');
+  let m;
+  while ((m = re.exec(decoded))) {
+    out += decoded.slice(pos, m.index);
+    const e = decoded.indexOf('</script>', m.index);
+    pos = e < 0 ? m.index + m[0].length : e;
+    re.lastIndex = pos;
+  }
+  return out + decoded.slice(pos);
+}
+const inlineScriptsOf = html =>
+  [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+
+function checkPageFunctions(name, bundleRaw, webHtml) {
+  let decoded;
+  try {
+    decoded = JSON.parse(bundleRaw.replace(/^[\s\S]*?export default /, '').replace(/;\s*$/, ''));
+  } catch (e) { return []; }
+  const allowed = INTENDED_FN_DIFF[name] || [];
+  const appFns = fnBodies(pageScriptOnly(decoded));
+  const webFns = fnBodies(inlineScriptsOf(webHtml));
+  const missing = [], changed = [];
+  for (const [fn, body] of webFns) {
+    if (allowed.includes(fn)) continue;
+    const web = stripNoise(body);
+    if (web.length < 60) continue;                 // ছোট মোড়ক — শব্দ বাড়ায় শুধু
+    if (!appFns.has(fn)) missing.push(fn);
+    else if (stripNoise(appFns.get(fn)) !== web) changed.push(fn);
+  }
+  const out = [];
+  if (missing.length) out.push(`${name}: ওয়েবসাইটের ${missing.length}টি ফাংশন অ্যাপে নেই (${missing.join(', ')}) — পোর্ট করা বাকি।`);
+  if (changed.length) out.push(`${name}: ${changed.length}টি ফাংশন ওয়েবসাইটের সাথে মিলছে না (${changed.join(', ')}) — পোর্ট করা বাকি।`);
+  return out;
+}
+
 let warnings = [];
 let rows = [];
 
@@ -144,7 +265,9 @@ for (const [name, htmlFile] of Object.entries(PAGES)) {
   const bundleRaw = fs.readFileSync(bundlePath, 'utf8');
   const app = unescapeBundle(bundleRaw);
 
+  warnings.push(...checkBundleIntact(name, bundleRaw));
   warnings.push(...checkInlinedEngines(name, bundleRaw));
+  warnings.push(...checkPageFunctions(name, bundleRaw, fs.readFileSync(htmlPath, 'utf8')));
 
   const webSvg = (web.match(/<svg/g) || []).length;
   const appSvg = (app.match(/<svg/g) || []).length;
