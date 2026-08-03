@@ -283,6 +283,15 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     <View style={[s.wv, style]}>
       <WebView
         ref={webViewRef}
+        /* queryString বদলালে WebView-কে নতুন করে বসানো হয় (key)। শুধু
+           source.uri বদলে দিলে পাতাটা নির্ভরযোগ্যভাবে আবার লোড হয় না —
+           result.html-এ সামঞ্জস্য বিশ্লেষণ দেখার পর নতুন একক অনুসন্ধান
+           করলে পুরনো ফলটাই পর্দায় থেকে যেত, কারণ পাতার JS আবার চলত না
+           (currentMultiItems-এর মতো ভেরিয়েবল আগের অবস্থাতেই বসে থাকত)।
+           key বদলালে React উপাদানটা ফেলে নতুন বানায় — গ্যারান্টিসহ নতুন
+           লোড। পাতার *ভিতরের* নেভিগেশনে (ক্যাটাগরি বেছে নেওয়া) queryString
+           বদলায় না, তাই সেখানে অকারণ রিলোডও হয় না। */
+        key={queryString || '__noq__'}
         source={{ uri: queryString ? uri + '?' + queryString : uri }}
         style={s.wv}
         // নিরাপত্তা: http:// ইচ্ছাকৃতভাবে বাদ, আর mixedContentMode="never" —
