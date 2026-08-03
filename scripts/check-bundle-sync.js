@@ -124,6 +124,65 @@ function checkEngineCopies() {
     : [];
 }
 
+/* ── বার্ষিক পঞ্জিকা PDF-এর প্রিন্ট CSS ────────────────────────────────
+   ওয়েবসাইটে PDF হয় ব্রাউজারের "Save as PDF" দিয়ে, তাই নিয়মগুলো
+   @media print-এর ভিতরে। অ্যাপে PDF হয় expo-print দিয়ে (WebView → static
+   HTML), যেখানে media query নির্ভরযোগ্যভাবে চলে না — তাই PanchangScreen.js
+   একই নিয়মগুলোর একটা মোড়ক-ছাড়া কপি (YEARLY_PRINT_CSS) রাখে।
+
+   অর্থাৎ এটা হাতে রাখা দ্বিতীয় কপি: ওয়েবসাইটের প্রিন্ট-নকশা বদলালে এখানেও
+   বদলাতে হবে, নইলে একই বছরের পঞ্জিকা দুই জায়গা থেকে নামালে দেখতে আলাদা
+   হবে (পৃষ্ঠা-ভাগ, লেখার আকার, মলমাস ব্যানার — সবই এই নিয়মে ঠিক হয়)।
+   ব্যবহারকারী দুটো মিলিয়ে দেখলে সঙ্গে সঙ্গে চোখে পড়ে, অথচ কোডে নীরব। */
+function checkYearlyPrintCss() {
+  const appFile = path.join(__dirname, '..', 'src', 'screens', 'PanchangScreen.js');
+  const webFile = path.join(SITE, 'panjika.html');
+  if (!fs.existsSync(appFile) || !fs.existsSync(webFile)) return [];
+
+  const appSrc = fs.readFileSync(appFile, 'utf8');
+  const MARK = 'const YEARLY_PRINT_CSS = `';
+  const a = appSrc.indexOf(MARK);
+  if (a < 0) return ['PanchangScreen.js-এ YEARLY_PRINT_CSS পাওয়া গেল না — নাম বদলেছে?'];
+  const appCss = appSrc.slice(a + MARK.length, appSrc.indexOf('`;', a));
+
+  // ওয়েবসাইটের সব @media print ব্লক (ব্যালান্সড ব্রেস, নেস্টেড নিয়মসহ)
+  const html = fs.readFileSync(webFile, 'utf8');
+  let webCss = '';
+  const re = /@media\s+print\s*\{/g;
+  let m;
+  while ((m = re.exec(html))) {
+    let depth = 1, i = m.index + m[0].length;
+    for (; i < html.length && depth > 0; i++) {
+      if (html[i] === '{') depth++;
+      else if (html[i] === '}') depth--;
+    }
+    webCss += html.slice(m.index + m[0].length, i - 1) + '\n';
+  }
+
+  // বার্ষিক পঞ্জিকা সংক্রান্ত নিয়মগুলোই কেবল মেলানো হয় — কুণ্ডলী/অন্য
+  // পাতার প্রিন্ট নিয়ম এই স্ক্রিনের সাথে সম্পর্কিত নয়
+  const RELEVANT = /yp-|yearlyPanjika|@page|pdfPromoOverlay|payOverlay/;
+  const rules = css => {
+    const map = new Map();
+    css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const r of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sel = r[1].trim().replace(/\s+/g, ' ');
+      if (RELEVANT.test(sel)) map.set(sel, r[2].replace(/\s+/g, '').replace(/;$/, ''));
+    }
+    return map;
+  };
+  const W = rules(webCss), A = rules(appCss);
+  const missing = [...W.keys()].filter(k => !A.has(k));
+  const extra   = [...A.keys()].filter(k => !W.has(k));
+  const differ  = [...W.keys()].filter(k => A.has(k) && A.get(k) !== W.get(k));
+
+  const out = [];
+  if (missing.length) out.push(`বার্ষিক পঞ্জিকা PDF: ওয়েবসাইটের ${missing.length}টি প্রিন্ট-নিয়ম অ্যাপে নেই (${missing.slice(0, 5).join(', ')}) — অ্যাপের PDF আলাদা দেখাবে।`);
+  if (extra.length)   out.push(`বার্ষিক পঞ্জিকা PDF: অ্যাপে ${extra.length}টি বাড়তি প্রিন্ট-নিয়ম (${extra.slice(0, 5).join(', ')}) — ওয়েবসাইটে নেই।`);
+  if (differ.length)  out.push(`বার্ষিক পঞ্জিকা PDF: ${differ.length}টি প্রিন্ট-নিয়মের মান আলাদা (${differ.slice(0, 5).join(', ')})।`);
+  return out;
+}
+
 function checkInlinedEngines(name, bundleRaw) {
   let decoded;
   try {
@@ -272,7 +331,7 @@ function checkPageFunctions(name, bundleRaw, webHtml) {
   return out;
 }
 
-let warnings = checkEngineCopies();
+let warnings = [...checkEngineCopies(), ...checkYearlyPrintCss()];
 let rows = [];
 
 for (const [name, htmlFile] of Object.entries(PAGES)) {
