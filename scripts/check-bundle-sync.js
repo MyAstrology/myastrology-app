@@ -96,14 +96,33 @@ function readPageWithScripts(htmlPath) {
    তাই হুবহু মিল দাবি করা নিরাপদ।
 
    KNOWN_DRIFT: যেগুলো ইচ্ছাকৃতভাবে আলাদা, সেগুলো এখানে লিখে রাখুন — নতুন
-   ফারাক তখনই সতর্কতা দেবে, পুরোনো জানা ফারাক নয়। */
-const KNOWN_DRIFT = {
-  // পঞ্জিকা-ডেটায় অ্যাপের কপিতে একটা বাড়তি মলমাস (২০২৭) আছে যা ওয়েবসাইটে
-  // নেই — জ্যোতিষ-তথ্যের প্রশ্ন, কোড-ভুল নয়; মালিকের সিদ্ধান্তের অপেক্ষায়।
-  'kundali': ['src/panjika-data.js'],
-};
+   ফারাক তখনই সতর্কতা দেবে, পুরোনো জানা ফারাক নয়। এখন খালি: কোনো ইনলাইন
+   ফাইলই ইচ্ছাকৃতভাবে আলাদা নয়, তাই সবগুলোই হুবহু মিলতে হবে। */
+const KNOWN_DRIFT = {};
 
 const MARKER_RE = /\/\*((?:src|js)\/[A-Za-z0-9_\-./]+\.js)\*\//g;
+
+/* ── src/engine/ — বান্ডলের বাইরের তৃতীয় কপি ──────────────────────────
+   PanchangScreen ইত্যাদি নেটিভ স্ক্রিন এই ফাইলগুলো সরাসরি import করে,
+   WebView বান্ডলের মধ্য দিয়ে নয়। ফলে উপরের কোনো পরীক্ষাই এদের ছুঁত না।
+   ২০২৬-০৮-০৩-এ ধরা পড়ল: ওয়েবসাইটে src/adhika-masa.js দিয়ে গণনা করে
+   ২০২৭/২০২৮/২০৩০-এর মনগড়া মলমাস বাদ দেওয়ার পরও এই কপিতে সেগুলো রয়ে
+   গিয়েছিল — ভুল মলমাস মানে ওই মাসের উৎসবগুলোও ভুল। */
+function checkEngineCopies() {
+  const dir = path.join(__dirname, '..', 'src', 'engine');
+  if (!fs.existsSync(dir)) return [];
+  const stale = [];
+  for (const f of fs.readdirSync(dir)) {
+    const web = path.join(SITE, 'src', f);
+    if (!fs.existsSync(web)) continue;          // অ্যাপের নিজস্ব ফাইল — মেলানোর কিছু নেই
+    if (fs.readFileSync(path.join(dir, f), 'utf8').trim() !== fs.readFileSync(web, 'utf8').trim()) {
+      stale.push('src/engine/' + f);
+    }
+  }
+  return stale.length
+    ? [`src/engine: ${stale.length}টি ফাইল ওয়েবসাইটের সাথে মিলছে না (${stale.join(', ')}) — পোর্ট করা বাকি।`]
+    : [];
+}
 
 function checkInlinedEngines(name, bundleRaw) {
   let decoded;
@@ -253,7 +272,7 @@ function checkPageFunctions(name, bundleRaw, webHtml) {
   return out;
 }
 
-let warnings = [];
+let warnings = checkEngineCopies();
 let rows = [];
 
 for (const [name, htmlFile] of Object.entries(PAGES)) {
