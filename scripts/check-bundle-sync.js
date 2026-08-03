@@ -82,6 +82,56 @@ function readPageWithScripts(htmlPath) {
   return html;
 }
 
+/* ── ইনলাইন করা ইঞ্জিন-ফাইল হুবহু মেলানো ──────────────────────────────
+   উপরের svg/ইমোজি গোনাগুলো "পাতা কতটা পুরোনো" তার আন্দাজ দেয় মাত্র — গণনার
+   ভিতরের পরিবর্তন ওতে ধরা পড়ে না। ২০২৬-০৮-০৩-এ ঠিক সেটাই ঘটেছিল: অ্যাপের
+   কুণ্ডলী পাতায় "জীবন" ট্যাবে বয়স-অনুযায়ী ৫টার বদলে ১২টা বিষয় আসছিল, আর
+   বর্ষফল ইঞ্জিন সায়ন (tropical) দ্রাঘিমাংশে গ্রহ বসাচ্ছিল — দুটোই ওয়েবসাইটে
+   অনেক আগে ঠিক হয়েছিল, বান্ডলে পোর্ট হয়নি। svg-সংখ্যা তখনও নিখুঁত মিলছিল।
+
+   বান্ডলার প্রতিটা ইনলাইন করা ফাইলের আগে একটা কমেন্ট-চিহ্ন বসায় (ফাইলের পথ
+   একটা ব্লক-কমেন্টে মোড়া, যেমন src/maha-dasha.js) — সেই চিহ্ন MARKER_RE
+   ধরে ভিতরের কপিটা ওয়েবসাইটের আসল ফাইলের সাথে অক্ষরে-অক্ষরে মেলানো
+   যায়। এখানে হাতে-করা প্যাচ থাকে না (প্যাচগুলো পাতার নিজস্ব HTML/স্ক্রিপ্টে),
+   তাই হুবহু মিল দাবি করা নিরাপদ।
+
+   KNOWN_DRIFT: যেগুলো ইচ্ছাকৃতভাবে আলাদা, সেগুলো এখানে লিখে রাখুন — নতুন
+   ফারাক তখনই সতর্কতা দেবে, পুরোনো জানা ফারাক নয়। */
+const KNOWN_DRIFT = {
+  // পঞ্জিকা-ডেটায় অ্যাপের কপিতে একটা বাড়তি মলমাস (২০২৭) আছে যা ওয়েবসাইটে
+  // নেই — জ্যোতিষ-তথ্যের প্রশ্ন, কোড-ভুল নয়; মালিকের সিদ্ধান্তের অপেক্ষায়।
+  'kundali': ['src/panjika-data.js'],
+};
+
+const MARKER_RE = /\/\*((?:src|js)\/[A-Za-z0-9_\-./]+\.js)\*\//g;
+
+function checkInlinedEngines(name, bundleRaw) {
+  let decoded;
+  try {
+    decoded = JSON.parse(bundleRaw.replace(/^[\s\S]*?export default /, '').replace(/;\s*$/, ''));
+  } catch (e) {
+    return [`${name}: বান্ডল স্ট্রিং হিসেবে পড়া গেল না — ${e.message}`];
+  }
+  const allowed = KNOWN_DRIFT[name] || [];
+  const stale = [];
+  const seen = new Set();
+  for (const m of decoded.matchAll(MARKER_RE)) {
+    const rel = m[1];
+    if (seen.has(rel) || allowed.includes(rel)) continue;
+    seen.add(rel);
+    const srcPath = path.join(SITE, rel);
+    if (!fs.existsSync(srcPath)) continue;
+    const start = m.index + m[0].length;
+    const end = decoded.indexOf('</script>', start);
+    if (end < 0) continue;
+    if (decoded.slice(start, end).trim() !== fs.readFileSync(srcPath, 'utf8').trim()) stale.push(rel);
+  }
+  return stale.length
+    ? [`${name}: ইনলাইন করা ${stale.length}টি ফাইল ওয়েবসাইটের সাথে মিলছে না ` +
+       `(${stale.join(', ')}) — পোর্ট করা বাকি।`]
+    : [];
+}
+
 let warnings = [];
 let rows = [];
 
@@ -91,7 +141,10 @@ for (const [name, htmlFile] of Object.entries(PAGES)) {
   if (!fs.existsSync(bundlePath) || !fs.existsSync(htmlPath)) continue;
 
   const web = readPageWithScripts(htmlPath);
-  const app = unescapeBundle(fs.readFileSync(bundlePath, 'utf8'));
+  const bundleRaw = fs.readFileSync(bundlePath, 'utf8');
+  const app = unescapeBundle(bundleRaw);
+
+  warnings.push(...checkInlinedEngines(name, bundleRaw));
 
   const webSvg = (web.match(/<svg/g) || []).length;
   const appSvg = (app.match(/<svg/g) || []).length;

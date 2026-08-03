@@ -18,6 +18,8 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { useAuth } from '../context/AuthContext';
+import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -438,6 +440,28 @@ export function KundaliScreen() {
   const kUri = useKUri();
   const [sourceUri, setSourceUri] = useState(null);
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(webViewRef);
+  const { user, loading: authLoading } = useAuth() || {};
+  const uid = user?.uid || null;
+
+  // অ্যাপ ↔ ওয়েবসাইট লগইন ব্রিজ। বাকি ক্যালকুলেটর স্ক্রিন LocalWebView ব্যবহার
+  // করে, সেখানে এই ব্রিজটা ভিতরেই আছে — কিন্তু কুণ্ডলী স্ক্রিন নিজের WebView
+  // চালায় (PDF রেন্ডারার + প্রি-ফিল কোয়েরির জন্য), ফলে এখানে ব্রিজটা কখনো
+  // চলতই না। তাই ওয়েবসাইটে লগইন করে সেভ করা কুণ্ডলী প্রোফাইল অ্যাপের কুণ্ডলী
+  // পাতায় দেখা যেত না (mya-cloud-sync.js পাতাটাকে "লগইন-ছাড়া" ধরে নিয়ে
+  // Firestore থেকে কিছুই আনত না)।
+  useEffect(() => {
+    if (!sourceUri || !webViewRef.current || authLoading) return;
+    let cancelled = false;
+    if (uid) {
+      fetchWebViewAuthToken().then((token) => {
+        if (cancelled || !token || !webViewRef.current) return;
+        webViewRef.current.injectJavaScript(buildBridgeSignInJS(token));
+      });
+    } else {
+      webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
+    }
+    return () => { cancelled = true; };
+  }, [uid, sourceUri, authLoading]);
 
   // Coming from another screen (e.g. "কুষ্ঠি দেখুন" in match-making) with birth
   // details in route.params — load kundali.html with those as a query string so

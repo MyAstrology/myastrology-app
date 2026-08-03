@@ -3,7 +3,7 @@
     "name": "MyAstrology",
     "slug": "myastrology",
     "scheme": "myastrology",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "in.myastrology.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
