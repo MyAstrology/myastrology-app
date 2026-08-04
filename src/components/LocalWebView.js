@@ -90,21 +90,22 @@ const RESULTS_TRACKER_JS = `(function(){
   function addBookingCard(el){
     if(document.getElementById('__myaBookCard')) return;
     if(getComputedStyle(el).display==='none') return;
+    /* ঘরটা তৈরি থাকলেই হবে না — ভিতরে সত্যিই ফলাফল আছে কি না দেখা হয়।
+       নইলে ফলাফল আসার আগেই ফাঁকা পাতায় কার্ডটা একা বসে যেত। */
+    if((el.innerText||'').trim().length<300) return;
     var d=document.createElement('div');
     d.id='__myaBookCard';
-    d.setAttribute('style','margin:26px auto 8px;max-width:640px;border-radius:16px;'
-      +'padding:16px 18px;background:linear-gradient(135deg,#2a1206 0%,#5a2410 55%,#2a1206 100%);'
-      +'box-shadow:0 6px 22px rgba(90,36,16,.28);text-align:center;font-family:inherit');
-    d.innerHTML='<div style="font-size:.78rem;color:#f0c98a;font-weight:700;letter-spacing:.4px">'
-      +'আরও গভীরে জানতে চান?</div>'
-      +'<div style="font-size:1rem;color:#fff;font-weight:800;margin:6px 0 4px;line-height:1.5">'
-      +'এই বিশ্লেষণ নিয়ে ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন</div>'
-      +'<div style="font-size:.76rem;color:rgba(255,255,255,.78);line-height:1.6;margin-bottom:12px">'
-      +'১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক · ব্যক্তিগত পরামর্শ</div>'
+    d.setAttribute('style','margin:20px auto 6px;max-width:600px;border-radius:13px;'
+      +'padding:11px 14px;background:linear-gradient(135deg,#2a1206 0%,#5a2410 55%,#2a1206 100%);'
+      +'box-shadow:0 4px 16px rgba(90,36,16,.25);text-align:center;font-family:inherit');
+    d.innerHTML='<div style="font-size:.88rem;color:#fff;font-weight:800;line-height:1.45">'
+      +'ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন</div>'
+      +'<div style="font-size:.68rem;color:rgba(255,255,255,.72);line-height:1.5;margin:2px 0 9px">'
+      +'১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক</div>'
       +'<button type="button" id="__myaBookBtn" style="border:none;cursor:pointer;'
       +'background:linear-gradient(135deg,#f5b800,#e08a00);color:#2a1206;font-weight:800;'
-      +'font-size:.92rem;font-family:inherit;padding:11px 30px;border-radius:999px;'
-      +'box-shadow:0 3px 14px rgba(245,184,0,.35)">পরামর্শ বুকিং করুন</button>';
+      +'font-size:.83rem;font-family:inherit;padding:8px 24px;border-radius:999px;'
+      +'box-shadow:0 2px 10px rgba(245,184,0,.32)">পরামর্শ বুকিং করুন</button>';
     el.appendChild(d);
     var b=document.getElementById('__myaBookBtn');
     if(b) b.addEventListener('click',function(){
