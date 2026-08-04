@@ -139,6 +139,19 @@ function inlineCalcScripts(html) {
   return html;
 }
 
+/* শহর-তালিকা গেঁথে দেওয়া — উপরের ব্যাখ্যা দ্রষ্টব্য।
+   _ensureCityDB() প্রথমেই `window.CITY_DB` আছে কি না দেখে, তাই তালিকা
+   আগে থেকে বসানো থাকলে ওই ডায়নামিক <script> আর কখনো তৈরিই হয় না —
+   ফাংশনটা বদলানোর দরকার নেই। */
+function inlineCityDb(html) {
+  if (!html.includes("s.src='src/cities.js'")) return html;
+  const full = path.join(WEBSITE_DIR, 'src', 'cities.js');
+  if (!fs.existsSync(full)) { console.log('    [skip] src/cities.js'); return html; }
+  const content = fs.readFileSync(full, 'utf8');
+  console.log(`    [inline] src/cities.js (${Math.round(content.length/1024)} KB) — অফলাইনে শহর-তালিকা`);
+  return html.replace('</head>', `<script>/*src/cities.js*/\n${content}\n</script>\n</head>`);
+}
+
 function bundle(htmlFile, outName) {
   console.log(`\nBundling: ${htmlFile}`);
   let html = fs.readFileSync(path.join(WEBSITE_DIR, htmlFile), 'utf8');
@@ -162,6 +175,7 @@ function bundle(htmlFile, outName) {
   // ভাঙা ইমেজ দেখায় (যেমন ফুটারের লোগো) — লাইভ সাইটের absolute URL-এ বদলানো হলো।
   html = html.replace(/src="images\//g, 'src="https://myastrology.in/images/');
   html = html.replace('<head>', '<head>\n' + APP_CSS + '\n');
+  html = inlineCityDb(html);
 
   // Output as JS module exporting string
   const jsContent = '// AUTO-GENERATED — do not edit manually\n// Run: node scripts/bundle-web-assets.js\nexport default ' + JSON.stringify(html) + ';\n';
