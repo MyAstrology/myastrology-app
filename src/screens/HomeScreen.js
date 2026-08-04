@@ -26,6 +26,16 @@ const EN_MONTHS = ['January','February','March','April','May','June','July','Aug
 // সূর্যোদয়/সূর্যাস্ত "HH:MM" (২৪ ঘণ্টা)-কে "সকাল ৫:০১" ফরম্যাটে দেখানোর জন্য —
 // সূর্যোদয় সবসময় সকাল, সূর্যাস্ত সবসময় সন্ধ্যা, তাই period সরাসরি প্যারামিটার
 // হিসেবে নেওয়া হচ্ছে, সাধারণ AM/PM লজিকের দরকার নেই।
+// কোন ঘড়িতে পাতার সময়গুলো — চেনা দুটোর নাম, বাকিদের UTC-ফারাক।
+// শহর বাছাই আন্তর্জাতিক হওয়ার পর "(IST)" লেখা আর সবসময় সত্যি নয়।
+const tzLabel = tz => {
+  if (Math.abs(tz - 5.5) < 0.01) return 'IST';
+  if (Math.abs(tz - 6)   < 0.01) return 'BST';
+  const sign = tz < 0 ? '−' : '+', a = Math.abs(tz);
+  const hh = Math.floor(a), mm = Math.round((a - hh) * 60);
+  return `UTC${sign}${hh}:${String(mm).padStart(2, '0')}`;
+};
+
 const to12h = (hhmm, period) => {
   if (!hhmm || hhmm === '—') return hhmm;
   const [h, m] = hhmm.split(':').map(Number);
@@ -436,13 +446,16 @@ export function HomeScreen() {
 
   const data = useMemo(() => {
     try {
-      return getPanchangForDate(iso, city.lat, city.lon);
+      return getPanchangForDate(iso, city.lat, city.lon, city.tz);
     } catch (_) {
       return { tithi:'—', nakshatra:'—', yoga:'—', karana:'—', sunrise:'—', sunset:'—',
                weekday:'—', weekdayNum:0, paksha:'—', bengaliDay:null,
                bengaliMonth:'—', bengaliYear:null, ritu:'—' };
     }
-  }, [iso, city.lat, city.lon]);
+  }, [iso, city.lat, city.lon, city.tz]);
+
+  // "রানাঘাট, ভারত (IST)" — পাঠক যেন জানেন সময়গুলো কোন জায়গা ও কোন ঘড়ির
+  const placeLine = `${city.label}${city.country ? ', ' + city.country : ''} (${tzLabel(city.tz)})`;
 
   const enDateStr = `${today.getDate()} ${EN_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
   const bnDateStr = data.bengaliDay
@@ -647,7 +660,7 @@ export function HomeScreen() {
 
           <View style={s.infoStrip}>
             <MaterialCommunityIcons name="information-outline" size={13} color={colors.primary} />
-            <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · {city.label} (IST)</Text>
+            <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · {placeLine}</Text>
           </View>
         </ScrollView>
     </View>

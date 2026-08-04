@@ -13,11 +13,11 @@ const KEY = 'mya_panjika_city';
 // panjika.html-এর নিজস্ব ডিফল্ট (`let LAT=23.1677, LNG=88.5808`)-এর হুবহু একই
 // মান — শহর বেছে না নিলে হোম ও পঞ্জিকা যেন একই হিসাব দেখায়।
 // panchang_full.js-এর DEF_LAT/DEF_LON-ও এই একই মান; দুটো একসাথে বদলাতে হবে।
-export const DEFAULT_CITY = { lat: 23.1677, lon: 88.5808, tz: 5.5, label: 'রানাঘাট' };
+export const DEFAULT_CITY = { lat: 23.1677, lon: 88.5808, tz: 5.5, label: 'রানাঘাট', country: 'ভারত' };
 
-// panchang_full.js-এর getPanchangForDate() শুধু lat/lon নেয়, টাইমজোন নেয় না —
-// ভিতরে IST ধরাই আছে। তাই ভারতের বাইরের শহর সেভ থাকলে সেটা প্রয়োগ করা হয় না
-// (নাহলে সময়গুলো ভুল টাইমজোনে দেখাত); তখন কলকাতাই থাকে।
+// আগে ভারতের বাইরের শহর বাতিল করা হতো — getPanchangForDate() তখন শুধু
+// lat/lon নিত, ভিতরে IST ধরা ছিল, তাই ঢাকা বাছলেও সময় ভারতীয় ঘড়িতে দেখাত।
+// ২০২৬-০৮-০৪: ইঞ্জিন এখন tz নেয়, তাই যেকোনো দেশের শহর সরাসরি চলে।
 const IST = 5.5;
 
 export async function savePanjikaCity(city) {
@@ -28,6 +28,7 @@ export async function savePanjikaCity(city) {
       lon: Number(city.lon),
       tz: Number.isFinite(Number(city.tz)) ? Number(city.tz) : IST,
       label: city.label || '',
+      country: city.country || '',
     }));
   } catch (_) {}
 }
@@ -38,8 +39,9 @@ export async function loadPanjikaCity() {
     if (!raw) return DEFAULT_CITY;
     const c = JSON.parse(raw);
     if (c?.lat == null || c?.lon == null) return DEFAULT_CITY;
-    if (Number(c.tz) !== IST) return DEFAULT_CITY;
-    return { lat: c.lat, lon: c.lon, tz: c.tz, label: c.label || DEFAULT_CITY.label };
+    const tz = Number.isFinite(Number(c.tz)) ? Number(c.tz) : IST;
+    return { lat: c.lat, lon: c.lon, tz, label: c.label || DEFAULT_CITY.label,
+             country: c.country || '' };
   } catch (_) {
     return DEFAULT_CITY;
   }

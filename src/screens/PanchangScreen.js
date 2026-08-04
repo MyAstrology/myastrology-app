@@ -342,7 +342,7 @@ const CITY_REPORT_JS = `
         if(o.lat==null||o.lng==null) return;
         window.ReactNativeWebView.postMessage(JSON.stringify({
           __rn:'pjCity', lat:o.lat, lon:o.lng, tz:o.tz,
-          label:o.bn||o.label||o.n||''
+          label:o.bn||o.label||o.n||'', country:o.country||''
         }));
       }catch(e){}
     }

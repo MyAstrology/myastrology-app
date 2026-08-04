@@ -2096,8 +2096,8 @@ function planetaryPositions(jd) {
 // ─────────────────────────────────────────────
 // JD from IST datetime (Indian Standard Time = UTC+5:30)
 // ─────────────────────────────────────────────
-function JD_IST(y, m, d, h_ist) {
-  const h_utc = h_ist - 5.5;
+function JD_IST(y, m, d, h_ist, tz) {
+  const h_utc = h_ist - ((typeof tz === 'number' && isFinite(tz)) ? tz : 5.5);
   let day = d, month = m, year = y, h = h_utc;
   if (h < 0) {
     h += 24; day--;
@@ -2406,10 +2406,12 @@ function getSunriseSunset(y, m, d, lat, lon_deg) {
   return result;
 }
 
-// JD → HH:MM:SS IST string
-function jdToIST(jd) {
+// JD → HH:MM:SS স্থানীয় ঘড়ির লেখা।
+// tz না দিলে ৫.৫ (IST) — পুরনো সব কল অবিকল আগের মানই পায়।
+function jdToIST(jd, tz) {
+  const off   = (typeof tz === 'number' && isFinite(tz)) ? tz : 5.5;
   const ut_h  = ((jd + 0.5) % 1) * 24;
-  const ist_h = ((ut_h + 5.5) % 24);
+  const ist_h = (((ut_h + off) % 24) + 24) % 24;
   const h  = Math.floor(ist_h);
   const m  = Math.floor((ist_h - h) * 60);
   const s  = Math.floor(((ist_h - h) * 60 - m) * 60);
@@ -2581,8 +2583,9 @@ function getJanmaRashi(jd) {
 }
 
 // সম্পূর্ণ দৈনিক পঞ্চাঙ্গ — একটি কলে সব তথ্য
-function getDailyPanchang(y, m, d, lat, lon) {
-  const jd  = JD(y, m, d) + 0.5 - lon/360.0 + 5.5/24.0; // IST noon
+function getDailyPanchang(y, m, d, lat, lon, tz) {
+  const TZ  = (typeof tz === 'number' && isFinite(tz)) ? tz : 5.5;
+  const jd  = JD(y, m, d) + 0.5 - lon/360.0 + TZ/24.0; // স্থানীয় দুপুর
   const jd0 = JD(y, m, d) - 0.5; // previous midnight UTC
 
   const ss   = getSunriseSunset(y, m, d, lat, lon);
@@ -2608,7 +2611,7 @@ function getDailyPanchang(y, m, d, lat, lon) {
   const md = getMrityuDosha(refJD, weekday);
 
   // সূর্যোদয় থেকে সূর্যাস্ত পর্যন্ত স্লট
-  const dayStart = riseJD || (JD(y,m,d) + 5.5/24 - 0.5);
+  const dayStart = riseJD || (JD(y,m,d) + TZ/24 - 0.5);
   const dayEnd   = setJD  || (dayStart + 12/24);
 
   const lagSlots = getLagnaSlots(dayStart, dayEnd, lat, lon);
@@ -2619,9 +2622,10 @@ function getDailyPanchang(y, m, d, lat, lon) {
   return {
     date: { y, m, d, weekday },
     ayanamsa: ay,
-    sunrise:  ss ? jdToIST(ss.rise)    : null,
-    sunset:   ss ? jdToIST(ss.set)     : null,
-    transit:  ss ? jdToIST(ss.transit) : null,
+    sunrise:  ss ? jdToIST(ss.rise,    TZ) : null,
+    sunset:   ss ? jdToIST(ss.set,     TZ) : null,
+    transit:  ss ? jdToIST(ss.transit, TZ) : null,
+    tz:       TZ,
     tithi:    { ...tit,  slots: titSlots },
     nakshatra:{ ...nak,  slots: nakSlots },
     yoga:     { ...yog,  slots: yogSlots },

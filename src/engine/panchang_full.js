@@ -68,6 +68,7 @@ const PADA_NAMES    = ['প্রথম','দ্বিতীয়','তৃত�
 // ইঞ্জিনকে ওটার সাথে মেলানো হলো, উল্টোটা নয়।
 const DEF_LAT = 23.1677;
 const DEF_LON = 88.5808;
+const DEF_TZ  = 5.5;   // ভারতীয় প্রামাণ্য সময় — শহর না বাছলে এটাই
 
 // Rahu Kala / Gulika / Yamagnda slot (1-indexed) by weekday (0=Sun…6=Sat).
 // GULIKA_SLOT and YAMAGNDA_SLOT were previously off by one weekday (rotated —
@@ -108,10 +109,11 @@ function _ephClamped(rise, set) {
 }
 
 // IST string "HH:MM:SS" → Julian Day
-function istStrToJD(y, m, d, istStr) {
+function istStrToJD(y, m, d, istStr, tz) {
   if (!istStr) return null;
+  const off = (typeof tz === 'number' && isFinite(tz)) ? tz : DEF_TZ;
   const [h, mn, s] = istStr.split(':').map(Number);
-  return v.JD(y, m, d) - 0.5 + (h + mn / 60 + (s || 0) / 3600 - 5.5) / 24;
+  return v.JD(y, m, d) - 0.5 + (h + mn / 60 + (s || 0) / 3600 - off) / 24;
 }
 
 // Binary search: find JD when getterFn(jd).index transitions away from currentIdx (= end)
@@ -136,15 +138,23 @@ function findStartJD(getterFn, refJD, currentIdx) {
   return hi;
 }
 
-function jdHM(jd) {
+function jdHM(jd, tz) {
   if (!jd) return null;
-  return v.jdToIST(jd).substring(0, 5);
+  return v.jdToIST(jd, tz).substring(0, 5);
 }
 
 function parseHMS(hms) {
   if (!hms) return null;
   const [h, m, s] = hms.split(':').map(Number);
   return h + (m || 0) / 60 + (s || 0) / 3600;
+}
+
+// দশমিক ঘণ্টা → "HH:MM:SS" — মেলানো সূর্যোদয়কে আবার JD-তে ফেরাতে লাগে,
+// তাই decToHM()-এর মিনিট-রাউন্ডিং এখানে চলবে না
+function _hToHMS(h) {
+  const t  = Math.round((((h % 24) + 24) % 24) * 3600);
+  const hh = Math.floor(t / 3600), mm = Math.floor((t % 3600) / 60), ss = t % 60;
+  return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
 }
 
 function decToHM(h) {
@@ -161,11 +171,21 @@ function getSlotTime(riseH, setH, slotNo) {
   return { start: decToHM(s), end: decToHM(s + step) };
 }
 
-export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
+// tz — বাছাই-করা শহরের UTC-ফারাক (ভারত ৫.৫, বাংলাদেশ ৬)। না দিলে ৫.৫,
+// তাই আগের সব কল অবিকল একই ফল পায়।
+export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON, tz = DEF_TZ) {
   const [y, m, d] = dateStr.split('-').map(Number);
+  const TZ = (typeof tz === 'number' && isFinite(tz)) ? tz : DEF_TZ;
+  /* মুদ্রিত পঞ্জিকার নিজস্ব ঘোষণা (বিশুদ্ধ সিদ্ধান্ত পঞ্জিকা ১৪৩৩, পৃ. ১৮২):
+     "অক্ষাংশ ও দ্রাঘিমাংশের তারতম্য অনুসারে বিভিন্ন স্থানের সূর্যোদয়,
+     সূর্যাস্ত, পূর্বাহ্ণ ও বারবেলা বিভিন্ন প্রকার হয়। কিন্তু তিথির
+     অন্তঃকাল ভারতীয় স্ট্যান্ডার্ড সময়ে সর্বত্র সমান।" — অর্থাৎ স্থান
+     বদলালে সূর্য-নির্ভর সময়গুলোই বদলায়, তিথির মুহূর্ত নয়; কেবল সেটি
+     কোন ঘড়িতে লেখা হচ্ছে তা বদলায়। */
+  const atHome = (lat === DEF_LAT && lon === DEF_LON && TZ === DEF_TZ);
 
   let p;
-  try { p = v.getDailyPanchang(y, m, d, lat, lon); }
+  try { p = v.getDailyPanchang(y, m, d, lat, lon, TZ); }
   catch (_) { return null; }
 
   // যোগ ও করণ তিথি/নক্ষত্রের চেয়ে অনেক দ্রুত বদলায় (করণ প্রতি তিথিতেই
@@ -176,16 +196,46 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   let nowJD = null;
   try {
     const now   = new Date();
-    const ist   = new Date(now.getTime() + 5.5 * 3600000);
-    nowJD = v.JD_IST(ist.getUTCFullYear(), ist.getUTCMonth() + 1, ist.getUTCDate(),
-                      ist.getUTCHours() + ist.getUTCMinutes() / 60 + ist.getUTCSeconds() / 3600);
+    const loc   = new Date(now.getTime() + TZ * 3600000);
+    nowJD = v.JD_IST(loc.getUTCFullYear(), loc.getUTCMonth() + 1, loc.getUTCDate(),
+                      loc.getUTCHours() + loc.getUTCMinutes() / 60 + loc.getUTCSeconds() / 3600, TZ);
     p.yoga   = v.getYoga(nowJD);
     p.karana = v.getKarana(nowJD);
   } catch (_) { /* keep the sunrise-based yoga/karana computed above */ }
 
   const wd    = p.date.weekday;
-  const riseH = parseHMS(p.sunrise);
-  const setH  = parseHMS(p.sunset);
+  let   riseH = parseHMS(p.sunrise);
+  let   setH  = parseHMS(p.sunset);
+  let   calibrated = false;
+
+  /* ── অন্য শহরের সময় ছাপা পঞ্জিকার সঙ্গে মেলানো ──
+     PEph-এর টেবিল (রানাঘাট) মুদ্রিত বিশুদ্ধ সিদ্ধান্ত পঞ্জিকার সঙ্গে হুবহু
+     মেলে — ১৯ অক্টোবর ২০২৬-এ ছাপা কলকাতা ৫:৩৮/১৭:০৫, PEph-ও তাই। কিন্তু
+     ওই টেবিল কেবল ওই এক জায়গার। vsop87 যেকোনো জায়গার হিসাব দেয়, তবে
+     ছাপা পঞ্জিকার চেয়ে ধারাবাহিকভাবে উদয়ে ~২ মিঃ আগে ও অস্তে ~২ মিঃ পরে
+     (দিনের দৈর্ঘ্য মাপার নিয়মটাই সামান্য আলাদা)।
+     তাই দুটোর সেরাটা নেওয়া হলো: যাচাই-করা রানাঘাট-মান + vsop87-এর
+     (এই শহর − রানাঘাট) ফারাক। নিয়মের ভুলটা ফারাক নিতে গিয়ে কেটে যায়।
+     পৃষ্ঠা ১৮২-এর ২৬টি রাজ্য-রাজধানীর বিরুদ্ধে মাপা (২০২৬-১০-১৯):
+       সরাসরি vsop87 — গড় ভুল ১.৬৯ মিঃ, ১১/২৬ শহরে ২ মিঃ-এর বেশি
+       এই পদ্ধতি     — গড় ভুল ০.৮৫ মিঃ,  ২/২৬ শহরে ২ মিঃ-এর বেশি
+     রানাঘাটের অক্ষাংশ থেকে ১৫° দূর পর্যন্তই প্রয়োগ (ভারত, বাংলাদেশ, নেপাল,
+     শ্রীলঙ্কা, মায়ানমার, উপসাগরীয় দেশ — যেখানে প্রায় সব ব্যবহারকারী)।
+     তার বাইরে ফারাকটা আর কাটাকাটি হয় না, তাই vsop87-ই থাকে। */
+  if (!atHome && riseH != null && setH != null && Math.abs(lat - DEF_LAT) <= 15) {
+    try {
+      const peR = PEph.getSunrise(dateStr), peS = PEph.getSunset(dateStr);
+      if (peR && peS && !_ephClamped(peR, peS)) {
+        const home = v.getDailyPanchang(y, m, d, DEF_LAT, DEF_LON, DEF_TZ);
+        const hR = parseHMS(home.sunrise), hS = parseHMS(home.sunset);
+        if (hR != null && hS != null) {
+          riseH = peR + (riseH - hR);
+          setH  = peS + (setH  - hS);
+          calibrated = true;
+        }
+      }
+    } catch (_) { /* মেলানো না গেলে vsop87-এর মানই থাকে */ }
+  }
 
   let rahuKala  = (riseH && setH) ? getSlotTime(riseH, setH, RAHU_SLOT[wd])     : null;
   let gulika    = (riseH && setH) ? getSlotTime(riseH, setH, GULIKA_SLOT[wd])    : null;
@@ -213,6 +263,7 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   // থাকতে পারত। ব্যর্থ হলে (কোনো তারিখে) উপরের হিসাবই থেকে যায়, ক্র্যাশ করে না।
   let peSunriseHM = null, peSunsetHM = null;
   try {
+    if (!atHome) throw new Error('অন্য শহর — PEph টেবিল রানাঘাটের, প্রযোজ্য নয়');
     const peSunrise = PEph.getSunrise(dateStr);
     const peSunset  = PEph.getSunset(dateStr);
     if (peSunrise && peSunset && !_ephClamped(peSunrise, peSunset)) {
@@ -239,6 +290,7 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   // হোম স্ক্রিনে দেখানোর জন্য শুধু দিনের প্রথম (সবচেয়ে প্রাসঙ্গিক) স্লট নেওয়া হলো।
   let amritKal = null;
   try {
+    if (!atHome) throw new Error('অন্য শহর — PEph-এর অমৃতযোগ রানাঘাটের');
     const dp = PEph.getDailyPanchang(dateStr, 12);
     const slot = dp?.amritaMahendra?.amritaDay?.[0];
     if (slot) amritKal = { start: slot.startStr, end: slot.endStr };
@@ -249,21 +301,22 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
   const bnDate = getBengaliDate(dateStr);
 
   // Compute slot start/end times via binary search
-  const refJD = p.sunrise ? istStrToJD(y, m, d, p.sunrise)
-                           : (v.JD(y, m, d) + 5.5 / 24 - 0.5 + 5 / 24);
+  const sunriseStr = calibrated ? _hToHMS(riseH) : p.sunrise;
+  const refJD = sunriseStr ? istStrToJD(y, m, d, sunriseStr, TZ)
+                           : (v.JD(y, m, d) + TZ / 24 - 0.5 + 5 / 24);
   // যোগ/করণ p.yoga.index ও p.karana.index-এ "বর্তমান মুহূর্তের" (nowJD) মান
   // বসানো হয়েছে উপরে (সূর্যোদয়ের না) — তাই তাদের start/end খোঁজার রেফারেন্স
   // JD-ও nowJD হতে হবে, refJD (সূর্যোদয়) না, নাহলে ভুল index-এর transition
   // খুঁজে ভুল/অসংগত সময় দিতে পারে (করণ দিনে ~৪ বার বদলায় বলে সবচেয়ে ঝুঁকিপূর্ণ)।
   const curJD = nowJD || refJD;
-  const tSt = jdHM(findStartJD(v.getTithi,     refJD, tIdx));
-  const tEn = jdHM(findEndJD  (v.getTithi,     refJD, tIdx));
-  const nSt = jdHM(findStartJD(v.getNakshatra, refJD, p.nakshatra.index));
-  const nEn = jdHM(findEndJD  (v.getNakshatra, refJD, p.nakshatra.index));
-  const ySt = jdHM(findStartJD(v.getYoga,      curJD, p.yoga.index));
-  const yEn = jdHM(findEndJD  (v.getYoga,      curJD, p.yoga.index));
-  const kSt = jdHM(findStartJD(v.getKarana,    curJD, p.karana.index));
-  const kEn = jdHM(findEndJD  (v.getKarana,    curJD, p.karana.index));
+  const tSt = jdHM(findStartJD(v.getTithi,     refJD, tIdx), TZ);
+  const tEn = jdHM(findEndJD  (v.getTithi,     refJD, tIdx), TZ);
+  const nSt = jdHM(findStartJD(v.getNakshatra, refJD, p.nakshatra.index), TZ);
+  const nEn = jdHM(findEndJD  (v.getNakshatra, refJD, p.nakshatra.index), TZ);
+  const ySt = jdHM(findStartJD(v.getYoga,      curJD, p.yoga.index), TZ);
+  const yEn = jdHM(findEndJD  (v.getYoga,      curJD, p.yoga.index), TZ);
+  const kSt = jdHM(findStartJD(v.getKarana,    curJD, p.karana.index), TZ);
+  const kEn = jdHM(findEndJD  (v.getKarana,    curJD, p.karana.index), TZ);
 
   const ay      = p.ayanamsa || 0;
   const ayDeg   = Math.floor(ay);
@@ -273,6 +326,8 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
 
   return {
     date:     dateStr,
+    tz:       TZ,
+    atDefaultPlace: atHome,
     weekday:  WEEKDAY_NAMES[wd],
     weekdayNum: wd,
     bengaliDay:   bnDate ? bnDate.day       : null,
@@ -283,8 +338,9 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON) {
     nakshatraStart: nSt,  nakshatraEnd: nEn,
     yogaStart:      ySt,  yogaEnd:      yEn,
     karanaStart:    kSt,  karanaEnd:    kEn,
-    sunrise:  peSunriseHM || (p.sunrise ? p.sunrise.substring(0,5) : '—'),
-    sunset:   peSunsetHM  || (p.sunset  ? p.sunset.substring(0,5)  : '—'),
+    sunrise:  peSunriseHM || (riseH != null ? decToHM(riseH) : '—'),
+    sunset:   peSunsetHM  || (setH  != null ? decToHM(setH)  : '—'),
+    calibrated,
     transit:  p.transit  ? p.transit.substring(0,5)  : '—',
     tithi:        TITHI_NAMES[tIdx]                    || '—',
     tithiIdx:     tIdx,
