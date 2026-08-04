@@ -142,7 +142,10 @@ function inlineCalcScripts(html) {
 function bundle(htmlFile, outName) {
   console.log(`\nBundling: ${htmlFile}`);
   let html = fs.readFileSync(path.join(WEBSITE_DIR, htmlFile), 'utf8');
-  html = html.replace(/<noscript>[\s\S]*?googletagmanager[\s\S]*?<\/noscript>\n?/g, '');
+  // একটাই <noscript> উপাদানের ভিতরে সীমাবদ্ধ — নইলে পাতার মাথার ফাঁকা
+  // <noscript> থেকে শুরু করে নিচের GTM-এর </noscript> পর্যন্ত সব মুছে যেত
+  // (result.html-এ ৪৮ KB, <style> সহ; numerology.html-এ গোটা <head>)
+  html = html.replace(/<noscript>(?:(?!<\/?noscript)[\s\S])*?googletagmanager(?:(?!<\/?noscript)[\s\S])*?<\/noscript>\n?/g, '');
   // GTM-এর inline লোডার <script src="..."> নয় (নিজে থেকে script tag বানায়),
   // তাই REMOVE_SRC/processStaticScripts ধরতে পারে না — আলাদাভাবে সরানো হলো
   // (দুটো ভ্যারিয়েন্ট: সাধারণ single-line স্নিপেট, আর panjika-স্টাইল deferred
