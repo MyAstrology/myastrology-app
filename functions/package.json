@@ -2,7 +2,7 @@
   "name": "myastrology-functions",
   "description": "Cloud Functions for MyAstrology (app ↔ website login bridge)",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
   "dependencies": {

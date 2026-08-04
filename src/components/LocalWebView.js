@@ -65,7 +65,9 @@ function parsePageName(url) {
 // React Navigation's tab history — which otherwise exits straight to whatever
 // tab was open before this screen (e.g. Home), skipping over the in-screen
 // form/results distinction the user actually expects "back" to respect.
-const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection', 'resultsSection'];
+const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection', 'resultsSection',
+  /* সংখ্যা জ্যোতিষের ফলাফল আলাদা পাতায় (result.html), ঘরের নাম আলাদা */
+  'resultContent'];
 
 // "গণনা করুন" চাপলে পেজগুলো ফলাফল দেখানোর পাশাপাশি ফর্মটাও লুকিয়ে ফেলে
 // (display:none)। ব্যাক চাপলে আগে শুধু ফলাফলটা লুকানো হতো — ফর্ম ফিরিয়ে আনা
@@ -82,11 +84,40 @@ const RESULTS_TRACKER_JS = `(function(){
     var visible=getComputedStyle(el).display!=='none';
     window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'resultsVisible',visible:visible}));
   }
+  /* ── ফলাফলের শেষে পরামর্শ-বুকিং কার্ড ──
+     ফলাফল দেখা যাচ্ছে এমন অবস্থাতেই কেবল বসে; একবারই (id দিয়ে পাহারা)।
+     চাপলে নেটিভ দিকে বার্তা যায়, LocalWebView বুকিং স্ক্রিনে নিয়ে যায়। */
+  function addBookingCard(el){
+    if(document.getElementById('__myaBookCard')) return;
+    if(getComputedStyle(el).display==='none') return;
+    var d=document.createElement('div');
+    d.id='__myaBookCard';
+    d.setAttribute('style','margin:26px auto 8px;max-width:640px;border-radius:16px;'
+      +'padding:16px 18px;background:linear-gradient(135deg,#2a1206 0%,#5a2410 55%,#2a1206 100%);'
+      +'box-shadow:0 6px 22px rgba(90,36,16,.28);text-align:center;font-family:inherit');
+    d.innerHTML='<div style="font-size:.78rem;color:#f0c98a;font-weight:700;letter-spacing:.4px">'
+      +'আরও গভীরে জানতে চান?</div>'
+      +'<div style="font-size:1rem;color:#fff;font-weight:800;margin:6px 0 4px;line-height:1.5">'
+      +'এই বিশ্লেষণ নিয়ে ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন</div>'
+      +'<div style="font-size:.76rem;color:rgba(255,255,255,.78);line-height:1.6;margin-bottom:12px">'
+      +'১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক · ব্যক্তিগত পরামর্শ</div>'
+      +'<button type="button" id="__myaBookBtn" style="border:none;cursor:pointer;'
+      +'background:linear-gradient(135deg,#f5b800,#e08a00);color:#2a1206;font-weight:800;'
+      +'font-size:.92rem;font-family:inherit;padding:11px 30px;border-radius:999px;'
+      +'box-shadow:0 3px 14px rgba(245,184,0,.35)">পরামর্শ বুকিং করুন</button>';
+    el.appendChild(d);
+    var b=document.getElementById('__myaBookBtn');
+    if(b) b.addEventListener('click',function(){
+      try{ window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'goScreen',screen:'Booking'})); }catch(e){}
+    });
+  }
   function start(){
     var el=findEl();
     if(!el){setTimeout(start,400);return;}
     report(el);
-    new MutationObserver(function(){report(el);}).observe(el,{attributes:true,attributeFilter:['style','class']});
+    addBookingCard(el);
+    new MutationObserver(function(){report(el);addBookingCard(el);})
+      .observe(el,{attributes:true,attributeFilter:['style','class'],childList:true});
   }
   start();
 })();true;`;
@@ -202,6 +233,11 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     }
     if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
     if (msg.__rn === 'shareText') { handleShareText(msg); return; }
+    if (msg.__rn === 'goScreen' && msg.screen) {
+      /* ফলাফলের নিচের বুকিং কার্ড থেকে — অ্যাপের নিজের স্ক্রিনে */
+      try { navigation.navigate(msg.screen); } catch (_) {}
+      return;
+    }
     if (msg.__rn === 'profiles') {
       /* পাতায় প্রোফাইল যোগ/মুছলে সেটাই ক্লাউডে — লগইন না থাকলে কিছু নয় */
       if (uid && Array.isArray(msg.list)) pushProfiles(uid, msg.list);
