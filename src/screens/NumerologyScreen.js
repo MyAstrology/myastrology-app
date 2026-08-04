@@ -15,8 +15,13 @@ header.site-header,nav.nav,#nm,#no,.nav-ov,#navOverlay,.nav-overlay{display:none
 .svc-scroll-sect{display:none!important;}
 
 /* প্রচারমূলক ও SEO অংশ — অ্যাপে ক্যালকুলেটরটাই মুখ্য, লম্বা পাঠ্য নয় */
-.daily-box,.stats,.catsw,.num-seo{display:none!important;}
-section.how,section.numsw,section.planw,section.seow,section.faq,section.ctaw{display:none!important;}
+.daily-box,.stats,.num-seo{display:none!important;}
+section.how,section.planw,section.seow,section.faq,section.ctaw{display:none!important;}
+/* ২৪ ক্যাটাগরি ও "১–৯ নয়টি গ্রহ" — দুটোই অ্যাপে কাজের: ঘরে চাপলে
+   সরাসরি সেই বিশ্লেষণে যায়, অফলাইনেও চলে। আগে লুকানো ছিল কারণ পাতার
+   নিজের CSS বান্ডলে আসত না, ঘরগুলো ভেঙে দেখাত। */
+.catsw,section.numsw{display:block!important;}
+.catsw .sh p,section.numsw .sh p{display:none!important;}  /* SEO-ঘেঁষা লাইন */
 footer,.site-footer,.fb{display:none!important;}
 
 /* পাতার গোড়া — WebView-এ স্ক্রলবার ও ছোঁয়ার ঝিলিক বেমানান */
