@@ -9,6 +9,7 @@ import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '.
 import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { handleShareText } from '../utils/webShareBridge';
+import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -138,8 +139,16 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         if (cancelled || !token || !webViewRef.current) return;
         webViewRef.current.injectJavaScript(buildBridgeSignInJS(token));
       });
+      /* সেভ করা প্রোফাইল — নেটিভ Firebase দিয়ে সরাসরি (profileBridge.js-এর
+         নোট দ্রষ্টব্য)। টোকেন-সেতু ব্যর্থ হলেও এটা কাজ করে, তাই ওয়েবসাইটে
+         সেভ করা প্রোফাইল অ্যাপে দেখা যাবেই। */
+      pullProfiles(uid).then((list) => {
+        if (cancelled || list === null || !webViewRef.current) return;
+        webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
+      });
     } else {
       webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
+      webViewRef.current.injectJavaScript(PROFILE_CLEAR_JS);
     }
     return () => { cancelled = true; };
   }, [uid, uri, remoteUrl, authLoading]);
@@ -193,6 +202,11 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     }
     if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
     if (msg.__rn === 'shareText') { handleShareText(msg); return; }
+    if (msg.__rn === 'profiles') {
+      /* পাতায় প্রোফাইল যোগ/মুছলে সেটাই ক্লাউডে — লগইন না থাকলে কিছু নয় */
+      if (uid && Array.isArray(msg.list)) pushProfiles(uid, msg.list);
+      return;
+    }
     if (msg.__rn !== 'open') return;
 
     const page = parsePageName(msg.url || '');
@@ -213,7 +227,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       const prefillQuery = qIdx >= 0 ? msg.url.slice(qIdx + 1) : '';
       navigation.navigate(screen, prefillQuery ? { prefillQuery } : undefined);
     }
-  }, [navigation, name, onPrint]);
+  }, [navigation, name, onPrint, uid]);
 
   // Intercepts window.location.href = 'page.html' navigations (e.g. _mmGoTo in match-making).
   // Returns false to block the WebView from actually navigating away.

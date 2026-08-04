@@ -25,20 +25,19 @@ body{height:auto!important;min-height:100vh!important;background:#FAF8F3!importa
 #main,main{padding:8px 12px 20px!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
-/* ── ফলাফলের নিচের বোতাম সারি — অ্যাপে শুধু "শেয়ার করুন" ──
-   ওয়েবসাইটে তিনটে বোতাম: কপি · শেয়ার · প্রিন্ট। ফোনে "কপি" আর "প্রিন্ট"
-   দুটোই অর্থহীন — অ্যান্ড্রয়েডের শেয়ার-শিটেই কপি, WhatsApp, PDF সব আছে,
-   আর তিনটে বোতাম পাশাপাশি থাকায় আসল কাজটা (শেয়ার) হারিয়ে যাচ্ছিল।
-   বোতামগুলোর কোনো id নেই, তাই ক্রম ধরে লুকানো হচ্ছে — DOM-এ সারিটা
-   সবসময় ঠিক এই ক্রমে বসে: ১ কপি · ২ শেয়ার · ৩ প্রিন্ট। */
-.share-buttons .share-btn:nth-child(1),
-.share-buttons .share-btn:nth-child(3){display:none!important;}
-.share-buttons{margin-top:22px!important;}
-.share-buttons .share-btn:nth-child(2){
+/* ── ফলাফলের নিচের "অ্যাপ শেয়ার করুন" বোতাম ──
+   বান্ডলে কপি ও প্রিন্ট আগেই বাদ দেওয়া আছে (port-result.js), তাই এখানে
+   একটাই বোতাম থাকে। আগে nth-child(1) ও (3) লুকানো হতো — তিন-বোতামের
+   যুগের নিয়ম; একটাই থাকায় সেটা উল্টে শেয়ার বোতামটাকেই লুকিয়ে দিচ্ছিল
+   (২০২৬-০৮-০৪-এ ধরা পড়ে, ফলাফলের নিচটা ফাঁকা দেখাত)। ক্রম-নির্ভর নিয়ম
+   ভঙ্গুর, তাই সব বোতামেই একই সাজ — একটাই হোক বা ভবিষ্যতে একাধিক। */
+.share-buttons{margin-top:22px!important;display:flex!important;
+  justify-content:center!important;gap:10px!important;flex-wrap:wrap!important;}
+.share-buttons .share-btn{
   background:linear-gradient(135deg,#f5b800,#e08a00)!important;
   border:none!important;color:#0a1233!important;
   font-weight:800!important;font-size:.92rem!important;
-  padding:12px 30px!important;
+  padding:12px 30px!important;border-radius:999px!important;
   box-shadow:0 3px 14px rgba(245,184,0,.32)!important;
 }
 /* ── Tables (if any appear in the analysis) ── */
