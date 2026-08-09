@@ -128,7 +128,7 @@ const RESULTS_TRACKER_JS = `(function(){
 //   queryString       — optional "a=1&b=2" appended to the file:// uri, so the
 //                       page's own location.search-based prefill logic (e.g.
 //                       result.html reading ?q=...) picks it up on load
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl }) {
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, hideResultsOnBack = true }) {
   const [uri,   setUri]   = useState(remoteUrl || null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
@@ -182,7 +182,11 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   // Navigation handle it (its default tab history behavior).
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (resultsVisibleRef.current && webViewRef.current) {
+      /* hideResultsOnBack=false — সংখ্যা জ্যোতিষের ফলাফল আলাদা পাতায়
+         (result.html), সেখানে ফিরে দেখানোর মতো কোনো ফর্ম নেই। ফলে ব্যাক
+         চাপলে ফলাফলটা লুকিয়ে যেত আর দেখানোর কিছু থাকত না — সাদা পাতা।
+         ওই পর্দায় ব্যাক মানে আগের পর্দায় ফেরা, তাই নিচে গড়িয়ে যেতে দেওয়া। */
+      if (hideResultsOnBack && resultsVisibleRef.current && webViewRef.current) {
         const hideJs = `(function(){
           var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
           var hid=false;
@@ -209,7 +213,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       return false;
     });
     return () => handler.remove();
-  }, []);
+  }, [hideResultsOnBack]);
 
   // Handles messages posted by the window.open interceptor in APP_CSS bridge
   // script, and by RESULTS_TRACKER_JS.

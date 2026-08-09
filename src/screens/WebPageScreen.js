@@ -26,14 +26,19 @@ import { colors } from '../theme/colors';
    ═══════════════════════════════════════════════════════════════ */
 const ORIGIN = 'https://myastrology.in';
 
+/* ⚠️ এখানে ইচ্ছাকৃতভাবে পটভূমির রং চাপানো হয় না। আগে
+   body{background:#FAF8F3!important} ছিল — কিন্তু এই পর্দা যেকোনো পাতা
+   দেখাতে পারে, আর যেসব পাতার নিজস্ব গাঢ় পটভূমি (যেমন 404) সেগুলোর সাদা
+   লেখা ওই ক্রিম রঙের উপর পড়ে অদৃশ্য হয়ে যেত। পাতার নিজের সাজ যতটা সম্ভব
+   অক্ষত রেখে শুধু ওয়েবসাইটের নিজস্ব হেডার/ফুটার লুকানো হয় (অ্যাপের নিজের
+   হেডার ও ট্যাব-বার তো উপরে-নিচে আছেই)। */
 const APP_CSS = `
 .site-header,.nav,.nav-overlay,.sidenav,.sidenav-overlay,.fs-overlay,
-.breadcrumb,.site-footer,footer,.wa-float,#scroll-bar,#btt,
+.breadcrumb,.site-footer,.wa-float,#scroll-bar,#btt,
 .author-byline-bar,.share-prompt-card{display:none!important;}
 :root{--nav-h:0px!important;--hdr-h:0px!important;}
 html{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;max-width:100vw!important;}
-body{height:auto!important;min-height:100vh!important;padding:0!important;margin:0!important;overflow-x:hidden!important;background:#FAF8F3!important;}
-main,#main-content{padding:10px 12px 24px!important;margin:0!important;max-width:100%!important;}
+body{height:auto!important;min-height:100vh!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
 `;

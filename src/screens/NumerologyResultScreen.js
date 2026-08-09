@@ -71,6 +71,9 @@ export function NumerologyResultScreen() {
         style={s.wv}
         injectedJS={INJECTED_JS}
         queryString={route.params?.prefillQuery}
+        /* ফলাফল আলাদা পাতায় — ফিরে দেখানোর মতো ফর্ম নেই, তাই ব্যাক চাপলে
+           ফলাফল লুকিয়ে সাদা পাতা না দেখিয়ে আগের পর্দায় ফেরাই ঠিক। */
+        hideResultsOnBack={false}
       />
     </View>
   );
