@@ -35,8 +35,7 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "myastrology.in" },
-            { "scheme": "https", "host": "www.myastrology.in" }
+            { "scheme": "https", "host": "myastrology.in" }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
         }
