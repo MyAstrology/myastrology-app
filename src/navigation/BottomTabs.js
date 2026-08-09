@@ -36,6 +36,7 @@ const lazy = {
   Panchang:        () => require('../screens/PanchangScreen').PanchangScreen,
   Rashifal:        () => require('../screens/RashifalScreen').RashifalScreen,
   RashifalDetail:  () => require('../screens/RashifalDetailScreen').RashifalDetailScreen,
+  WebPage:         () => require('../screens/WebPageScreen').WebPageScreen,
   Kundali:         () => require('../screens/KundaliScreen').KundaliScreen,
   More:            () => require('../screens/MoreScreen').MoreScreen,
   Namakaran:       () => require('../screens/NamakaranScreen').NamakaranScreen,
@@ -115,6 +116,8 @@ export function BottomTabs() {
       <Tab.Screen name="Varshaphala"      getComponent={lazy.Varshaphala}      options={HIDDEN} />
       <Tab.Screen name="Prashna"          getComponent={lazy.Prashna}          options={HIDDEN} />
       <Tab.Screen name="RashifalDetail"   getComponent={lazy.RashifalDetail}   options={HIDDEN} />
+      {/* যে পাতার নিজস্ব পর্দা নেই — deep link-এর নিরাপত্তা-জাল, মেনুতে নেই */}
+      <Tab.Screen name="WebPage"          getComponent={lazy.WebPage}          options={HIDDEN} />
       <Tab.Screen name="Blog"             getComponent={lazy.Blog}             options={HIDDEN} />
       <Tab.Screen name="News"             getComponent={lazy.News}             options={HIDDEN} />
       <Tab.Screen name="Booking"          getComponent={lazy.Booking}          options={HIDDEN} />

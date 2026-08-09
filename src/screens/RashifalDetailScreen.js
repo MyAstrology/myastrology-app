@@ -41,9 +41,11 @@ export function RashifalDetailScreen() {
   // মানটাই রাখে, ফলে গ্রীড থেকে দ্বিতীয় কোনো রাশিতে চাপ দিলেও প্রথমে
   // খোলা রাশিফলটাই দেখাত। তাই সরাসরি route.params থেকেই পড়া হয়।
   const rashiIndex = route.params?.rashiIndex ?? 0;
-  const [mode, setMode] = useState('daily');
-  // নতুন রাশি বাছলে "সাপ্তাহিক"-এ আটকে না থেকে আবার আজকের রাশিফল থেকে শুরু
-  useEffect(() => { setMode('daily'); }, [rashiIndex]);
+  // সাপ্তাহিক রাশিফলের নোটিফিকেশন/লিংক সরাসরি সাপ্তাহিক ট্যাবেই খোলে
+  const wantMode = route.params?.mode === 'weekly' ? 'weekly' : 'daily';
+  const [mode, setMode] = useState(wantMode);
+  // নতুন রাশি বাছলে আগের ট্যাবে আটকে না থেকে যেটা চাওয়া হয়েছে সেখান থেকে শুরু
+  useEffect(() => { setMode(wantMode); }, [rashiIndex, wantMode]);
 
   const sign = RASHI_SIGNS[rashiIndex];
   const url = rashifalUrl(rashiIndex, mode);
