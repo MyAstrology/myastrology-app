@@ -404,7 +404,7 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 // earlyJS আলাদা প্রপ — কারণ ডিফল্ট EARLY_CSS_JS-এ পঞ্জিকা পাতার জন্য লেখা
 // `body>*:not(main):not(...)` ব্ল্যাঙ্কেট রুল আছে। উৎসব-হাব পাতার গঠন আলাদা,
 // ওখানে ওই রুল চাপালে প্রায় পুরো পাতাটাই লুকিয়ে যেত।
-const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS, onReady }, ref) {
+const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS, onReady, onUtsab }, ref) {
   const navigation = useNavigation();
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
 
@@ -414,6 +414,19 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
     if (m && RASHIFAL_SLUG_TO_INDEX[m[1]] !== undefined) {
       navigation.navigate('RashifalDetail', { rashiIndex: RASHIFAL_SLUG_TO_INDEX[m[1]] });
       return false;
+    }
+    // পঞ্জিকার প্রতিটি ট্যাবে "নির্দিষ্ট উৎসবের তারিখ খুঁজছেন?" কার্ডটা
+    // <a href="utsab/"> — ওয়েবসাইটে ঠিকঠাক, কিন্তু অ্যাপে পাতাটা
+    // file:///…/myastro/panjika_app.html থেকে চলে, তাই ওই আপেক্ষিক লিংক
+    // file:///…/myastro/utsab/-এ যেত যেখানে কিছুই নেই — চাপলে কিছুই হতো না।
+    // এখন ধরে নিয়ে অ্যাপের নিজের "উৎসব খোঁজা" ট্যাবে পাঠানো হয়।
+    // শুধু file:// (বান্ডল-করা পঞ্জিকা) থেকে আসা লিংকই ধরা হয় — "উৎসব খোঁজা"
+    // ট্যাব নিজেই https://myastrology.in/utsab/ খোলে, ওটাকে আটকালে ওই
+    // ট্যাবটাই আর লোড হতো না, আর ভিতরের কার্ডে চাপলে স্বাভাবিকভাবেই
+    // ওয়েবসাইটের ভিতরে যাওয়া উচিত।
+    if (url.startsWith('file://')) {
+      const u = url.match(/\/utsab\/([a-z0-9-]*)\/?$/i);
+      if (u && onUtsab) { onUtsab(u[1] || ''); return false; }
     }
     return true;
   };
@@ -477,6 +490,8 @@ export function PanchangScreen() {
   const route      = useRoute();
   const insets     = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('today');
+  // '' মানে হাব-পাতা; slug থাকলে ওই উৎসবের নিজের পাতা
+  const [utsabSlug, setUtsabSlug] = useState('');
   const [menuOpen,  setMenuOpen]  = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false); // drives the "PDF তৈরি হচ্ছে…" overlay
   const pdfBusyRef   = useRef(false); // prevent double-tap while a PDF is being generated
@@ -491,6 +506,10 @@ export function PanchangScreen() {
   // সেটাই দেখাত। `key` বদলালেই আবার চলে, তাই একই কার্ডে বারবার চাপ দিলেও কাজ করে।
   const wantTab    = route.params?.tab;
   const wantScroll = route.params?.scrollTo;
+  // nonce — একই কার্ডে আবার চাপ দিলে tab/scrollTo-র মান একই থাকে, তাই
+  // নিচের useEffect আর চলত না আর ব্যবহারকারী আগের ট্যাবেই আটকে থাকতেন।
+  // ডাকার সময় Date.now() পাঠানো হয়, তাই প্রতিবারই effect আবার চলে।
+  const wantNonce  = route.params?.nonce;
   const navKey     = route.key;
   const pendingScrollRef = useRef(null);
   useEffect(() => {
@@ -503,7 +522,10 @@ export function PanchangScreen() {
       // (onReady আসবে না) — তখন সরাসরি চেষ্টা করাই একমাত্র উপায়।
       if (!wantTab || activeTab === wantTab) scrollToSection(wantScroll);
     }
-  }, [wantTab, wantScroll, navKey]);
+  }, [wantTab, wantScroll, wantNonce, navKey]);
+
+  // পঞ্জিকার ভিতরের উৎসব-লিংক থেকে অ্যাপের "উৎসব খোঁজা" ট্যাবে
+  const goUtsab = (slug) => { setUtsabSlug(slug || ''); setActiveTab('utsab'); };
 
   const handleTabReady = () => {
     const id = pendingScrollRef.current;
@@ -623,7 +645,9 @@ export function PanchangScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.innerTabScroll}>
           {INNER_TABS.map(t => (
-            <TouchableOpacity key={t.key} onPress={() => setActiveTab(t.key)}
+            /* ট্যাব-বার থেকে সরাসরি "উৎসব খোঁজা"-য় গেলে হাব-পাতাই দেখা উচিত —
+               আগের বার কোনো নির্দিষ্ট উৎসবে গিয়ে থাকলে সেটায় আটকে থাকা নয়। */
+            <TouchableOpacity key={t.key} onPress={() => { if (t.key === 'utsab') setUtsabSlug(''); setActiveTab(t.key); }}
               activeOpacity={0.7} style={[s.innerTab, activeTab === t.key && s.innerTabActive]}>
               <Text style={[s.innerTabLabel, activeTab === t.key && s.innerTabLabelActive]}>
                 {t.label}
@@ -635,11 +659,11 @@ export function PanchangScreen() {
 
       {/* ── Content ── */}
       <View style={s.content}>
-        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} onReady={handleTabReady} />}
-        {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} />}
-        {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} />}
-        {activeTab === 'utsab'    && <PjWebView ref={webViewRef} uri={UTSAB_URL} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} />}
-        {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} />}
+        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} onReady={handleTabReady} onUtsab={goUtsab} />}
+        {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'utsab'    && <PjWebView ref={webViewRef} key={utsabSlug} uri={UTSAB_URL + utsabSlug} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} onUtsab={goUtsab} />}
       </View>
 
       {/* ── PDF generation overlay — otherwise the wait (rendering a whole

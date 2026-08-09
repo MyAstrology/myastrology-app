@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { LocalWebView } from '../components/LocalWebView';
@@ -36,9 +36,14 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 
 export function RashifalDetailScreen() {
   const route = useRoute();
-  const initialIndex = route.params?.rashiIndex ?? 0;
-  const [rashiIndex] = useState(initialIndex);
+  // ⚠️ এটা লুকোনো ট্যাব-স্ক্রিন, তাই একবার খুললে আর unmount হয় না। আগে
+  // রাশিটা useState(initialIndex)-এ ধরা থাকত — useState শুধু প্রথমবারের
+  // মানটাই রাখে, ফলে গ্রীড থেকে দ্বিতীয় কোনো রাশিতে চাপ দিলেও প্রথমে
+  // খোলা রাশিফলটাই দেখাত। তাই সরাসরি route.params থেকেই পড়া হয়।
+  const rashiIndex = route.params?.rashiIndex ?? 0;
   const [mode, setMode] = useState('daily');
+  // নতুন রাশি বাছলে "সাপ্তাহিক"-এ আটকে না থেকে আবার আজকের রাশিফল থেকে শুরু
+  useEffect(() => { setMode('daily'); }, [rashiIndex]);
 
   const sign = RASHI_SIGNS[rashiIndex];
   const url = rashifalUrl(rashiIndex, mode);
@@ -63,7 +68,7 @@ export function RashifalDetailScreen() {
         </TouchableOpacity>
       </View>
       <LocalWebView
-        key={mode}
+        key={`${mode}-${rashiIndex}`}
         name={`rashifal-${mode}-${sign.dailySlug}`}
         remoteUrl={url}
         style={s.wv}

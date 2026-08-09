@@ -581,7 +581,11 @@ export function HomeScreen() {
             dayIndex={today.getDate()}
             onPress={() => {
               haptics.tap();
-              navigation.navigate('Panchang', { tab: 'today', scrollTo: 'srCard' });
+              // nonce ছাড়া দ্বিতীয়বার চাপ দিলে কিছুই হতো না: পঞ্জিকা একটা
+              // ট্যাব-স্ক্রিন, একবার খুললে আর unmount হয় না, আর প্যারামিটার
+              // দুটোর মান অপরিবর্তিত থাকায় ওপাশের useEffect আবার চলত না —
+              // ফলে ব্যবহারকারী পঞ্জিকার যে ট্যাবে ছিলেন সেখানেই থেকে যেতেন।
+              navigation.navigate('Panchang', { tab: 'today', scrollTo: 'srCard', nonce: Date.now() });
             }}
           />
 
