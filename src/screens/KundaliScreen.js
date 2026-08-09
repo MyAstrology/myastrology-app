@@ -266,7 +266,11 @@ tr.ds-cur-pd>td{background:#fff3e0!important;font-weight:700!important;}
    আঁকা হয় — toastStack body-র প্রথম সন্তান, আর অর্ডারের মোডালগুলো অনেক
    পরে; ফলে ইমেইল ছাড়া "অর্ডার সম্পন্ন করুন" চাপলে বার্তা যেত ঠিকই, কিন্তু
    মোডালের পিছনে পড়ে অদৃশ্য থাকত — মনে হতো বোতামটাই কাজ করছে না। */
-#toastStack{position:fixed!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:10001!important;pointer-events:none!important;}
+/* top:auto — ওয়েবসাইটের CSS-এ top:78px আছে, আর এখানে bottom:90px।
+   position:fixed-এ দুটোই থাকলে বাক্সটা উপর থেকে নিচ পর্যন্ত টেনে লম্বা
+   হয়ে যায়, আর বার্তা গিয়ে বসে ফর্মের ঘরগুলোর ঠিক উপরে। অ্যাপে বার্তা
+   নিচে থাকাই ভালো — ফর্ম ঢাকে না, আর কিবোর্ডের উপরেই দেখা যায়। */
+#toastStack{position:fixed!important;top:auto!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:10001!important;pointer-events:none!important;}
 .toast{display:flex!important;align-items:flex-start!important;gap:8px!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;padding:10px 12px!important;margin-bottom:8px!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;font-size:.88rem!important;pointer-events:all!important;opacity:0!important;transition:opacity .25s!important;}
 .toast.show{opacity:1!important;}
 /* ⚠️ লেখার রং এখানেই ঠিক করতে হয়। উপরের নিয়ম বাক্সটাকে সাদা করে দেয়,
