@@ -11,6 +11,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import PANJIKA_HTML from '../web-html/panjika';
+import { ensureWebFile } from '../utils/webAssetFile';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
@@ -63,21 +64,13 @@ const UTSAB_JS = `(function(){
 
 // ── Local panjika.html URI (written once per session) ─────────────────────────
 
-const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
 let _pjUri = null;
 let _pjPromise = null;
 
 async function getPjUri() {
   if (_pjUri) return _pjUri;
   if (!_pjPromise) {
-    _pjPromise = (async () => {
-      await FileSystem.makeDirectoryAsync(WEB_DIR, { intermediates: true });
-      const dest = WEB_DIR + 'panjika_app.html';
-      await FileSystem.writeAsStringAsync(dest, PANJIKA_HTML,
-        { encoding: FileSystem.EncodingType.UTF8 });
-      _pjUri = dest;
-      return dest;
-    })();
+    _pjPromise = ensureWebFile('panjika_app', PANJIKA_HTML).then(u => { _pjUri = u; return u; });
   }
   return _pjPromise;
 }

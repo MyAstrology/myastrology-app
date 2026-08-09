@@ -9,6 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from './src/context/UserContext';
 import { AuthProvider } from './src/context/AuthContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
+import { linking } from './src/navigation/linking';
 import { SplashOverlay } from './src/components/SplashOverlay';
 import { initOneSignal } from './src/utils/onesignal';
 import { logScreenView } from './src/utils/analytics';
@@ -60,6 +61,7 @@ function App() {
           {fontsLoaded ? (
             <NavigationContainer
               ref={navigationRef}
+              linking={linking}
               onReady={() => {
                 routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
               }}

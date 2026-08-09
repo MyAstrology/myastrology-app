@@ -12,6 +12,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import KUNDALI_HTML from '../web-html/kundali';
 import KUNDALI_PRINT_HTML from '../web-html/kundali-print';
+import { ensureWebFile } from '../utils/webAssetFile';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
@@ -71,14 +72,10 @@ function fixKundaliHtml(html) {
 async function getKUri() {
   if (_kUri) return _kUri;
   if (!_kPromise) {
-    _kPromise = (async () => {
-      await FileSystem.makeDirectoryAsync(WEB_DIR, { intermediates: true });
-      const dest = WEB_DIR + 'kundali_app.html';
-      await FileSystem.writeAsStringAsync(dest, fixKundaliHtml(KUNDALI_HTML),
-        { encoding: FileSystem.EncodingType.UTF8 });
-      _kUri = dest;
-      return dest;
-    })();
+    /* salt — fixKundaliHtml() বদলালে এই সংখ্যাটা বাড়াবেন, নইলে ছাপ একই
+       থেকে যাবে আর পুরনো রূপান্তর-করা ফাইলটাই ব্যবহার হতে থাকবে। */
+    _kPromise = ensureWebFile('kundali_app', KUNDALI_HTML,
+      { salt: 'fix1', transform: fixKundaliHtml }).then(u => { _kUri = u; return u; });
   }
   return _kPromise;
 }

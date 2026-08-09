@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, Linking, BackHandler } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +9,7 @@ import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { handleShareText } from '../utils/webShareBridge';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
+import { ensureWebFile } from '../utils/webAssetFile';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -28,17 +28,7 @@ function isExternalHandoffUrl(url) {
     /^https?:\/\/[^/?#]+\/[^?#]*\.pdf(\?|#|$)/i.test(url);
 }
 
-const WEB_DIR = FileSystem.documentDirectory + 'myastro/';
-const _ready  = {};
-
-async function ensureFile(name, htmlString) {
-  if (_ready[name]) return _ready[name];
-  await FileSystem.makeDirectoryAsync(WEB_DIR, { intermediates: true });
-  const dest = WEB_DIR + name + '.html';
-  await FileSystem.writeAsStringAsync(dest, htmlString, { encoding: FileSystem.EncodingType.UTF8 });
-  _ready[name] = dest;
-  return dest;
-}
+const ensureFile = (name, htmlString) => ensureWebFile(name, htmlString);
 
 // HTML page filename → React Navigation screen name
 const PAGE_TO_SCREEN = {
