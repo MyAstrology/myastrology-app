@@ -262,9 +262,21 @@ tr.ds-cur-pd>td{background:#fff3e0!important;font-weight:700!important;}
 .suggestions li{padding:10px 12px!important;cursor:pointer!important;border-bottom:1px solid #f0e8d8!important;font-size:.9rem!important;color:#3a2218!important;}
 .suggestions li:last-child{border-bottom:none!important;}
 /* ── Toast ── */
-#toastStack{position:fixed!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:9999!important;pointer-events:none!important;}
+/* z-index মোডালের (৯৯৯৯) *উপরে*। সমান হলে DOM-এ পরে থাকা জিনিস আগে
+   আঁকা হয় — toastStack body-র প্রথম সন্তান, আর অর্ডারের মোডালগুলো অনেক
+   পরে; ফলে ইমেইল ছাড়া "অর্ডার সম্পন্ন করুন" চাপলে বার্তা যেত ঠিকই, কিন্তু
+   মোডালের পিছনে পড়ে অদৃশ্য থাকত — মনে হতো বোতামটাই কাজ করছে না। */
+#toastStack{position:fixed!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:10001!important;pointer-events:none!important;}
 .toast{display:flex!important;align-items:flex-start!important;gap:8px!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;padding:10px 12px!important;margin-bottom:8px!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;font-size:.88rem!important;pointer-events:all!important;opacity:0!important;transition:opacity .25s!important;}
 .toast.show{opacity:1!important;}
+/* ⚠️ লেখার রং এখানেই ঠিক করতে হয়। উপরের নিয়ম বাক্সটাকে সাদা করে দেয়,
+   অথচ ওয়েবসাইটের নিজের সাজে বাক্স গাঢ় নীল আর লেখা ক্রিম — সেই ক্রিম
+   লেখাটাই সাদা বাক্সে এসে পড়ত, অর্থাৎ বার্তা থাকত কিন্তু পড়া যেত না।
+   পটভূমি যেখানে বদলানো হচ্ছে, লেখার রংও সেখানেই বদলানো বাধ্যতামূলক। */
+.toast,.toast-msg,.toast-close{color:#2c1a0e!important;}
+.toast-error .toast-icon{stroke:#c62828!important;}
+.toast-success .toast-icon{stroke:#2e7d32!important;}
+.toast .toast-icon{stroke:#8a6d52!important;}
 .toast-error{border-color:#e0a0a0!important;background:#fff9f9!important;}
 .toast-success{border-color:#a0c8a0!important;}
 `;
