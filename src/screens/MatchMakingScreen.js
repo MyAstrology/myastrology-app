@@ -369,7 +369,7 @@ export function MatchMakingScreen() {
   const handlePrint = useCallback((rawJson) => {
     if (pdfBusyRef.current) return;
     if (!rawJson) {
-      Alert.alert('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে কুষ্ঠি মিলন গণনা করুন।');
+      Alert.alert('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে কোষ্ঠী মিলন গণনা করুন।');
       return;
     }
     pdfBusyRef.current = true;
@@ -417,7 +417,7 @@ export function MatchMakingScreen() {
             text: 'শেয়ার করুন',
             onPress: () => Sharing.shareAsync(uri, {
               mimeType: 'application/pdf',
-              dialogTitle: 'কুষ্ঠি মিলন রিপোর্ট শেয়ার করুন',
+              dialogTitle: 'কোষ্ঠী মিলন রিপোর্ট শেয়ার করুন',
               UTI: 'com.adobe.pdf',
             }),
           },

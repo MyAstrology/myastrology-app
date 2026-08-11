@@ -250,7 +250,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     }
 
     // Cross-page navigation — forward the query string (name/dob/tob/lat/lon/…)
-    // so the target screen can prefill and auto-calculate, e.g. "কুষ্ঠি দেখুন"
+    // so the target screen can prefill and auto-calculate, e.g. "কোষ্ঠী দেখুন"
     // from match-making should open that person's chart directly, not a blank form.
     const screen = PAGE_TO_SCREEN[page];
     if (screen) {

@@ -392,7 +392,7 @@ function buildInjectedJS(css) {
           try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
         }
         if(!printData){
-          if(typeof showToast==='function')showToast('কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।','error');
+          if(typeof showToast==='function')showToast('কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।','error');
           return;
         }
         if(window.ReactNativeWebView){
@@ -476,7 +476,7 @@ export function KundaliScreen() {
     return () => { cancelled = true; };
   }, [uid, sourceUri, authLoading]);
 
-  // Coming from another screen (e.g. "কুষ্ঠি দেখুন" in match-making) with birth
+  // Coming from another screen (e.g. "কোষ্ঠী দেখুন" in match-making) with birth
   // details in route.params — load kundali.html with those as a query string so
   // its own prefillFromURL()+auto-calc (auto=1) shows that person's chart
   // directly, instead of landing on a blank form.
@@ -561,7 +561,7 @@ export function KundaliScreen() {
                   if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
                   if (msg.type === 'generatePdf') {
                     if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
-                      Alert.alert('ত্রুটি', 'কুষ্ঠির তথ্য পাওয়া যায়নি। প্রথমে কুষ্ঠি গণনা করুন।');
+                      Alert.alert('ত্রুটি', 'কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।');
                       return;
                     }
                     if (pdfBusyRef.current) return;
