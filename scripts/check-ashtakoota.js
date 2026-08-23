@@ -71,5 +71,56 @@ for (const [ref, bR, gR, bG, gG, em, eg, er] of ROWS) {
     console.log(`❌ ${ref.padEnd(14)} ${k.padEnd(11)} EKundali ${exp[k]} · বান্ডিল ${got[k]}`);
   }
 }
-console.log(bad ? `\n⚠️  ${bad}টি ঘর মেলেনি (${ok}টি মিলেছে)` : `✓ ${ok}টি ঘরই EKundali-র ছাপা ফলের সঙ্গে মেলে`);
+/* দ্বিতীয় দম্পতি — santosh (বর, উত্তরাষাঢ়া/মকর) ও rakhi (কন্যা,
+   উত্তরফাল্গুনী/সিংহ)। এখানে AstroSage ও EKundali **দুটোই** আছে; যে ছ-টা
+   কূটে দুজনে একমত সেগুলোই বাঁধা হলো। এই জোড়াতেই নাড়ীর ভুলটা ধরা পড়ে —
+   দুই সফটওয়্যার বলে ৮, আমাদের ইঞ্জিন বলছিল ০ (মিথ্যা নাড়ীদোষ)। */
+const C2 = { gn: 'উত্তরফাল্গুনী', gr: 'সিংহ', bn: 'উত্তরাষাঢ়া', br: 'মকর' };
+const C2_EXP = { 'বর্ণ': 0, 'তারা': 3, 'গ্রহমৈত্রী': 0, 'গণ': 6, 'ভকূট': 0, 'নাড়ী': 8 };
+const C2_GOT = {
+  'বর্ণ':       e.calcVarna(C2.gr, C2.br).points,
+  'তারা':       e.calcTara(C2.gn, C2.bn).points,
+  'গ্রহমৈত্রী': e.calcGrahaMaitri(C2.gr, C2.br).points,
+  'গণ':         e.calcGana(C2.gn, C2.bn).points,
+  'ভকূট':       e.calcRashi(C2.gr, C2.br).points,
+  'নাড়ী':      e.calcNadi(C2.gn, C2.bn).points
+};
+for (const k of Object.keys(C2_EXP)) {
+  if (C2_GOT[k] === C2_EXP[k]) { ok++; continue; }
+  bad++;
+  console.log(`❌ দ্বিতীয় দম্পতি · ${k.padEnd(11)} দুই সফটওয়্যার ${C2_EXP[k]} · বান্ডিল ${C2_GOT[k]}`);
+}
+
+// নাড়ীর ২৭টা নক্ষত্র শাস্ত্রীয় আগুপিছু ছকে আছে কিনা
+const NAK_ORDER = ['অশ্বিনী','ভরণী','কৃত্তিকা','রোহিণী','মৃগশিরা','আর্দ্রা','পুনর্বসু','পুষ্যা','অশ্লেষা','মঘা','পূর্বফাল্গুনী','উত্তরফাল্গুনী','হস্তা','চিত্রা','স্বাতী','বিশাখা','অনুরাধা','জ্যেষ্ঠা','মূলা','পূর্বাষাঢ়া','উত্তরাষাঢ়া','শ্রবণা','ধনিষ্ঠা','শতভিষা','পূর্বভাদ্রপদ','উত্তরভাদ্রপদ','রেবতী'];
+const NB = ['আদ্য','মধ্য','অন্ত্য','অন্ত্য','মধ্য','আদ্য','আদ্য','মধ্য','অন্ত্য'];
+const NEXP = [...NB, ...[...NB].reverse(), ...NB];
+NAK_ORDER.forEach((nak, i) => {
+  if (e.nakshatraNadi[nak] === NEXP[i]) { ok++; return; }
+  bad++;
+  console.log(`❌ নাড়ী: ${nak} → ${e.nakshatraNadi[nak]}, হওয়ার কথা ${NEXP[i]}`);
+});
+
+/* ⚠️ উপরের সব পরীক্ষা calc*() সরাসরি ডাকে, তাই match() পুরো ভেঙে গেলেও
+   সেগুলো সবুজই থাকত — পোর্ট করার সময় ঠিক সেটাই একবার ঘটেছিল (চারটে
+   `const` লাইন মুছে গিয়েছিল, তবু ৬৩/৬৩ দেখাচ্ছিল)। তাই আসল প্রবেশপথটাও
+   চালিয়ে দেখা হয়, আর তার ফল সরাসরি ডাকের সঙ্গে মিলিয়ে নেওয়া হয়। */
+try {
+  const r = e.match(
+    { moonNakshatra: C2.gn, moonRashi: C2.gr, lagnaRashi: C2.gr },
+    { moonNakshatra: C2.bn, moonRashi: C2.br, lagnaRashi: C2.br });
+  const direct = { varna: C2_GOT['বর্ণ'], tara: C2_GOT['তারা'], grahaMaitri: C2_GOT['গ্রহমৈত্রী'],
+                   gana: C2_GOT['গণ'], rashi: C2_GOT['ভকূট'], nadi: C2_GOT['নাড়ী'] };
+  for (const k of Object.keys(direct)) {
+    const got = r.kootas && r.kootas[k] && r.kootas[k].points;
+    if (got === direct[k]) { ok++; continue; }
+    bad++;
+    console.log(`❌ match() · ${k}: সরাসরি ডাকে ${direct[k]}, match()-এ ${got}`);
+  }
+} catch (err) {
+  bad++;
+  console.log('❌ match() চালাতেই ব্যর্থ — ' + err.message);
+}
+
+console.log(bad ? `\n⚠️  ${bad}টি ঘর মেলেনি (${ok}টি মিলেছে)` : `✓ ${ok}টি ঘরই EKundali/AstroSage-এর ছাপা ফলের সঙ্গে মেলে`);
 process.exit(bad ? 1 : 0);
