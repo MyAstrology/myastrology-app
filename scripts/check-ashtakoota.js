@@ -59,12 +59,15 @@ for (const g of ['দেব', 'নর', 'রাক্ষস'])
 
 let bad = 0, ok = 0;
 for (const [ref, bR, gR, bG, gG, em, eg, er] of ROWS) {
+  /* ⚠️ গণকূট এখানে আর মেলানো হয় না। মালিকের শাস্ত্রগ্রন্থে (পৃ. ৩৩১)
+     গণের সারণি তিনটে ঘরে AstroSage/EKundali-র থেকে আলাদা, আর বইটাই
+     আমাদের প্রমাণ। বইয়ের সারণি নিচে আলাদা করে যাচাই হয়। */
   const got = {
     'গ্রহমৈত্রী': e.calcGrahaMaitri(gR, bR).points,
-    'গণ':         e.calcGana(nakOf[gG], nakOf[bG]).points,
     'ভকূট':       e.calcRashi(gR, bR).points
   };
-  const exp = { 'গ্রহমৈত্রী': em, 'গণ': eg, 'ভকূট': er };
+  const exp = { 'গ্রহমৈত্রী': em, 'ভকূট': er };
+  void eg; void bG; void gG;
   for (const k of Object.keys(exp)) {
     if (got[k] === exp[k]) { ok++; continue; }
     bad++;
@@ -77,6 +80,7 @@ for (const [ref, bR, gR, bG, gG, em, eg, er] of ROWS) {
    দুই সফটওয়্যার বলে ৮, আমাদের ইঞ্জিন বলছিল ০ (মিথ্যা নাড়ীদোষ)। */
 const C2 = { gn: 'উত্তরফাল্গুনী', gr: 'সিংহ', bn: 'উত্তরাষাঢ়া', br: 'মকর' };
 const C2_EXP = { 'বর্ণ': 0, 'তারা': 3, 'গ্রহমৈত্রী': 0, 'গণ': 6, 'ভকূট': 0, 'নাড়ী': 8 };
+// (এখানে দুজনেরই একই গণ, তাই বই ও সফটওয়্যার দুই-ই ৬ দেয় — মিলিয়ে দেখা নিরাপদ)
 const C2_GOT = {
   'বর্ণ':       e.calcVarna(C2.gr, C2.br).points,
   'তারা':       e.calcTara(C2.gn, C2.bn).points,
@@ -122,5 +126,41 @@ try {
   console.log('❌ match() চালাতেই ব্যর্থ — ' + err.message);
 }
 
-console.log(bad ? `\n⚠️  ${bad}টি ঘর মেলেনি (${ok}টি মিলেছে)` : `✓ ${ok}টি ঘরই EKundali/AstroSage-এর ছাপা ফলের সঙ্গে মেলে`);
+/* মালিকের শাস্ত্রগ্রন্থের গণ-সারণি (পৃ. ৩৩১) — বান্ডিলেও পৌঁছেছে কিনা */
+const GANA_BOOK = {
+  'দেব':    { 'দেব': 6, 'নর': 5, 'রাক্ষস': 0 },
+  'নর':     { 'দেব': 4, 'নর': 6, 'রাক্ষস': 0 },
+  'রাক্ষস': { 'দেব': 2, 'নর': 1, 'রাক্ষস': 6 }
+};
+for (const b of Object.keys(GANA_BOOK)) for (const g of Object.keys(GANA_BOOK[b])) {
+  const got = e.calcGana(nakOf[g], nakOf[b]).points;
+  if (got === GANA_BOOK[b][g]) { ok++; continue; }
+  bad++;
+  console.log(`❌ গণ (বই) বর ${b} × কন্যা ${g}: বান্ডিল ${got}, বইয়ে ${GANA_BOOK[b][g]}`);
+}
+
+/* বশ্যকূট — বইয়ের বশ্য রাশিচক্রের কয়েকটি নমুনা ঘর (পৃ. ৩৩০)।
+   পুরো চক্রটা services/scripts/verify-mm-book.js-এ যাচাই হয়; এখানে
+   শুধু দেখা হয় যে পোর্টটা সত্যিই এসেছে (পুরনো ছকে এগুলো অন্য ফল দিত)। */
+const VASHYA_SAMPLE = [
+  ['কন্যা', 'মীন', 2], ['মকর', 'সিংহ', 0], ['বৃশ্চিক', 'তুলা', 0],
+  ['মিথুন', 'মকর', 2], ['কর্কট', 'বৃশ্চিক', 2], ['সিংহ', 'কুম্ভ', 2]
+];
+for (const [br, gr, exp] of VASHYA_SAMPLE) {
+  const got = e.calcVashya(gr, br, 5, 5).points;
+  if (got === exp) { ok++; continue; }
+  bad++;
+  console.log(`❌ বশ্য বর ${br} × কন্যা ${gr}: বান্ডিল ${got}, বইয়ে ${exp}`);
+}
+
+/* যোনিকূট — বইয়ের ধাপ ০/২/৪, পুরনো ১.৫ ফিরে আসেনি তো? */
+{
+  let oneAndHalf = 0;
+  for (const g of Object.keys(e.nakshatraYoni)) for (const b of Object.keys(e.nakshatraYoni))
+    if (e.calcYoni(g, b).points === 1.5) oneAndHalf++;
+  if (oneAndHalf) { bad++; console.log(`❌ যোনি: ${oneAndHalf}টি ঘরে এখনো পুরনো ১.৫ বসছে`); }
+  else ok++;
+}
+
+console.log(bad ? `\n⚠️  ${bad}টি ঘর মেলেনি (${ok}টি মিলেছে)` : `✓ ${ok}টি ঘরই মিলেছে (মালিকের শাস্ত্রগ্রন্থ + EKundali/AstroSage)`);
 process.exit(bad ? 1 : 0);
