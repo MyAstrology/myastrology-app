@@ -142,9 +142,11 @@ for (const b of Object.keys(GANA_BOOK)) for (const g of Object.keys(GANA_BOOK[b]
 /* বশ্যকূট — বইয়ের বশ্য রাশিচক্রের কয়েকটি নমুনা ঘর (পৃ. ৩৩০)।
    পুরো চক্রটা services/scripts/verify-mm-book.js-এ যাচাই হয়; এখানে
    শুধু দেখা হয় যে পোর্টটা সত্যিই এসেছে (পুরনো ছকে এগুলো অন্য ফল দিত)। */
+/* গুণবিভাগ পঞ্জিকার (খ ৩২): সৌখ্য ২ · বৈর-বশ্য ১ · বশ্যভক্ষ্য ০.৫ ·
+   বৈর-ভক্ষ্য ০ — চারটি ধাপ, দুটি নয়। */
 const VASHYA_SAMPLE = [
-  ['কন্যা', 'মীন', 2], ['মকর', 'সিংহ', 0], ['বৃশ্চিক', 'তুলা', 0],
-  ['মিথুন', 'মকর', 2], ['কর্কট', 'বৃশ্চিক', 2], ['সিংহ', 'কুম্ভ', 2]
+  ['কন্যা', 'মীন', 1], ['মকর', 'সিংহ', 0.5], ['বৃশ্চিক', 'তুলা', 0.5],
+  ['মিথুন', 'মকর', 1], ['কর্কট', 'বৃশ্চিক', 2], ['সিংহ', 'কুম্ভ', 1]
 ];
 for (const [br, gr, exp] of VASHYA_SAMPLE) {
   const got = e.calcVashya(gr, br, 5, 5).points;
@@ -160,6 +162,20 @@ for (const [br, gr, exp] of VASHYA_SAMPLE) {
     if (e.calcYoni(g, b).points === 1.5) oneAndHalf++;
   if (oneAndHalf) { bad++; console.log(`❌ যোনি: ${oneAndHalf}টি ঘরে এখনো পুরনো ১.৫ বসছে`); }
   else ok++;
+}
+
+
+/* ভৌমদোষ — মালিকের রায় (২০২৬-০৮-২৪): লগ্ন **বা চন্দ্র** থেকে ১/৪/৭/৮/১২।
+   ⚠️ পুরনো বান্ডিলে দ্বিতীয় ঘরও ধরা ছিল, আর চন্দ্র থেকে দেখাই হতো না। */
+{
+  const R = e.rashiNames, H = [1, 4, 7, 8, 12];
+  let n = 0;
+  for (let lag = 0; lag < 12; lag++) for (let moon = 0; moon < 12; moon++) for (let mars = 0; mars < 12; mars++) {
+    const exp = H.indexOf(((mars - lag + 12) % 12) + 1) !== -1 || H.indexOf(((mars - moon + 12) % 12) + 1) !== -1;
+    if (e.calcManglik(R[mars], R[lag], 'boy', R[moon]).hasDosha === exp) n++;
+    else { bad++; console.log(`❌ ভৌমদোষ লগ্ন ${R[lag]} চন্দ্র ${R[moon]} মঙ্গল ${R[mars]}`); break; }
+  }
+  if (n === 1728) ok++;
 }
 
 console.log(bad ? `\n⚠️  ${bad}টি ঘর মেলেনি (${ok}টি মিলেছে)` : `✓ ${ok}টি ঘরই মিলেছে (মালিকের শাস্ত্রগ্রন্থ + EKundali/AstroSage)`);
