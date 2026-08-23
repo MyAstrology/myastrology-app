@@ -62,11 +62,12 @@ for (const [ref, bR, gR, bG, gG, em, eg, er] of ROWS) {
   /* ⚠️ গণকূট এখানে আর মেলানো হয় না। মালিকের শাস্ত্রগ্রন্থে (পৃ. ৩৩১)
      গণের সারণি তিনটে ঘরে AstroSage/EKundali-র থেকে আলাদা, আর বইটাই
      আমাদের প্রমাণ। বইয়ের সারণি নিচে আলাদা করে যাচাই হয়। */
-  const got = {
-    'গ্রহমৈত্রী': e.calcGrahaMaitri(gR, bR).points,
-    'ভকূট':       e.calcRashi(gR, bR).points
-  };
-  const exp = { 'গ্রহমৈত্রী': em, 'ভকূট': er };
+  /* ⚠️ ভকূটও আর মেলানো হয় না। পঞ্জিকা দ্বিদ্বাদশ/নবপঞ্চমকে **অসম** ধরে
+     (বর থেকে কন্যা দ্বাদশে/নবমে হলে শুভ), সফটওয়্যারগুলো সবটাই দোষ ধরে।
+     বইয়ের নিয়মটা নিচে আলাদা করে যাচাই হয়। */
+  const got = { 'গ্রহমৈত্রী': e.calcGrahaMaitri(gR, bR).points };
+  const exp = { 'গ্রহমৈত্রী': em };
+  void er;
   void eg; void bG; void gG;
   for (const k of Object.keys(exp)) {
     if (got[k] === exp[k]) { ok++; continue; }
@@ -79,14 +80,13 @@ for (const [ref, bR, gR, bG, gG, em, eg, er] of ROWS) {
    কূটে দুজনে একমত সেগুলোই বাঁধা হলো। এই জোড়াতেই নাড়ীর ভুলটা ধরা পড়ে —
    দুই সফটওয়্যার বলে ৮, আমাদের ইঞ্জিন বলছিল ০ (মিথ্যা নাড়ীদোষ)। */
 const C2 = { gn: 'উত্তরফাল্গুনী', gr: 'সিংহ', bn: 'উত্তরাষাঢ়া', br: 'মকর' };
-const C2_EXP = { 'বর্ণ': 0, 'তারা': 3, 'গ্রহমৈত্রী': 0, 'গণ': 6, 'ভকূট': 0, 'নাড়ী': 8 };
+const C2_EXP = { 'বর্ণ': 0, 'তারা': 3, 'গ্রহমৈত্রী': 0, 'গণ': 6, 'নাড়ী': 8 };
 // (এখানে দুজনেরই একই গণ, তাই বই ও সফটওয়্যার দুই-ই ৬ দেয় — মিলিয়ে দেখা নিরাপদ)
 const C2_GOT = {
   'বর্ণ':       e.calcVarna(C2.gr, C2.br).points,
   'তারা':       e.calcTara(C2.gn, C2.bn).points,
   'গ্রহমৈত্রী': e.calcGrahaMaitri(C2.gr, C2.br).points,
   'গণ':         e.calcGana(C2.gn, C2.bn).points,
-  'ভকূট':       e.calcRashi(C2.gr, C2.br).points,
   'নাড়ী':      e.calcNadi(C2.gn, C2.bn).points
 };
 for (const k of Object.keys(C2_EXP)) {
@@ -113,8 +113,9 @@ try {
   const r = e.match(
     { moonNakshatra: C2.gn, moonRashi: C2.gr, lagnaRashi: C2.gr },
     { moonNakshatra: C2.bn, moonRashi: C2.br, lagnaRashi: C2.br });
+  /* ভকূট বাদ — উপরে দেখা, পঞ্জিকার নিয়ম আলাদা। */
   const direct = { varna: C2_GOT['বর্ণ'], tara: C2_GOT['তারা'], grahaMaitri: C2_GOT['গ্রহমৈত্রী'],
-                   gana: C2_GOT['গণ'], rashi: C2_GOT['ভকূট'], nadi: C2_GOT['নাড়ী'] };
+                   gana: C2_GOT['গণ'], nadi: C2_GOT['নাড়ী'] };
   for (const k of Object.keys(direct)) {
     const got = r.kootas && r.kootas[k] && r.kootas[k].points;
     if (got === direct[k]) { ok++; continue; }
@@ -176,6 +177,33 @@ for (const [br, gr, exp] of VASHYA_SAMPLE) {
     else { bad++; console.log(`❌ ভৌমদোষ লগ্ন ${R[lag]} চন্দ্র ${R[moon]} মঙ্গল ${R[mars]}`); break; }
   }
   if (n === 1728) ok++;
+}
+
+
+/* রাশিকূট — পঞ্জিকার সাত-ধাপ (খ ৩৩) বান্ডিলেও পৌঁছেছে কিনা */
+{
+  const R = e.rashiNames;
+  const CASES = [
+    ['মেষ', 'মেষ', 0, 1, 1, 2, 7, 'এক রাশি ভিন্ন নক্ষত্র'],
+    ['মেষ', 'মেষ', 0, 0, 2, 2, 0, 'এক রাশি এক নক্ষত্র এক চরণ'],
+    ['মেষ', 'মেষ', 0, 0, 1, 3, 7, 'এক রাশি এক নক্ষত্র ভিন্ন চরণ'],
+    ['মেষ', 'বৃষ', 2, 2, 1, 4, 5, 'ভিন্ন রাশি এক নক্ষত্র']
+  ];
+  for (const [gr, br, gn, bn, gp, bp, exp, lbl] of CASES) {
+    const got = e.calcRashi(gr, br, { girlNak: gn, boyNak: bn, girlPada: gp, boyPada: bp }).points;
+    if (got === exp) { ok++; continue; }
+    bad++;
+    console.log(`❌ রাশিকূট (${lbl}): বান্ডিল ${got}, বইয়ে ${exp}`);
+  }
+  /* সাতটা ধাপের প্রতিটাই বান্ডিলে সত্যিই বেরোয় তো? */
+  const seen = {};
+  for (let g = 0; g < 12; g++) for (let b = 0; b < 12; b++)
+    for (const [gn, bn] of [[0, 5], [5, 0], [3, 3]])
+      seen[e.calcRashi(R[g], R[b], { girlNak: gn, boyNak: bn, girlPada: 1, boyPada: 2 }).points] = 1;
+  for (const lv of [0, 1, 4, 5, 6, 7]) {
+    if (seen[lv]) ok++;
+    else { bad++; console.log(`❌ রাশিকূটে ${lv} গুণের কোনো নমুনাই বান্ডিলে এল না`); }
+  }
 }
 
 console.log(bad ? `\n⚠️  ${bad}টি ঘর মেলেনি (${ok}টি মিলেছে)` : `✓ ${ok}টি ঘরই মিলেছে (মালিকের শাস্ত্রগ্রন্থ + EKundali/AstroSage)`);
