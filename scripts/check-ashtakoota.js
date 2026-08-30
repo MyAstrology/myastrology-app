@@ -200,7 +200,9 @@ for (const [br, gr, exp] of VASHYA_SAMPLE) {
   for (let g = 0; g < 12; g++) for (let b = 0; b < 12; b++)
     for (const [gn, bn] of [[0, 5], [5, 0], [3, 3]])
       seen[e.calcRashi(R[g], R[b], { girlNak: gn, boyNak: bn, girlPada: 1, boyPada: 2 }).points] = 1;
-  for (const lv of [0, 1, 4, 5, 6, 7]) {
+  /* ⚠️ ২০২৬-০৮-৩০: ৪ ও ১ ধাপ তুলে দেওয়া হয়েছে — পঞ্জিকার ছাপা
+     যোটকচক্র অশুভ রাশিকূটে ০-ই চায় (services/CLAUDE.md দেখুন)। */
+  for (const lv of ['0', '5', '6', '7']) {
     if (seen[lv]) ok++;
     else { bad++; console.log(`❌ রাশিকূটে ${lv} গুণের কোনো নমুনাই বান্ডিলে এল না`); }
   }
