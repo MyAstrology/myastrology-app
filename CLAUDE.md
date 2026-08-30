@@ -84,3 +84,35 @@ builds, Firestore rules changes, OneSignal config).
 - Commit messages and in-app strings are Bengali; comments explain *why*
   (a constraint, a past bug, a platform quirk), not *what* — follow that
   pattern rather than adding narrative comments.
+
+## Porting one inlined `src/*.js` into a bundle — the safe, verifiable way
+
+`scripts/bundle-web-assets.js` inlines each website `<script src="src/x.js">`
+as `<script>/*src/x.js*/\n…\n</script>` inside the exported string. So a
+whole engine file can be swapped **without** regenerating the bundle and
+losing the hand-applied patches:
+
+1. `JSON.parse` the `export default "…"` body back into the HTML string.
+2. Find `<script>/*src/match-making.js*/\n` and the next `\n</script>`.
+3. Replace only what is between them with the website file's contents.
+4. Re-emit `export default ${JSON.stringify(html)};` with the same header.
+
+**Then prove the edit was local**: assert the prefix before the block and
+the suffix after it are character-identical to the originals. And **prove
+the result is right**: re-decode the bundle, pull the block out, run it in
+a `vm` context (`{window:{}, module:{exports:{}}}` is enough for
+`match-making.js`), and compare `match()` output against the website engine
+over a sweep — 6,048 couples, zero differences, is what "ported" should
+mean. `node --check` alone only proves it parses.
+
+This worked because `src/match-making.js` is self-contained — it defines
+its own `MM_TEXT`/`_mm()`, and with no overlay loaded `_mm()` returns the
+Bengali thunk, so the i18n plumbing is inert in the app and the Bengali
+output is byte-identical. Check that self-containment before using this on
+another file; an engine that expects a helper defined elsewhere in the page
+will fail silently at runtime, not at parse time.
+
+⚠️ The page-level code (`_mmDoshaNashakHtml`, `_MM_DOSHA_NAME`, …) is a
+**separate** hand-maintained copy without the `_mp()` wrappers. Swapping
+the engine does not update it — new `doshaNashak` keys need their Bengali
+names added there by hand, or the reader sees a raw key like `rashi`.
