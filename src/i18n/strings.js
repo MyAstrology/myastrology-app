@@ -1143,5 +1143,33 @@ export const STRINGS = {
   "ইন্টারনেট নেই — এই গণনাটি আপাতত বাংলাতেই দেখানো হচ্ছে।": {
     "en": "No internet — this calculation is shown in Bengali for now.",
     "hi": "इंटरनेट नहीं है — यह गणना फ़िलहाल बंगाली में दिखाई जा रही है।"
+  },
+  "জন্মকুণ্ডলী PDF": {
+    "en": "Birth chart PDF",
+    "hi": "जन्मकुंडली PDF"
+  },
+  "কোষ্ঠী মিলন PDF": {
+    "en": "Kundali matching PDF",
+    "hi": "कुंडली मिलान PDF"
+  },
+  "সংখ্যা জ্যোতিষ PDF": {
+    "en": "Numerology PDF",
+    "hi": "अंक ज्योतिष PDF"
+  },
+  "বর্ষফল PDF": {
+    "en": "Varshaphala PDF",
+    "hi": "वर्षफल PDF"
+  },
+  "বার্ষিক পঞ্জিকা PDF": {
+    "en": "Yearly Panjika PDF",
+    "hi": "वार्षिक पंजिका PDF"
+  },
+  "প্রিমিয়াম কুণ্ডলী রিপোর্ট": {
+    "en": "Premium kundali report",
+    "hi": "प्रीमियम कुंडली रिपोर्ट"
+  },
+  "VIP পরামর্শ ও সমাধান": {
+    "en": "VIP consultation and remedy",
+    "hi": "VIP परामर्श और समाधान"
   }
 };

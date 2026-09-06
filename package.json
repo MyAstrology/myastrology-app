@@ -13,7 +13,8 @@
     "check:splash": "node scripts/check-splash.js",
     "check:parse": "node scripts/check-parse.js",
     "verify-app-i18n": "node scripts/verify-app-i18n.js",
-    "build-app-terms": "node scripts/build-app-terms.js"
+    "build-app-terms": "node scripts/build-app-terms.js",
+    "verify-play-billing": "node scripts/verify-play-billing.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

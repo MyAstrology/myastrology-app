@@ -51,5 +51,16 @@ service cloud.firestore {
                     && request.resource.data.ts is number;
       allow read, list, update, delete: if isAdmin();
     }
+
+    // ── Play Billing-এ কেনা অধিকার ──
+    // পাঠক নিজের অধিকার **পড়তে** পারেন (অ্যাপ দেখায় কোনটা কেনা আছে),
+    // কিন্তু লিখতে পারেন না — লেখে কেবল verifyPlayPurchase ফাংশন, Admin
+    // SDK দিয়ে, Google-এর কাছে টোকেন যাচাই করার পরে।
+    // ⚠️ ক্লায়েন্টকে লেখার অধিকার দিলে যাচাইয়ের গোটা ব্যবস্থাটাই অর্থহীন
+    // হতো — যে কেউ নিজের ঘরে "কেনা হয়েছে" লিখে দিতে পারতেন।
+    match /entitlements/{uid}/items/{orderId} {
+      allow read, list: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
   }
 }
