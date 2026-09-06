@@ -69,7 +69,15 @@ export const linking = {
      এখানে ঠিকানার একটা টুকরোকে সম্পূর্ণ আলাদা প্যারামিটারে বদলাতে হয়।
      কোনোটাই না মিললে নিচে স্বাভাবিক নিয়মেই যায়। */
   getStateFromPath(path, options) {
-    const clean = String(path).replace(/[?#].*$/, '').replace(/\.html$/i, '').replace(/\/+$/, '');
+    /* ভাষা-উপসর্গ ছেঁটে ফেলা — ওয়েবসাইটে একই পাতার তিনটে ঠিকানা
+       (/kundali · /en/kundali · /hi/kundali)। উপসর্গ না ছাঁটলে
+       /en/kundali কোনো পর্দার সঙ্গে মিলত না আর পাঠক সাধারণ WebPage-এ
+       পড়তেন — শেয়ার করা ইংরেজি লিংকে ক্যালকুলেটরটাই খুলত না।
+       ⚠️ উপসর্গ দেখে অ্যাপের ভাষা **বদলানো হয় না** — লিংক পাঠানো আর
+       পাঠকের নিজের পছন্দ এক জিনিস নয়; বদলালে একটা লিংকে চাপ দিয়েই
+       কারো গোটা অ্যাপের ভাষা পাল্টে যেত। */
+    const clean = String(path).replace(/[?#].*$/, '').replace(/\.html$/i, '')
+      .replace(/^\/?(en|hi)(?=\/|$)/i, '').replace(/\/+$/, '');
 
     // সাপ্তাহিক রাশিফল — ঠিকানায় ইংরেজি নাম (rashifal/saptahik/aries)
     let m = clean.match(/^\/?rashifal\/saptahik\/([a-z]+)$/i);
@@ -91,7 +99,9 @@ export const linking = {
       return { routes: [{ name: 'Blog', params: { slug: m[1] } }] };
     }
 
-    const std = getStateFromPath(path, options);
+    /* ⚠️ `path` নয়, `clean` — নইলে ভাষা-উপসর্গ ছাঁটাই বৃথা যেত, কারণ
+       সাধারণ ম্যাচারটা আসল ঠিকানাটাই দেখত আর /en/kundali কিছুতেই মিলত না। */
+    const std = getStateFromPath(clean || '/', options);
     if (std) return std;
 
     /* কিছুই মিলল না — ওয়েবসাইটে ৫০০-র বেশি পাতা, অ্যাপে পর্দা দুই ডজন।

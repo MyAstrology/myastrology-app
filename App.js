@@ -8,6 +8,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from './src/context/UserContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { LanguageGate } from './src/components/LanguageGate';
 import { AuthProvider } from './src/context/AuthContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
 import { linking } from './src/navigation/linking';
@@ -83,6 +84,9 @@ function App() {
           )}
         </AuthProvider>
       </UserProvider>
+        {/* প্রথম চালুর ভাষা-পর্দা — ঠিক একবার, নেভিগেশনের উপরে।
+            স্প্ল্যাশের নিচে রাখা হয়েছে যাতে ছবিটা শেষ হওয়ার পর দেখা যায়। */}
+        <LanguageGate />
       </LanguageProvider>
       {showSplash && <SplashOverlay opacity={splashOpacity} scale={splashScale} />}
     </SafeAreaProvider>

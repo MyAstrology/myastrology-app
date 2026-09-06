@@ -19,6 +19,14 @@ const { execFileSync } = require('child_process');
 const APP = path.resolve(__dirname, '..');
 const { BN_G, strip } = require('./bn-scan.js');
 
+/* ── ইচ্ছাকৃত ব্যতিক্রম ──
+   LanguageGate প্রথম চালুর ভাষা-পর্দা। পাঠক তখনো ভাষাই বাছেননি, তাই
+   ওখানে কোনো লেখা অনুবাদ করা হয় না — তিন ভাষার লাইনই পাশাপাশি দেখানো
+   হয়, যাতে যিনি যেটা পড়তে পারেন সেটাই পড়েন। ব্যতিক্রমটা নাম ধরে লেখা,
+   আর নিচে ⑦-এ যাচাই করা হয় যে ফাইলটা সত্যিই তিন ভাষা বহন করে — নইলে
+   "ব্যতিক্রম" মানে দাঁড়াত "যা খুশি অনূদিত না রাখার ছাড়পত্র"। */
+const NO_TRANSLATE = new Set(['src/components/LanguageGate.js']);
+
 let checks = 0, fail = 0;
 const ok  = m => { checks++; console.log('  \x1b[32m✓\x1b[0m ' + m); };
 const bad = m => { checks++; fail++; console.log('  \x1b[31m✗\x1b[0m ' + m); };
@@ -74,6 +82,7 @@ console.log('① প্রতিটি বাংলা লেখার en ও hi
 {
   const miss = [];
   for (const [s, f] of found) {
+    if (NO_TRANSLATE.has(path.relative(APP, f))) continue;
     const h = TABLE[nfc(s)];
     if (!h || !h.en || !h.hi) miss.push([s, path.relative(APP, f)]);
   }
@@ -136,6 +145,7 @@ console.log('④ বাংলা লেখা যে ফাইলে, সেখ�
     const src = fs.readFileSync(f, 'utf8');
     /* কেবল সেই ফাইল যেখানে সত্যিই <Text> রেন্ডার হয় */
     if (!/<Text[\s>]/.test(src)) continue;
+    if (NO_TRANSLATE.has(path.relative(APP, f))) continue;
     if (!/from '.*i18n\/Text'/.test(src)) missing.push(path.relative(APP, f));
   }
   if (!missing.length) ok('বাংলা লেখাওয়ালা প্রতিটি কম্পোনেন্ট-ফাইলেই মোড়কটা আমদানি হয়েছে');
@@ -186,6 +196,56 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
   const note = 'ইন্টারনেট নেই';
   if (lw.includes(note) && ks.includes(note)) ok('নেট না থাকলে বাংলায় ফেরার কথা পাঠককে বলা হয় (নীরব নয়)');
   else bad('অফলাইন ফলব্যাক নীরব — পাঠক ইংরেজি খোলসে বাংলা ভিতর দেখতেন, কিছু না জেনে');
+}
+
+console.log('⑦ প্রথম চালুর ভাষা-পর্দা');
+{
+  const gate = path.join(APP, 'src/components/LanguageGate.js');
+  if (!fs.existsSync(gate)) bad('LanguageGate.js নেই — হিন্দি/ইংরেজি পাঠক বাংলা পর্দায় আটকে যাবেন');
+  else {
+    const g = fs.readFileSync(gate, 'utf8');
+    /* ব্যতিক্রমটা তখনই বৈধ যখন ফাইলটা সত্যিই তিন ভাষা বহন করে */
+    const three = ['ভাষা বেছে নিন', 'भाषा चुनें', 'Choose your language'];
+    const has = three.filter(t => g.includes(t));
+    if (has.length === 3) ok('ভাষা-পর্দায় তিন ভাষার লেখাই আছে (তাই অনুবাদ-ছাড়টা বৈধ)');
+    else bad(`ভাষা-পর্দায় ${3 - has.length}টি ভাষার লেখা নেই — ওই ভাষার পাঠক কিছু বুঝতেন না`);
+
+    /* বোতামের লেবেল নিজের লিপিতেই থাকতে হবে */
+    const labels = ['বাংলা', 'हिन्दी', 'English'];
+    if (labels.every(l => g.includes(l))) ok('তিনটি বোতামের লেবেলই নিজের লিপিতে');
+    else bad('ভাষা-বোতামের লেবেল নিজের লিপিতে নেই — পাঠক নিজের ভাষা চিনতে পারতেন না');
+
+    /* App.js-এ সত্যিই বসানো আছে তো */
+    const app = fs.readFileSync(path.join(APP, 'App.js'), 'utf8');
+    if (/<LanguageGate\s*\/>/.test(app) && /LanguageGate/.test(app.split('\n')[0] + app))
+      ok('App.js-এ পর্দাটা বসানো আছে');
+    else bad('LanguageGate তৈরি হয়েছে কিন্তু App.js-এ বসানো হয়নি — কেউ দেখতেই পেত না');
+  }
+
+  /* ফোনের ভাষা নিজে থেকে **বসে যায় না**, কেবল আগে থেকে বাছা থাকে */
+  const ctx = fs.readFileSync(path.join(APP, 'src/context/LanguageContext.js'), 'utf8');
+  if (/CHOSEN_KEY/.test(ctx) && /deviceLang\(\)/.test(ctx)) ok('ফোনের ভাষা কেবল প্রি-সিলেক্ট, "বেছেছেন" আলাদা চাবিতে রাখা');
+  else bad('প্রথম চালুর অবস্থা আলাদা করে রাখা নেই — পর্দাটা বারবার আসত, বা কখনোই আসত না');
+}
+
+console.log('⑧ ভাষা-উপসর্গওয়ালা লিংক');
+{
+  /* ওয়েবসাইটে একই পাতার তিনটে ঠিকানা। /en/kundali অ্যাপে এলে ওটা
+     ক্যালকুলেটরেই খুলতে হবে, সাধারণ WebPage-এ নয়। */
+  const lk = fs.readFileSync(path.join(APP, 'src/navigation/linking.js'), 'utf8');
+  const strip = /\(en\|hi\)/.test(lk);
+  if (strip) ok('deep link থেকে ভাষা-উপসর্গ ছাঁটা হয়');
+  else bad('/en/… বা /hi/… লিংক কোনো পর্দার সঙ্গে মিলবে না — পাঠক সাধারণ WebPage-এ পড়বেন');
+
+  /* ⚠️ ছাঁটার পর সাধারণ ম্যাচারকেও **ছাঁটা** ঠিকানাটাই দিতে হবে —
+     আসলটা দিলে গোটা ছাঁটাই বৃথা যেত, আর সেটা নীরবে। */
+  if (/getStateFromPath\(clean/.test(lk)) ok('ছাঁটা ঠিকানাটাই সাধারণ ম্যাচারে যায়');
+  else bad('ম্যাচার আসল path পাচ্ছে, clean নয় — উপসর্গ ছাঁটাই কাজ করবে না');
+
+  /* উপসর্গ দেখে ভাষা বদলে দেওয়া হয় না — একটা লিংকে চাপ দিয়ে কারো
+     গোটা অ্যাপের ভাষা পাল্টে যাওয়া উচিত নয়। */
+  if (!/setLang|setCurrentLang/.test(lk)) ok('লিংক দেখে অ্যাপের ভাষা বদলানো হয় না');
+  else bad('linking.js ভাষা বদলাচ্ছে — শেয়ার করা লিংকে পাঠকের পছন্দ মুছে যেত');
 }
 
 console.log('⑤ পার্স (JSX সহ)');
