@@ -11,7 +11,9 @@
     "check:all": "npm run check:parse && npm run check:css && npm run check:lazy && npm run check:sync && npm run check:panchang && npm run check:splash",
     "check:panchang": "node scripts/check-panchang.js",
     "check:splash": "node scripts/check-splash.js",
-    "check:parse": "node scripts/check-parse.js"
+    "check:parse": "node scripts/check-parse.js",
+    "verify-app-i18n": "node scripts/verify-app-i18n.js",
+    "build-app-terms": "node scripts/build-app-terms.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

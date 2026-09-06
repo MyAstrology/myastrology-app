@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, ActivityIndicator, BackHandler, Alert,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, BackHandler, Alert } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +14,7 @@ import * as Sharing from 'expo-sharing';
 import KUNDALI_HTML from '../web-html/kundali';
 import KUNDALI_PRINT_HTML from '../web-html/kundali-print';
 import { ensureWebFile } from '../utils/webAssetFile';
+import { useLanguage } from '../context/LanguageContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
@@ -451,6 +453,18 @@ export function KundaliScreen() {
   const lastPrefillRef = useRef(null);
 
   const kUri = useKUri();
+  /* ── ভাষা ──
+     বান্ডল করা kundali.html-এ কোনো অনুবাদ-যন্ত্রপাতি নেই (মেপে দেখা:
+     MyaI18n/ENGINE_I18N শূন্য), তাই ইংরেজি/হিন্দি বেছে নিলে ওয়েবসাইটের ওই
+     ভাষার পাতাটাই খোলা হয় — সেটি সম্পূর্ণ অনূদিত ও যাচাই করা। বাংলায়
+     আগের মতোই বান্ডল, অর্থাৎ ইন্টারনেট ছাড়াও চলে।
+     ⚠️ ভাষা রেন্ডারের সময় পড়া হয়, মডিউল লোডে নয়। */
+  const { lang, t } = useLanguage();
+  const [langFellBack, setLangFellBack] = useState(false);
+  const langBase = ((lang === 'en' || lang === 'hi') && !langFellBack)
+    ? 'https://myastrology.in/' + lang + '/kundali'
+    : null;
+  useEffect(() => { setLangFellBack(false); }, [lang]);
   const [sourceUri, setSourceUri] = useState(null);
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(webViewRef);
   const { user, loading: authLoading } = useAuth() || {};
@@ -481,15 +495,16 @@ export function KundaliScreen() {
   // its own prefillFromURL()+auto-calc (auto=1) shows that person's chart
   // directly, instead of landing on a blank form.
   useEffect(() => {
-    if (!kUri) return;
+    const base = langBase || kUri;
+    if (!base) return;
     const prefillQuery = route.params?.prefillQuery;
     if (prefillQuery && prefillQuery !== lastPrefillRef.current) {
       lastPrefillRef.current = prefillQuery;
-      setSourceUri(kUri + '?' + prefillQuery);
-    } else if (!sourceUri) {
-      setSourceUri(kUri);
+      setSourceUri(base + '?' + prefillQuery);
+    } else {
+      setSourceUri(base);
     }
-  }, [kUri, route.params?.prefillQuery]);
+  }, [kUri, langBase, route.params?.prefillQuery]);
 
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -552,7 +567,12 @@ export function KundaliScreen() {
                 return req.url.startsWith('file://') || req.url === 'about:blank';
               }}
               onLoadStart={onLoadStart}
-              onError={onError}
+              onError={(e) => {
+                /* ইংরেজি/হিন্দিতে লাইভ পাতা না এলে বাংলা বান্ডলে ফেরা —
+                   নীরবে নয়, নিচে এক লাইনে বলা হয়। */
+                if (langBase) { setLangFellBack(true); return; }
+                onError(e);
+              }}
               onHttpError={onHttpError}
               renderError={renderError}
               onMessage={(event) => {
@@ -582,6 +602,13 @@ export function KundaliScreen() {
               )}
             />
             <WebViewErrorOverlay webError={webError} onRetry={retry} />
+            {langFellBack && (lang === 'en' || lang === 'hi') && (
+              <View style={s.langNote}>
+                <Text style={s.langNoteText} numberOfLines={2}>
+                  {t('ইন্টারনেট নেই — এই গণনাটি আপাতত বাংলাতেই দেখানো হচ্ছে।')}
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -726,6 +753,11 @@ export function KundaliScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
+  langNote: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(122,46,46,0.94)', paddingVertical: 7, paddingHorizontal: 14,
+  },
+  langNoteText: { color: '#fff', fontSize: 12, textAlign: 'center', lineHeight: 17 },
   root: { flex: 1, backgroundColor: colors.background },
 
   /* Header */

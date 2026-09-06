@@ -327,7 +327,7 @@ export function NamakaranScreen() {
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="namakaran" html={html} style={s.wv} injectedJS={INJECTED_JS} />
+      <LocalWebView name="namakaran" webPath="namakaran" html={html} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );
 }

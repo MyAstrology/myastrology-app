@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, Pressable, Alert } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
+import { useAlert } from '../i18n/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -75,6 +80,8 @@ function UserRow({ item, selfUid, onBlock, onDelete, busy }) {
 }
 
 export function AdminScreen() {
+  /* Alert-এর শিরোনাম, বার্তা ও বোতামের লেখা পাঠকের ভাষায় */
+  const alertT = useAlert();
   const { user } = useAuth();
   const isAdmin = !!user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
   const [users, setUsers]   = useState([]);
@@ -95,7 +102,7 @@ export function AdminScreen() {
 
   const handleBlock = useCallback((item) => {
     const nextBlocked = !item.blocked;
-    Alert.alert(
+    alertT(
       nextBlocked ? 'ব্যবহারকারীকে ব্লক করবেন?' : 'ব্লক তুলে দেবেন?',
       (item.name || item.email) + (nextBlocked ? ' — ব্লক করলে তিনি আর সাইন-ইন করতে পারবেন না।' : ' — আনব্লক করলে আবার সাইন-ইন করতে পারবেন।'),
       [
@@ -108,7 +115,7 @@ export function AdminScreen() {
             try {
               await setUserBlockedFn({ uid: item.id, blocked: nextBlocked });
             } catch (e) {
-              Alert.alert('ব্যর্থ', String(e?.message || e));
+              alertT('ব্যর্থ', String(e?.message || e));
             } finally {
               setBusyUid(null);
             }
@@ -119,7 +126,7 @@ export function AdminScreen() {
   }, []);
 
   const handleDelete = useCallback((item) => {
-    Alert.alert(
+    alertT(
       'ব্যবহারকারী ডিলিট করবেন?',
       (item.name || item.email) + ' — এই তথ্য স্থায়ীভাবে মুছে যাবে, ফিরিয়ে আনা যাবে না।',
       [
@@ -132,7 +139,7 @@ export function AdminScreen() {
             try {
               await deleteUserFn({ uid: item.id });
             } catch (e) {
-              Alert.alert('ব্যর্থ', String(e?.message || e));
+              alertT('ব্যর্থ', String(e?.message || e));
             } finally {
               setBusyUid(null);
             }

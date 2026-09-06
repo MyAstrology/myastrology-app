@@ -1,4 +1,7 @@
 import { Alert, Linking } from 'react-native';
+/* এই ফাইলটা কম্পোনেন্ট নয় (LocalWebView-এর বার্তা-হ্যান্ডলার থেকে ডাকা হয়),
+   তাই useLanguage() ডাকা যায় না। tGlobal ভাষাটা **ডাকার সময়** পড়ে। */
+import { tGlobal as t, getCurrentLang } from '../i18n';
 
 // অ্যাপের ভিতরে ₹৫১/₹৫০১ পেমেন্ট ইচ্ছাকৃতভাবে বন্ধ — বান্ডলের app-bridge
 // Razorpay-র জায়গায় শুধু একটা টোস্ট দেখাত ("পেমেন্টের জন্য myastrology.in
@@ -116,17 +119,22 @@ export function handleBuyOnWeb(msg) {
   };
   const page = PAGES[msg?.page] || 'kundali.html';
   const q = msg?.query ? '?' + msg.query : '';
-  const url = SITE + page + q;
+  /* অ্যাপ ইংরেজি/হিন্দিতে থাকলে ওয়েবসাইটেও সেই ভাষার পাতাই খোলে —
+     ওই তিনটি পাতারই /en/ ও /hi/ সংস্করণ আছে। বাংলা হলে উপসর্গ নেই।
+     ⚠️ কেবল এই তিনটিতে — অন্য পাতার অনূদিত সংস্করণ না থাকলে ৪০৪ হতো। */
+  const lg = getCurrentLang();
+  const prefix = (lg === 'en' || lg === 'hi') ? lg + '/' : '';
+  const url = SITE + prefix + page + q;
   Alert.alert(
-    'ওয়েবসাইটে কিনুন',
+    t('ওয়েবসাইটে কিনুন'),
     msg?.page === 'panjika'
-      ? 'বার্ষিক পঞ্জিকা PDF এখন myastrology.in ওয়েবসাইট থেকে সংরক্ষণ করা যাবে। '
-        + 'আপনি যে সনের পঞ্জিকা দেখছেন, সেটাই খুলে যাবে।'
-      : 'এই রিপোর্টটি এখন myastrology.in ওয়েবসাইট থেকে কেনা যাবে। '
-        + 'আপনার দেওয়া তথ্য সেখানে নিয়ে যাওয়া হবে, আবার লিখতে হবে না।',
+      ? t('বার্ষিক পঞ্জিকা PDF এখন myastrology.in ওয়েবসাইট থেকে সংরক্ষণ করা যাবে। ')
+        + t('আপনি যে সনের পঞ্জিকা দেখছেন, সেটাই খুলে যাবে।')
+      : t('এই রিপোর্টটি এখন myastrology.in ওয়েবসাইট থেকে কেনা যাবে। ')
+        + t('আপনার দেওয়া তথ্য সেখানে নিয়ে যাওয়া হবে, আবার লিখতে হবে না।'),
     [
-      { text: 'বাতিল', style: 'cancel' },
-      { text: 'ওয়েবসাইটে যান', onPress: () => { Linking.openURL(url).catch(() => {}); } },
+      { text: t('বাতিল'), style: 'cancel' },
+      { text: t('ওয়েবসাইটে যান'), onPress: () => { Linking.openURL(url).catch(() => {}); } },
     ],
   );
 }

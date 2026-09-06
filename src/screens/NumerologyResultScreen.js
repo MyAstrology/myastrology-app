@@ -66,7 +66,7 @@ export function NumerologyResultScreen() {
     <View style={s.root}>
       <AppHeader />
       <LocalWebView
-        name="result"
+        name="result" webPath="result"
         html={html}
         style={s.wv}
         injectedJS={INJECTED_JS}

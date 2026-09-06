@@ -7,6 +7,7 @@ import { registerRootComponent } from 'expo';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from './src/context/UserContext';
+import { LanguageProvider } from './src/context/LanguageContext';
 import { AuthProvider } from './src/context/AuthContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
 import { linking } from './src/navigation/linking';
@@ -56,6 +57,7 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      <LanguageProvider>
       <UserProvider>
         <AuthProvider>
           {fontsLoaded ? (
@@ -81,6 +83,7 @@ function App() {
           )}
         </AuthProvider>
       </UserProvider>
+      </LanguageProvider>
       {showSplash && <SplashOverlay opacity={splashOpacity} scale={splashScale} />}
     </SafeAreaProvider>
   );

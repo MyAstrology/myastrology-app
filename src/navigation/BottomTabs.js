@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from '../screens/HomeScreen';
 import { colors } from '../theme/colors';
 import { MenuIcon } from './menuItems';
+import { useLanguage } from '../context/LanguageContext';
 
 /* ── স্ক্রিনগুলো getComponent দিয়ে দেরিতে লোড করা হয় (আগে static import ছিল) ──
    কেন: ক্যালকুলেটর স্ক্রিনগুলো নিজেদের web-html/*.js বান্ডল static import
@@ -71,6 +72,9 @@ const HIDDEN = { tabBarItemStyle: { display: 'none' }, tabBarButton: () => null 
 
 export function BottomTabs() {
   const insets = useSafeAreaInsets();
+  /* ট্যাবের লেবেল পাঠকের ভাষায় — লেখাটাই চাবি, তাই অনুবাদ না থাকলে
+     বাংলাটাই থাকে, কখনো ফাঁকা নয়। */
+  const { t } = useLanguage();
   return (
     <Tab.Navigator
       /* backBehavior="history" — ব্যাক চাপলে **আগের দেখা স্ক্রিনে** ফেরে।
@@ -102,11 +106,11 @@ export function BottomTabs() {
     >
       {/* HomeScreen-ই initial route, প্রথম render-এই লাগে — তাই এটি static
           import-ই থাকল; getComponent দিলে বাড়তি কোনো লাভ হতো না। */}
-      <Tab.Screen name="Home"     component={HomeScreen}          options={{ tabBarLabel: 'হোম',     tabBarIcon: ico('home-variant')           }} />
-      <Tab.Screen name="Panchang" getComponent={lazy.Panchang}    options={{ tabBarLabel: 'পঞ্জিকা', tabBarIcon: ico('calendar-month')         }} />
-      <Tab.Screen name="Rashifal" getComponent={lazy.Rashifal}    options={{ tabBarLabel: 'রাশিফল',  tabBarIcon: ico('star-circle')            }} />
-      <Tab.Screen name="Kundali"  getComponent={lazy.Kundali}     options={{ tabBarLabel: 'কুণ্ডলী', tabBarIcon: icoMenu('Kundali')             }} />
-      <Tab.Screen name="More"     getComponent={lazy.More}        options={{ tabBarLabel: 'আরও',     tabBarIcon: ico('dots-horizontal-circle') }} />
+      <Tab.Screen name="Home"     component={HomeScreen}          options={{ tabBarLabel: t('হোম'),     tabBarIcon: ico('home-variant')           }} />
+      <Tab.Screen name="Panchang" getComponent={lazy.Panchang}    options={{ tabBarLabel: t('পঞ্জিকা'), tabBarIcon: ico('calendar-month')         }} />
+      <Tab.Screen name="Rashifal" getComponent={lazy.Rashifal}    options={{ tabBarLabel: t('রাশিফল'),  tabBarIcon: ico('star-circle')            }} />
+      <Tab.Screen name="Kundali"  getComponent={lazy.Kundali}     options={{ tabBarLabel: t('কুণ্ডলী'), tabBarIcon: icoMenu('Kundali')             }} />
+      <Tab.Screen name="More"     getComponent={lazy.More}        options={{ tabBarLabel: t('আরও'),     tabBarIcon: ico('dots-horizontal-circle') }} />
 
       {/* Hidden screens — navigable from MoreScreen / hamburger menu */}
       <Tab.Screen name="Namakaran"        getComponent={lazy.Namakaran}        options={HIDDEN} />

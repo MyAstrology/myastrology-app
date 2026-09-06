@@ -1,5 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
+import { useAlert } from '../i18n/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +19,8 @@ const LOGO = require('../../assets/logo.png');
 // সরাসরি Google সাইন-ইন শুরু হয়ে যায়; লগইন থাকলে প্রোফাইল ছবি/অক্ষর দেখায়
 // এবং ট্যাপে Settings-এর অ্যাকাউন্ট সেকশনে নিয়ে যায় (সাইন-আউট/প্রোফাইল দেখতে)।
 function HeaderAuthButton() {
+  /* Alert-এর লেখা পাঠকের ভাষায় */
+  const alertT = useAlert();
   const navigation = useNavigation();
   const { user, loading, signInWithGoogle } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -24,7 +31,7 @@ function HeaderAuthButton() {
     try {
       await signInWithGoogle();
     } catch (e) {
-      Alert.alert('লগইন ব্যর্থ', String(e?.message || e));
+      alertT('লগইন ব্যর্থ', String(e?.message || e));
     } finally {
       setBusy(false);
     }

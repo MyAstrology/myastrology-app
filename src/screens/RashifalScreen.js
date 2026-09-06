@@ -1,5 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Image } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
+import { useLanguage } from '../context/LanguageContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
@@ -63,6 +68,7 @@ function RashiGrid({ onSelect }) {
 }
 
 export function RashifalScreen() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
 
   return (
@@ -72,7 +78,18 @@ export function RashifalScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.moonBar}>
           <MaterialCommunityIcons name="moon-waning-crescent" size={16} color={colors.gold} />
-          <Text style={styles.moonText}>আজ চন্দ্র <Text style={styles.moonRashi}>{data.moonRashiName}</Text> রাশিতে</Text>
+          {/* ⚠️ বাক্যটা আগে তিন টুকরোয় ভাঙা ছিল — ইংরেজি/হিন্দিতে
+              শব্দক্রম আলাদা, তাই টুকরো অনুবাদ করলে অর্থ ভেঙে যেত — ওয়েবসাইটে
+              data-lang-hide দিয়ে যে সমস্যাটা সারানো হয়েছিল, এটা তারই নেটিভ রূপ।
+              এখন গোটা বাক্যটাই একটা চাবি। */}
+          <Text style={styles.moonText}>
+            {t('আজ চন্দ্র {rashi} রাশিতে').split('{rashi}').map((part, idx) => (
+              idx === 0 ? part : [
+                <Text key={'r' + idx} style={styles.moonRashi}>{t(data.moonRashiName)}</Text>,
+                part,
+              ]
+            ))}
+          </Text>
         </View>
 
         <RashiGrid onSelect={(rashiIndex) => navigation.navigate('RashifalDetail', { rashiIndex })} />

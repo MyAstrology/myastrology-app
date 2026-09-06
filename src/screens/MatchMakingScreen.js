@@ -1,5 +1,10 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
+import { useAlert } from '../i18n/Text';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
@@ -361,6 +366,8 @@ const CAPTURE_JS = `(function poll(){
 })();true;`;
 
 export function MatchMakingScreen() {
+  /* Alert-এর শিরোনাম, বার্তা ও বোতামের লেখা পাঠকের ভাষায় */
+  const alertT = useAlert();
   const [generating, setGenerating] = useState(false);
   const [pdfRenderHtml, setPdfRenderHtml] = useState(null);
   const pdfWebViewRef = useRef(null);
@@ -369,7 +376,7 @@ export function MatchMakingScreen() {
   const handlePrint = useCallback((rawJson) => {
     if (pdfBusyRef.current) return;
     if (!rawJson) {
-      Alert.alert('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে কোষ্ঠী মিলন গণনা করুন।');
+      alertT('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে কোষ্ঠী মিলন গণনা করুন।');
       return;
     }
     pdfBusyRef.current = true;
@@ -390,7 +397,7 @@ export function MatchMakingScreen() {
         height: 842,
       });
       haptics.success();
-      Alert.alert(
+      alertT(
         'PDF তৈরি হয়েছে',
         'কী করতে চান?',
         [
@@ -406,7 +413,7 @@ export function MatchMakingScreen() {
                   );
                   const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
                   await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
-                  Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
+                  alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
                 }
               } catch (_) {
                 await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
@@ -426,7 +433,7 @@ export function MatchMakingScreen() {
       );
     } catch (e2) {
       haptics.error();
-      Alert.alert('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      alertT('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
       pdfBusyRef.current = false;
       setGenerating(false);
@@ -437,7 +444,7 @@ export function MatchMakingScreen() {
     <View style={s.root}>
       <AppHeader />
       <LocalWebView
-        name="match-making"
+        name="match-making" webPath="match-making"
         html={html}
         style={s.wv}
         onPrint={handlePrint}

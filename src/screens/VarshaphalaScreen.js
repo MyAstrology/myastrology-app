@@ -237,7 +237,7 @@ export function VarshaphalaScreen() {
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="varshaphala" html={html} style={s.wv} injectedJS={INJECTED_JS} />
+      <LocalWebView name="varshaphala" webPath="varshaphala" html={html} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );
 }

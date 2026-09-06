@@ -1,7 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View, Text, Pressable, StyleSheet, ScrollView, Linking, Switch, Alert, Share,
-} from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView, Linking, Switch, Alert, Share } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
+import { useAlert } from '../i18n/Text';
+import { useLanguage } from '../context/LanguageContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import Constants from 'expo-constants';
@@ -46,6 +50,9 @@ function Row({ icon, label, sub, onPress, right, danger }) {
 }
 
 export function SettingsScreen({ navigation }) {
+  /* Alert-এর শিরোনাম, বার্তা ও বোতামের লেখা পাঠকের ভাষায় */
+  const alertT = useAlert();
+  const { lang, setLang, LANGS, LANG_LABEL } = useLanguage();
   const { user, loading, signInWithGoogle, signOut, deleteAccount } = useAuth();
   const { clearUser } = useUser();
   const [notifOn, setNotifOn] = useState(false);
@@ -84,7 +91,7 @@ export function SettingsScreen({ navigation }) {
       }
     } catch (e) {
       haptics.error();
-      Alert.alert('ত্রুটি', 'সাইন-ইন করা যায়নি। আবার চেষ্টা করুন।');
+      alertT('ত্রুটি', 'সাইন-ইন করা যায়নি। আবার চেষ্টা করুন।');
     }
   }, [user, signInWithGoogle, signOut]);
 
@@ -92,7 +99,7 @@ export function SettingsScreen({ navigation }) {
   // ডেটা মোছার পথ থাকতে হয়। দুই ধাপের নিশ্চিতকরণ রাখা হয়েছে — কাজটা
   // অপরিবর্তনীয়, আর "লগআউট" সারির ঠিক নিচেই থাকায় ভুল ট্যাপের ঝুঁকি আছে।
   const confirmDeleteAccount = useCallback(() => {
-    Alert.alert(
+    alertT(
       'অ্যাকাউন্ট মুছে ফেলবেন?',
       'আপনার নাম, ইমেইল, প্রোফাইল ছবি ও ক্লাউডে সংরক্ষিত কুণ্ডলীগুলো স্থায়ীভাবে মুছে যাবে। এটি ফিরিয়ে আনা যাবে না।',
       [
@@ -100,7 +107,7 @@ export function SettingsScreen({ navigation }) {
         {
           text: 'এগিয়ে যান',
           style: 'destructive',
-          onPress: () => Alert.alert(
+          onPress: () => alertT(
             'শেষ নিশ্চিতকরণ',
             'সত্যিই অ্যাকাউন্ট মুছে ফেলতে চান?',
             [
@@ -117,10 +124,10 @@ export function SettingsScreen({ navigation }) {
                     // প্রতিশ্রুতিটা অর্ধেক পালন করা হতো।
                     await clearUser().catch(() => {});
                     haptics.success();
-                    Alert.alert('মুছে ফেলা হয়েছে', 'আপনার অ্যাকাউন্ট ও সংরক্ষিত তথ্য মুছে ফেলা হয়েছে।');
+                    alertT('মুছে ফেলা হয়েছে', 'আপনার অ্যাকাউন্ট ও সংরক্ষিত তথ্য মুছে ফেলা হয়েছে।');
                   } catch (e) {
                     haptics.error();
-                    Alert.alert(
+                    alertT(
                       'মুছে ফেলা যায়নি',
                       'নিরাপত্তার কারণে আবার সাইন-ইন করে চেষ্টা করতে হতে পারে। সমস্যা থাকলে ' +
                       SUPPORT_PHONE + ' নম্বরে যোগাযোগ করুন।',
@@ -147,7 +154,7 @@ export function SettingsScreen({ navigation }) {
   }, []);
 
   const clearCache = useCallback(() => {
-    Alert.alert(
+    alertT(
       'ক্যাশ পরিষ্কার করুন',
       'অফলাইন পেজগুলো নতুন করে লোড হবে। এগিয়ে যাবেন?',
       [
@@ -160,10 +167,10 @@ export function SettingsScreen({ navigation }) {
             try {
               await FileSystem.deleteAsync(WEB_CACHE_DIR, { idempotent: true });
               haptics.success();
-              Alert.alert('সম্পন্ন', 'ক্যাশ পরিষ্কার হয়েছে।');
+              alertT('সম্পন্ন', 'ক্যাশ পরিষ্কার হয়েছে।');
             } catch (_) {
               haptics.error();
-              Alert.alert('ত্রুটি', 'ক্যাশ পরিষ্কার করা যায়নি।');
+              alertT('ত্রুটি', 'ক্যাশ পরিষ্কার করা যায়নি।');
             } finally {
               setClearing(false);
             }
@@ -226,6 +233,36 @@ export function SettingsScreen({ navigation }) {
                 />
               </>
             )}
+          </View>
+        </View>
+
+        {/* ── ভাষা ──
+            ডিফল্ট বাংলা; পছন্দটা AsyncStorage-এ থাকে, তাই অ্যাপ বন্ধ করে
+            খুললেও একই ভাষা। প্রতিটি বোতামে ভাষার নাম **সেই ভাষাতেই** লেখা
+            (বাংলা · हिन्दी · English) — নইলে যিনি বাংলা পড়তে পারেন না তিনি
+            নিজের ভাষাটা খুঁজেই পেতেন না। */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>ভাষা</Text>
+          <View style={s.card}>
+            <View style={s.langRow}>
+              {LANGS.map((code) => {
+                const on = code === lang;
+                return (
+                  <Pressable
+                    key={code}
+                    onPress={() => { haptics.tap(); setLang(code); }}
+                    style={[s.langPill, on && s.langPillOn]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                  >
+                    <Text noTranslate style={[s.langPillText, on && s.langPillTextOn]}>{LANG_LABEL[code]}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={s.langNote}>
+              অ্যাপের মেনু, পঞ্জিকা ও রাশিফল বেছে নেওয়া ভাষায় দেখা যাবে।
+            </Text>
           </View>
         </View>
 
@@ -338,6 +375,16 @@ export function SettingsScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  langRow:  { flexDirection: 'row', gap: 8, padding: 12 },
+  langPill: {
+    flex: 1, paddingVertical: 9, borderRadius: radii.pill, alignItems: 'center',
+    borderWidth: 1.5, borderColor: colors.cardBorder, backgroundColor: 'transparent',
+  },
+  langPillOn:     { borderColor: colors.gold, backgroundColor: 'rgba(200,168,122,0.14)' },
+  langPillText:   { ...typography.body, fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+  langPillTextOn: { color: colors.gold, fontWeight: '700' },
+  langNote:       { ...typography.label, color: colors.textSecondary, paddingHorizontal: 14, paddingBottom: 12, lineHeight: 16 },
+
   container: { flex: 1, backgroundColor: colors.background },
 
   section:      { marginHorizontal: spacing.md, marginTop: spacing.md },

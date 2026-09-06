@@ -70,7 +70,7 @@ export function NumerologyScreen() {
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="numerology" html={html} style={s.wv} injectedJS={INJECTED_JS} />
+      <LocalWebView name="numerology" webPath="numerology" html={html} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );
 }

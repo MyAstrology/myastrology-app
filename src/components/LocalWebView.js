@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, Linking, BackHandler } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Linking, BackHandler } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
 import { WebView } from 'react-native-webview';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -10,6 +14,7 @@ import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { handleShareText } from '../utils/webShareBridge';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
+import { useLanguage } from '../context/LanguageContext';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -128,8 +133,33 @@ const RESULTS_TRACKER_JS = `(function(){
 //   queryString       — optional "a=1&b=2" appended to the file:// uri, so the
 //                       page's own location.search-based prefill logic (e.g.
 //                       result.html reading ?q=...) picks it up on load
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, hideResultsOnBack = true }) {
-  const [uri,   setUri]   = useState(remoteUrl || null);
+/*  ── ভাষা ও বান্ডল ──
+ *  বান্ডল করা পাতাগুলোতে (web-html/*.js) কোনো অনুবাদ-যন্ত্রপাতি নেই — মেপে
+ *  দেখা: দশটা বান্ডলের একটিতেও MyaI18n বা ENGINE_I18N নেই। অর্থাৎ ওগুলো
+ *  বাংলা-only, আর অনুবাদ বসাতে হলে ইঞ্জিনের ওভারলে বান্ডলে ঢোকাতে হতো —
+ *  একা কুণ্ডলীতেই কাঁচা ১.৪ MB (en) + ২.৯ MB (hi), অ্যাপের আকার প্রায়
+ *  দ্বিগুণ। তার বদলে পাঠক ইংরেজি/হিন্দি বেছে নিলে ওয়েবসাইটের **ওই ভাষার
+ *  পাতাটাই** খোলা হয় — সেগুলো সম্পূর্ণ অনূদিত ও যাচাই করা, আর ক্যালকুলেটরে
+ *  কোনো সংশোধন হলে অ্যাপে সঙ্গে সঙ্গে পৌঁছয় (বান্ডল পোর্ট করার অপেক্ষা নেই)।
+ *
+ *  ⚠️ বাংলা পাঠকের কিছুই বদলায়নি — ডিফল্ট বাংলা, আর বাংলায় বান্ডলই চলে,
+ *  অর্থাৎ ইন্টারনেট ছাড়াও আগের মতোই কাজ করে।
+ *  ⚠️ ইংরেজি/হিন্দিতে নেট না থাকলে বাংলা বান্ডলে ফিরে যাওয়া হয় — কিন্তু
+ *  নীরবে নয়, পাঠককে এক লাইনে বলা হয়। "ইংরেজি খোলস, বাংলা ভিতর" নীরবে
+ *  দেখানোটাই এই রিপোর সবচেয়ে বেশিবার নথিভুক্ত ব্যর্থতা।
+ */
+const SITE = 'https://myastrology.in/';
+
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, webPath, hideResultsOnBack = true }) {
+  const { lang, t } = useLanguage();
+  /* ভাষা **রেন্ডারের সময়** পড়া হয়, মডিউল লোডে নয় — নইলে চালুর সময়ের
+     ভাষা জমে যেত আর সেটিংসে বদলালেও পাতা বাংলাই থাকত। */
+  const langUrl = (!remoteUrl && webPath && (lang === 'en' || lang === 'hi'))
+    ? SITE + lang + '/' + webPath
+    : null;
+  const [fellBack, setFellBack] = useState(false);
+  const useLang = !!langUrl && !fellBack;
+  const [uri,   setUri]   = useState(remoteUrl || langUrl || null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
   const webViewRef = useRef(null);
@@ -141,12 +171,17 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
 
   useEffect(() => {
     if (remoteUrl) { setUri(remoteUrl); return; }
+    if (useLang) { setUri(langUrl); return; }
     let cancelled = false;
     ensureFile(name, html)
       .then(u  => { if (!cancelled) setUri(u);          })
       .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; };
-  }, [name, html, remoteUrl]);
+  }, [name, html, remoteUrl, useLang, langUrl]);
+
+  /* ভাষা বদলালে আগের ফলব্যাক-অবস্থা ভুলে যেতে হয়, নইলে একবার নেট গেলে
+     পাঠক ভাষা বদলেও আর অনূদিত পাতা পেতেন না। */
+  useEffect(() => { setFellBack(false); }, [lang]);
 
   // অ্যাপ ↔ ওয়েবসাইট লগইন ব্রিজ — বান্ডল করা পেজেই প্রযোজ্য (mya-auth.js
   // শুধু ওখানেই আছে); অ্যাপে সাইন-ইন থাকলে WebView-কেও একই Firebase
@@ -365,7 +400,12 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         injectedJavaScript={fullInjectedJS}
         onLoadStart={onWebLoadStart}
         onLoadEnd={() => { webViewRef.current?.injectJavaScript(fullInjectedJS); }}
-        onError={handleWebError}
+        onError={(e) => {
+          /* ইংরেজি/হিন্দিতে লাইভ পাতা না এলে বাংলা বান্ডলে ফেরা — কিন্তু
+             নীরবে নয়, নিচে এক লাইনে বলা হয়। */
+          if (useLang) { setFellBack(true); return; }
+          handleWebError(e);
+        }}
         onHttpError={handleHttpError}
         renderError={renderWebError}
         renderLoading={() => (
@@ -376,12 +416,24 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         )}
       />
       <WebViewErrorOverlay webError={webError} onRetry={handleRetry} />
+      {fellBack && !!langUrl && (
+        <View style={s.langNote}>
+          <Text style={s.langNoteText} numberOfLines={2}>
+            {t('ইন্টারনেট নেই — এই গণনাটি আপাতত বাংলাতেই দেখানো হচ্ছে।')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
   wv:     { flex: 1 },
+  langNote: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(122,46,46,0.94)', paddingVertical: 7, paddingHorizontal: 14,
+  },
+  langNoteText: { color: '#fff', fontSize: 12, textAlign: 'center', lineHeight: 17 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   msg:    { marginTop: 10, color: colors.textSecondary, fontSize: 13 },
   err:    { color: '#DC2626', fontSize: 13, textAlign: 'center', paddingHorizontal: 20 },

@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  View, Text, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground,
-} from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground } from 'react-native';
+/* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
+   import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
+   পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
+import { Text } from '../i18n/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
@@ -19,9 +21,13 @@ import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
 import { loadPanjikaCity, DEFAULT_CITY } from '../utils/panjikaCity';
+import { numText, getCurrentLang, tGlobal } from '../i18n';
+import { useLanguage } from '../context/LanguageContext';
 
-const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-const toBN = n => String(n).split('').map(d => BN_DIGITS[+d] ?? d).join('');
+/* অঙ্ক পাঠকের লিপিতে — বাংলা ০১২ · হিন্দি ०१२ · ইংরেজি 012।
+   ⚠️ ভাষাটা **ডাকার সময়** পড়া হয় (মডিউল লোডের সময় নয়) — নইলে অ্যাপ
+   চালুর সময়ের ভাষা জমে যেত আর পরে বদলালেও অঙ্ক বাংলাই থাকত। */
+const toBN = n => numText(getCurrentLang(), n);
 const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 // সূর্যোদয়/সূর্যাস্ত "HH:MM" (২৪ ঘণ্টা)-কে "সকাল ৫:০১" ফরম্যাটে দেখানোর জন্য —
 // সূর্যোদয় সবসময় সকাল, সূর্যাস্ত সবসময় সন্ধ্যা, তাই period সরাসরি প্যারামিটার
@@ -40,7 +46,7 @@ const to12h = (hhmm, period) => {
   if (!hhmm || hhmm === '—') return hhmm;
   const [h, m] = hhmm.split(':').map(Number);
   const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${period} ${toBN(h12)}:${toBN(String(m).padStart(2, '0'))}`;
+  return `${tGlobal(period)} ${toBN(h12)}:${toBN(String(m).padStart(2, '0'))}`;
 };
 // রাশিফল গ্রিড কার্ডের (RashifalScreen.js) একই ইমেজ সেট — সেখানকার
 // RASHI_IMAGES-এর ক্রমের সাথে মিল রেখে (মেষ→মীন)
@@ -195,7 +201,7 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
               <View style={s.luckBox}>
                 <View style={s.luckScoreCol}>
                   <Text style={s.luckScoreLabel}>ভাগ্য স্কোর</Text>
-                  <Text style={s.luckScoreValue}>{toBN(luckScore)}<Text style={s.luckScoreMax}>/১০</Text></Text>
+                  <Text style={s.luckScoreValue}>{toBN(luckScore)}<Text style={s.luckScoreMax}>/{toBN(10)}</Text></Text>
                 </View>
                 <View style={s.luckDivider} />
                 <View style={s.luckAdviceCol}>
@@ -378,6 +384,7 @@ function QuickTile({ tab, icon, label, color, onPress, width }) {
 }
 
 export function HomeScreen() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const { user, saveUser } = useUser();
   const [rashiModal, setRashiModal] = useState(false);
@@ -458,8 +465,13 @@ export function HomeScreen() {
   const placeLine = `${city.label}${city.country ? ', ' + city.country : ''} (${tzLabel(city.tz)})`;
 
   const enDateStr = `${today.getDate()} ${EN_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
+  /* গোটা বাক্যটাই একটা চাবি — টুকরো জুড়লে ইংরেজি/হিন্দিতে শব্দক্রম ভাঙত,
+     আর মাসের নামটাও অনুবাদ ছাড়া বাংলাই থেকে যেত। */
   const bnDateStr = data.bengaliDay
-    ? `${toBN(data.bengaliDay)} ${data.bengaliMonth} ${toBN(data.bengaliYear)} বঙ্গাব্দ`
+    ? t('{d} {m} {y} বঙ্গাব্দ')
+        .replace('{d}', toBN(data.bengaliDay))
+        .replace('{m}', t(data.bengaliMonth))
+        .replace('{y}', toBN(data.bengaliYear))
     : '—';
 
   const todaysFestival = useMemo(() => {

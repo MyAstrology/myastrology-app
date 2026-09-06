@@ -236,7 +236,7 @@ export function PrashnaScreen() {
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="prashna" html={html} style={s.wv} injectedJS={INJECTED_JS} />
+      <LocalWebView name="prashna" webPath="prashna" html={html} style={s.wv} injectedJS={INJECTED_JS} />
     </View>
   );
 }

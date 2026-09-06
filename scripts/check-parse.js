@@ -17,7 +17,18 @@
 
 const fs    = require('fs');
 const path  = require('path');
-const babel = require('@babel/core');
+/* @babel/core এই স্যান্ডবক্সে নেই (node_modules ইনস্টল করা হয় না)।
+   না পেলে TypeScript-এর পার্সারে ফিরে যাওয়া হয় — সেটিও JSX বোঝে, আর
+   কেবল পার্স করা হয়, টাইপ মেলানো নয়।
+   ⚠️ node --check দিয়ে ফলব্যাক করা যায় না: `import` দিয়ে শুরু হওয়া ফাইলে
+   Node সিনট্যাক্স পরীক্ষাটাই এড়িয়ে যায় এবং ভাঙা ফাইলেও exit 0 দেয়। */
+let babel = null, ts = null;
+try { babel = require('@babel/core'); } catch (e) {
+  for (const p0 of ['/opt/node22/lib/node_modules/typescript/lib/typescript.js', 'typescript']) {
+    try { ts = require(p0); break; } catch (e2) {}
+  }
+  if (!ts) { console.error('✗ কোনো JSX পার্সার নেই — পার্স-পরীক্ষা চালানো গেল না'); process.exit(1); }
+}
 
 const ROOT = path.join(__dirname, '..');
 
@@ -57,15 +68,24 @@ for (const file of files) {
   }
 
   checked++;
-  try {
-    babel.parseSync(src, {
-      filename: file,
-      babelrc: false, configFile: false,
-      presets: [require.resolve('babel-preset-expo')],
-    });
-  } catch (e) {
-    const loc = e.loc ? ` (লাইন ${e.loc.line})` : '';
-    problems.push(`${rel}${loc}: ${String(e.message).split('\n')[0].slice(0, 120)}`);
+  if (babel) {
+    try {
+      babel.parseSync(src, {
+        filename: file,
+        babelrc: false, configFile: false,
+        presets: [require.resolve('babel-preset-expo')],
+      });
+    } catch (e) {
+      const loc = e.loc ? ` (লাইন ${e.loc.line})` : '';
+      problems.push(`${rel}${loc}: ${String(e.message).split('\n')[0].slice(0, 120)}`);
+    }
+  } else {
+    const sf = ts.createSourceFile('x.tsx', src, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
+    const d = sf.parseDiagnostics;
+    if (d.length) {
+      const line = sf.getLineAndCharacterOfPosition(d[0].start).line + 1;
+      problems.push(`${rel} (লাইন ${line}): ${ts.flattenDiagnosticMessageText(d[0].messageText, ' ').slice(0, 120)}`);
+    }
   }
 }
 
