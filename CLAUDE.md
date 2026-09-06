@@ -240,3 +240,46 @@ if (sf.parseDiagnostics.length) { /* সত্যিকারের সিনট
 Android-এর `res/values-xx/strings.xml`-এ কাজ করে, JS বান্ডলের ভিতরের
 লেখায় নয়। **আকার কমাতে হলে দেখতে হবে `web-html` (১০.৫ MB) ও assets
 (৬.৯ MB)** — অনুবাদ নয়।
+
+## ⛔ Play-র পেমেন্ট-নীতি — কোডে লেখা দাবিটা ভুল ছিল (2026-09-06)
+
+সহকর্মী Google-এর নিজের পাতাটা পাঠান
+(`support.google.com/googleplay/android-developer/answer/10281818`), আর
+তাতেই ধরা পড়ল `buyOnWebBridge.js`-এ লেখা ছিল:
+
+> "Play-র নিয়মে অ্যাপের বাইরের কেনাকাটা সম্পূর্ণ ঠিক"
+
+**সেটা ভুল।** পাতার নিজের ভাষা:
+
+> "Within an app, developers may not lead users to a payment method other
+> than Google Play's billing system unless Section 3, 8 or 9 of the
+> payments policy applies."
+
+PDF রিপোর্ট ওই পাতার তালিকায় **"Digital items"**, তাই অ্যাপ থেকে
+ব্রাউজারে পাঠিয়ে Razorpay-তে কেনানো নিষেধের মধ্যেই পড়ে। অর্থাৎ
+**Play Billing চালু করা উন্নতি নয়, সংশোধন।**
+
+⚠️ তবু হ্যান্ড-অফটা এখনই তোলা যায় না — Play Billing পরীক্ষিত না হওয়া
+পর্যন্ত ওটাই অ্যাপ থেকে কেনার একমাত্র পথ। ক্রম: বিল্ড → প্রোডাক্ট →
+License testing → **তারপর** ফলব্যাক বাদ।
+
+### ₹১৫০১ — ছাড়ের শর্ত আছে, কিন্তু আমাদের বান্ডলে খাটে না
+
+একই পাতা:
+
+> "If your app provides a 1:1 online paid service, you are not required to
+> use Google Play's billing system if: the paid service is between two
+> individuals [and] the paid service is not available for replay afterwards."
+
+ফোনে সরাসরি পরামর্শ ১:১ ও রেকর্ড-বিহীন — শর্ত মেটে। **কিন্তু সঙ্গে একটা
+PDF রিপোর্টও যায়**, যা পরে বারবার পড়া যায় ("available for replay")।
+তাই বান্ডল হিসেবে ছাড়টা নিশ্চিত নয় — Play Billing-ই বসানো আছে।
+Play Billing *ব্যবহার* করায় কখনো আপত্তি হয় না; না করলেই সমস্যা।
+
+💡 কেবল-পরামর্শ (PDF ছাড়া) আলাদা সেবা হিসেবে বেচলে ছাড়টা পুরোপুরি
+খাটত — প্রতি অর্ডারে ~₹১৯৫ বেশি। সেটা সহকর্মীর ব্যবসায়িক সিদ্ধান্ত।
+
+⚠️ **সাধারণ শিক্ষা, আর এটাই এই ফাইলের সবচেয়ে পুরনো নিয়মের নতুন রূপ:**
+কোডের মন্তব্যে লেখা একটা **নীতি-দাবিও** যাচাই করতে হয়। এটা কারো
+অনুমান থেকে কোডে ঢুকেছিল, বছরখানেক টিকে ছিল, আর আমি নিজেও একবার সেটা
+সহকর্মীকে বলে ফেলেছিলাম — মূল সূত্র না দেখে।

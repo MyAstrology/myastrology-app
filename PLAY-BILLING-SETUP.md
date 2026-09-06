@@ -5,6 +5,56 @@
 
 ---
 
+## নীতিটা আসলে কী বলে — Google-এর নিজের পাতা থেকে
+
+সূত্র: <https://support.google.com/googleplay/android-developer/answer/10281818>
+
+**Play Billing লাগে যাতে:** "Digital items … Subscription services … App
+functionality or content … Cloud software and services".
+→ আমাদের সাতটি PDF/রিপোর্টই এই ঘরে পড়ে।
+
+**Play Billing লাগে না যাতে:** ফিজিক্যাল পণ্য ও সেবা (যাতায়াত, জিম,
+খাবার ডেলিভারি), বিমা/শেয়ার/কর-পরামর্শের মতো নিয়ন্ত্রিত সেবা, আর —
+
+> "If your app provides a 1:1 online paid service, you are not required to
+> use Google Play's billing system if: the paid service is between two
+> individuals [and] the paid service is not available for replay afterwards."
+
+⚠️ **₹১৫০১ ঠিক এই সীমানায়।** ফোনে সরাসরি কথা — ১:১, রেকর্ড করা নয় —
+ছাড়ের শর্ত মেটে। কিন্তু সঙ্গে **একটা PDF রিপোর্টও** যায়, আর সেটা পরে
+বারবার পড়া যায় ("available for replay")। তাই বান্ডল হিসেবে ছাড়টা
+নিশ্চিতভাবে খাটে না — **Play Billing-ই নিরাপদ**, আর সেটাই বসানো আছে।
+(Play Billing ব্যবহার করায় কখনো আপত্তি হয় না; না করলেই সমস্যা।)
+
+💡 **একটা ব্যবসায়িক সুযোগ, আপনার সিদ্ধান্ত:** যদি কখনো **কেবল পরামর্শ**
+(PDF ছাড়া, শুধু ১:১ কল) আলাদা একটা সেবা হিসেবে বেচেন, সেটা ছাড়ের শর্ত
+পুরোপুরি মেটাবে — তখন Play Billing লাগবে না, প্রতি অর্ডারে ~₹১৯৫ বেশি
+হাতে থাকবে।
+
+## ⛔ আজকের অ্যাপে একটা নিয়মভঙ্গ আছে
+
+একই পাতায়:
+
+> "Within an app, developers may not lead users to a payment method other
+> than Google Play's billing system unless Section 3, 8 or 9 of the
+> payments policy applies."
+
+অ্যাপ এখন PDF কেনার বোতামে চাপ দিলে **ব্রাউজারে ওয়েবসাইটে পাঠায়**, সেখানে
+Razorpay। PDF হলো "digital items", তাই এটা ওই নিষেধের মধ্যেই পড়ে।
+কোডে আগে উল্টোটা লেখা ছিল ("অ্যাপের বাইরের কেনাকাটা সম্পূর্ণ ঠিক") —
+সেটা সংশোধন করা হয়েছে।
+
+**অর্থাৎ Play Billing চালু করা উন্নতি নয়, সংশোধন।**
+
+⚠️ তবু হ্যান্ড-অফটা **এখনই তুলবেন না** — Play Billing কাজ করছে দেখার আগে
+তুলে দিলে অ্যাপ থেকে কেউ কিছুই কিনতে পারবেন না। ক্রম: বিল্ড → প্রোডাক্ট →
+পরীক্ষা → **তারপর** হ্যান্ড-অফ বাদ।
+
+ℹ️ ভারতে alternative billing-এর ব্যবস্থা আছে (Google-এর service fee ৪% কম),
+কিন্তু সেটা আলাদা করে নথিভুক্ত হতে হয় — এমনি ওয়েবসাইটে লিংক করে দেওয়া নয়।
+
+---
+
 ## ০. কেন এই ক্রম
 
 ⚠️ **Play Console-এ ইন-অ্যাপ প্রোডাক্ট তৈরি করা যায় না যতক্ষণ না Billing
