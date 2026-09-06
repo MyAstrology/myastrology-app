@@ -44,6 +44,7 @@ export const MENU_ITEMS = [
   { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           },
   { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   },
   { tab: 'AboutAstrologer',icon: 'account-star-outline',    label: 'জ্যোতিষী সম্পর্কে'},
+  { tab: 'MyReports',      icon: 'file-document-multiple-outline', label: 'আমার রিপোর্ট'   },
   { tab: 'Settings',       icon: 'cog-outline',             label: 'সেটিংস'          },
   { tab: 'More',           icon: 'dots-horizontal-circle',  label: 'আরও'             },
 ];

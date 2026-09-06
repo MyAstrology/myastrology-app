@@ -58,6 +58,7 @@ const lazy = {
   Settings:        () => require('../screens/SettingsScreen').SettingsScreen,
   Admin:           () => require('../screens/AdminScreen').AdminScreen,
   AboutAstrologer: () => require('../screens/AboutAstrologerScreen').AboutAstrologerScreen,
+  MyReports:       () => require('../screens/MyReportsScreen').MyReportsScreen,
 };
 
 const Tab = createBottomTabNavigator();
@@ -134,6 +135,7 @@ export function BottomTabs() {
       <Tab.Screen name="Settings"         getComponent={lazy.Settings}         options={HIDDEN} />
       <Tab.Screen name="Admin"            getComponent={lazy.Admin}            options={HIDDEN} />
       <Tab.Screen name="AboutAstrologer"  getComponent={lazy.AboutAstrologer}  options={HIDDEN} />
+      <Tab.Screen name="MyReports"        getComponent={lazy.MyReports}        options={HIDDEN} />
     </Tab.Navigator>
   );
 }

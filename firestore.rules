@@ -49,7 +49,28 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasAll(['pid', 'email', 'ts'])
                     && request.resource.data.email is string
                     && request.resource.data.ts is number;
-      allow read, list, update, delete: if isAdmin();
+      // ── ক্রেতা নিজের অর্ডার দেখতে পারেন ──
+      // আগে কেবল অ্যাডমিন পড়তে পারতেন, তাই কেউ ₹৫০১ দিয়ে কিনে ২৪ ঘণ্টা
+      // অপেক্ষা করলেও অ্যাপে/সাইটে কিছুই দেখতে পেতেন না — টাকা গেল, কোথায়
+      // দাঁড়িয়ে আছে জানার উপায় নেই। এখন নিজের uid-এর অর্ডার পড়া যায়।
+      // ⚠️ কেবল **পড়া** — status বা কোনো ফিল্ড ক্রেতা বদলাতে পারেন না,
+      // নইলে যে কেউ নিজের অর্ডারকে 'done' বা দাম বদলে দিতে পারতেন।
+      // ⚠️ list-এর জন্য ক্লায়েন্টকে where('uid','==',...) দিয়েই কোয়েরি
+      // করতে হয়; অন্য কোনো কোয়েরি Firestore নিজেই ফিরিয়ে দেবে।
+      // ⚠️ `read` ইচ্ছাকৃতভাবে — এটি get **ও** list দুটোই ঢাকে। আলাদা করে
+      // `allow list: if isAdmin()` লিখলে ক্রেতার where('uid','==',…) কোয়েরিটাই
+      // আটকে যেত, আর "আমার রিপোর্ট" পাতাটা কখনো কিছু দেখাত না।
+      allow read: if isAdmin()
+                  || (request.auth != null && resource.data.uid == request.auth.uid);
+      // ₹১৫০১-এ ফোন/হোয়াটসঅ্যাপে পরামর্শ থাকে, সেটা অ্যাপের বাইরে হয় —
+      // তাই ক্রেতাকে নিজের সময় ও নম্বর জানাতে দিতে হয়। কিন্তু **কেবল
+      // `booking` ঘরটাই** — affectedKeys().hasOnly() ছাড়া যে কেউ নিজের
+      // অর্ডারের status 'done' বা দাম বদলে দিতে পারতেন।
+      allow update: if isAdmin()
+                    || (request.auth != null
+                        && resource.data.uid == request.auth.uid
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['booking']));
+      allow delete: if isAdmin();
     }
 
     // ── Play Billing-এ কেনা অধিকার ──

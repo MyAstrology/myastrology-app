@@ -61,6 +61,7 @@ export const linking = {
       Learning: 'learning',
       VedicAstrology: 'vedic-astrology',
       Gemstone: 'gemstone',
+      MyReports: 'my-reports',
     },
   },
 
