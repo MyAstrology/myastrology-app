@@ -6,35 +6,104 @@ const BN_RITU        = ['গ্রীষ্মকাল','গ্রীষ্ম�
 
 // Bengali month start dates (source: panjika-ephemeris.js bms table)
 // [gregorianDateISO, bnYear, bnMonthIndex]
-const BMS = [
-  ['2023-04-15',1430,0],['2023-05-15',1430,1],['2023-06-15',1430,2],['2023-07-17',1430,3],
-  ['2023-08-17',1430,4],['2023-09-17',1430,5],['2023-10-18',1430,6],['2023-11-17',1430,7],
-  ['2023-12-17',1430,8],['2024-01-15',1430,9],['2024-02-14',1430,10],['2024-03-14',1430,11],
-  ['2024-04-14',1431,0],['2024-05-15',1431,1],['2024-06-15',1431,2],['2024-07-16',1431,3],
-  ['2024-08-17',1431,4],['2024-09-17',1431,5],['2024-10-17',1431,6],['2024-11-16',1431,7],
-  ['2024-12-16',1431,8],['2025-01-14',1431,9],['2025-02-13',1431,10],['2025-03-14',1431,11],
-  ['2025-04-15',1432,0],['2025-05-16',1432,1],['2025-06-16',1432,2],['2025-07-17',1432,3],
-  ['2025-08-18',1432,4],['2025-09-18',1432,5],['2025-10-18',1432,6],['2025-11-17',1432,7],
-  ['2025-12-17',1432,8],['2026-01-15',1432,9],['2026-02-14',1432,10],['2026-03-16',1432,11],
-  ['2026-04-15',1433,0],['2026-05-16',1433,1],['2026-06-16',1433,2],['2026-07-18',1433,3],
-  ['2026-08-19',1433,4],['2026-09-17',1433,5],['2026-10-17',1433,6],['2026-11-18',1433,7],
-  ['2026-12-17',1433,8],['2027-01-15',1433,9],['2027-02-13',1433,10],['2027-03-15',1433,11],
-  ['2027-04-15',1434,0],['2027-05-16',1434,1],['2027-06-16',1434,2],['2027-07-17',1434,3],
-  ['2027-08-19',1434,4],['2027-09-17',1434,5],['2027-10-17',1434,6],['2027-11-16',1434,7],
-  ['2027-12-16',1434,8],['2028-01-15',1434,9],['2028-02-14',1434,10],['2028-03-14',1434,11],
-  ['2028-04-14',1435,0],['2028-05-15',1435,1],['2028-06-15',1435,2],['2028-07-16',1435,3],
-  ['2028-08-17',1435,4],['2028-09-16',1435,5],['2028-10-17',1435,6],['2028-11-16',1435,7],
-  ['2028-12-16',1435,8],['2029-01-15',1435,9],['2029-02-13',1435,10],['2029-03-15',1435,11],
-];
+
+/* ⛔ আগে এখানে হাতে লেখা BMS সারণী দেখে বাংলা তারিখ বলা হতো, আর
+   ৭২টি মাস-শুরুর ৩৪টিই (৪৭%) এক-দুদিন সরে ছিল — তাই হোম স্ক্রিন
+   "১৯ ভাদ্র" দেখাত যেখানে পঞ্জিকা স্ক্রিন ও ওয়েবসাইট "২০ ভাদ্র"।
+   ওয়েবসাইট এই সারণী অনেক আগেই বাদ দিয়েছে ("Dynamic Bengali date —
+   replaces static BMS lookup"), অ্যাপে পুরনোটা রয়ে গিয়েছিল।
+
+   এখন সংক্রান্তি থেকেই গণনা — rashifal-core.js-এর যাচাই-করা নিয়ম
+   হুবহু পোর্ট করা (ছাপা পঞ্জিকার সঙ্গে ২০৫/২০৫ মেলে):
+     মাসান্ত নির্ণয় → মাসারম্ভ = মাসান্ত + ১ → দিন = তারিখ − মাসারম্ভ + ১
+   দ্বিদণ্ডাত্মক মধ্যরাত্রি নিয়ম, আর আষাঢ়/পৌষের দুটি ব্যতিক্রম-সহ।
+
+   ⚠️ কোনো নীরব ফলব্যাক রাখা হয়নি — গণনা না হলে null, আর UI তখন
+   '—' দেখায়। জ্যোতিষে ভুল তারিখ দেখানোর চেয়ে না-দেখানো ভালো। */
+const _sunSidAt = jd => ((v.sunL(jd) - v.lahiriAY(jd)) % 360 + 360) % 360;
+
+function _findSankrantiJD(targetDeg, jdApprox) {
+  const diff = jd => { let d = targetDeg - _sunSidAt(jd); if (d > 180) d -= 360; if (d < -180) d += 360; return d; };
+  let lo = jdApprox - 20, hi = jdApprox + 20;
+  let guard = 0;
+  while (diff(lo) * diff(hi) > 0 && guard++ < 40) { lo -= 10; hi += 10; }
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (hi - lo < 1e-8) break;
+    if (diff(lo) * diff(mid) <= 0) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function _activeSankranti(jd) {
+  const sunSid = _sunSidAt(jd);
+  const signIdx = Math.floor(sunSid / 30);              // 0=মেষ … 11=মীন
+  const daysAgo = (sunSid - signIdx * 30) / (360 / 365.25);
+  return { signIdx, sankrantiJD: _findSankrantiJD(signIdx * 30, jd - daysAgo) };
+}
+
+const _tithiIdxAt = jd => Math.floor(((v.moonL(jd) - v.sunL(jd) + 360) % 360) / 12) % 30;
+
+/* মাসান্ত — দ্বিদণ্ডাত্মক মধ্যরাত্রি নিয়ম (rashifal-core.js থেকে হুবহু)
+   ⚠️ প্রথম চেষ্টায় এই ফাংশনের শুরুটা বাদ পড়েছিল — দ্বিদণ্ডাত্মক জানালার
+   পরীক্ষাটাই ছিল না, আর সবসময় midnightDayJD (+১) ধরা হচ্ছিল। ফলে পোর্ট
+   করা কোড হুবহু পুরনো ভুল সারণীরই উত্তর দিচ্ছিল (১৯ ভাদ্র), আর সিনট্যাক্স
+   পরীক্ষা সবুজই ছিল। একটা ফাংশনের লেজ পড়ে পোর্ট করা যায় না। */
+function _masantaJD(sankrantiJD, signIdx) {
+  const istMs = (sankrantiJD - 2440587.5) * 86400000 + 5.5 * 3600000;
+  const dt = new Date(istMs);
+  const y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate();
+  const h = dt.getUTCHours() + dt.getUTCMinutes() / 60 + dt.getUTCSeconds() / 3600;
+
+  // দ্বিদণ্ডাত্মক জানালা: রাত ১১:৩৬ → পরদিন ১২:২৪
+  const DWS = 23 + 36 / 60, DWE = 24 / 60;
+  if (!(h >= DWS || h < DWE)) return v.JD(y, m, d);   // সাধারণ নিয়ম: সংক্রান্তির দিনই মাসান্ত
+
+  let dy = y, dm = m, dd = d;
+  if (h < DWE) {                                       // ১২:০০–১২:২৪ → আগের IST তারিখ
+    const prev = new Date(istMs - 86400000);
+    dy = prev.getUTCFullYear(); dm = prev.getUTCMonth() + 1; dd = prev.getUTCDate();
+  }
+  const midnightDayJD = v.JD(dy, dm, dd) + 1;
+  if (signIdx === 3) return midnightDayJD;             // আষাঢ় শেষ — সেই দিবসই মাসান্ত
+  if (signIdx === 9) return midnightDayJD + 1;         // পৌষ শেষ — পরদিবস মাসান্ত
+
+  let sunriseJD = null;
+  try {
+    const t = PEph && PEph.sunTimes ? PEph.sunTimes(dy, dm, dd) : null;
+    if (t && typeof t.rise === 'number') sunriseJD = v.JD(dy, dm, dd) + (t.rise - DEF_TZ) / 24;
+  } catch (_) { }
+  if (sunriseJD == null) return midnightDayJD;
+  return _tithiIdxAt(sunriseJD) !== _tithiIdxAt(sankrantiJD) ? midnightDayJD + 1 : midnightDayJD;
+}
+
+/* বঙ্গাব্দ — মেষ সংক্রান্তির গ্রেগরীয় বছর ধরে */
+function _bnYearFor(signIdx, gregYear, gregMonth) {
+  let meshaGregYear;
+  if (gregMonth <= 3) meshaGregYear = gregYear - 1;
+  else if (gregMonth === 4 && signIdx === 11) meshaGregYear = gregYear - 1;
+  else meshaGregYear = gregYear;
+  const meshaJD = _findSankrantiJD(0, v.JD(meshaGregYear, 4, 14) + 0.5);
+  return new Date((meshaJD - 2440587.5) * 86400000).getUTCFullYear() - 593;
+}
 
 export function getBengaliDate(dateStr) {
-  let found = null;
-  for (let i = BMS.length - 1; i >= 0; i--) {
-    if (dateStr >= BMS[i][0]) { found = BMS[i]; break; }
-  }
-  if (!found) return null;
-  const dayDiff = Math.round((new Date(dateStr + 'T00:00:00') - new Date(found[0] + 'T00:00:00')) / 86400000);
-  return { year: found[1], monthName: BN_MONTH_NAMES[found[2]], day: dayDiff + 1, ritu: BN_RITU[found[2]] };
+  try {
+    const [y, m, d] = String(dateStr).split('-').map(Number);
+    if (!y || !m || !d) return null;
+    const jd = v.JD(y, m, d) + 0.5;                       // noon UTC
+    const { signIdx, sankrantiJD } = _activeSankranti(jd);
+    let idx = signIdx;
+    let day = Math.floor(v.JD(y, m, d) - (_masantaJD(sankrantiJD, signIdx) + 1)) + 1;
+    if (day < 1) {
+      // দিনটি মাসান্ত — আগের মাসের শেষ দিন
+      idx = (signIdx + 11) % 12;
+      const prevSank = _findSankrantiJD(idx * 30, sankrantiJD - 30);
+      day = Math.floor(v.JD(y, m, d) - (_masantaJD(prevSank, idx) + 1)) + 1;
+    }
+    if (day < 1 || day > 32) return null;
+    return { year: _bnYearFor(idx, y, m), monthName: BN_MONTH_NAMES[idx], day, ritu: BN_RITU[idx] };
+  } catch (_) { return null; }
 }
 
 const TITHI_NAMES = [
