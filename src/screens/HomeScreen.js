@@ -22,7 +22,7 @@ import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
 import { loadPanjikaCity, DEFAULT_CITY } from '../utils/panjikaCity';
 import { numText, getCurrentLang, tGlobal } from '../i18n';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage, useT } from '../context/LanguageContext';
 
 /* অঙ্ক পাঠকের লিপিতে — বাংলা ০১২ · হিন্দি ०१२ · ইংরেজি 012।
    ⚠️ ভাষাটা **ডাকার সময়** পড়া হয় (মডিউল লোডের সময় নয়) — নইলে অ্যাপ
@@ -158,6 +158,10 @@ function StarRow({ score }) {
 // ডানের স্ট্যাটস-কলাম সাদা, আইকনগুলো রঙিন (গোলাপি/সবুজ/বাদামি/সোনালি) — সব গোল্ড
 // না। luckBox এক-লাইনে কমপ্যাক্ট রাখা হয়েছে যাতে কার্ডের হাইট না বাড়ে।
 function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRashifalPress }) {
+  /* ⚠️ এটি আলাদা একটি কম্পোনেন্ট — HomeScreen-এর `t` এখানে পৌঁছয় না।
+     না থাকলে রেন্ডারেই `t is not a function`, আর রাশি বাছার সঙ্গে সঙ্গে
+     অ্যাপ ভেঙে যেত (এই সারিটা কেবল রাশি বাছা থাকলেই আঁকা হয়)। */
+  const t = useT();
   const lucky = RashiLucky[rashiIdx];
   return (
     <Pressable onPress={onRashifalPress} style={s.rashiHeroWrap}>

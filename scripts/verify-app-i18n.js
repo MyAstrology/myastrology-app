@@ -361,5 +361,45 @@ console.log('⑤ পার্স (JSX সহ)');
   }
 }
 
+/* ─── ⑨ t() যেখানে ডাকা হচ্ছে, সেখানে t সত্যিই আছে তো ───
+   ⚠️ ২০২৬-০৯-০৭: HomeScreen-এর `RashiHeroRow` একটা **আলাদা** কম্পোনেন্ট,
+   অথচ তাতে `t('রাশি পরিবর্তন করুন')` বসানো হয়েছিল — `t` ওখানে ছিলই না।
+   ফল: পাঠক রাশি বাছার সঙ্গে সঙ্গে **অ্যাপ ভেঙে যেত** (ওই সারিটা কেবল
+   রাশি বাছা থাকলেই আঁকা হয়)। পার্স-পরীক্ষা এটা ধরে না — সিনট্যাক্স
+   নিখুঁত; ভুলটা কেবল চালানোর সময়ে। */
+{
+  console.log('\n⑨ t() ব্যবহারের জায়গায় t আছে কি না');
+  const START = /^(?:export\s+)?(?:function\s+\w+|const\s+\w+\s*=\s*(?:\([^)]*\)|\w+)\s*=>)/gm;
+  const bad2 = [];
+  for (const f of files) {
+    /* ⚠️ মন্তব্য বাদ — এই রিপোর মন্তব্য বাংলায় আর তাতে `t()` উদ্ধৃত থাকে
+       (LanguageContext-এর "কেবল t() লাগলে"), তাই মন্তব্য না ছাঁটলে
+       মিথ্যে লাল আসে। */
+    const src = fs.readFileSync(f, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+    /* মডিউল-স্তরে `tGlobal as t` আনা থাকলে গোটা ফাইলেই t আছে */
+    if (/import\s*\{[^}]*\btGlobal\s+as\s+t\b/.test(src)) continue;
+    const starts = [...src.matchAll(START)].map(m => ({ i: m.index, head: m[0] }));
+    if (!starts.length) continue;
+    for (const m of src.matchAll(/[^\w.]t\(/g)) {
+      const i = m.index;
+      const before = starts.filter(x => x.i < i);
+      if (!before.length) continue;
+      const fnStart = before[before.length - 1];
+      const nextI = (starts.find(x => x.i > i) || { i: src.length }).i;
+      const body = src.slice(fnStart.i, nextI);
+      /* t এসেছে হুক থেকে, নাকি প্যারামিটার হিসেবে? */
+      /* WebView-এ ইনজেক্ট করা স্ক্রিপ্ট নিজের `function t(){}` বানায় —
+         ওটাও বৈধ। */
+      if (/const\s*\{[^}]*\bt\b[^}]*\}\s*=\s*use|const\s+t\s*=\s*use|\bt\s*=>|function\s+t\s*\(/.test(body)) continue;
+      if (/\(\s*t\s*[,)]|,\s*t\s*[,)]/.test(fnStart.head)) continue;
+      bad2.push(path.relative(APP, f) + ':' + (src.slice(0, i).split('\n').length)
+                + '  (' + fnStart.head.trim().slice(0, 40) + ')');
+    }
+  }
+  if (!bad2.length) ok('প্রতিটি t() ডাকার জায়গাতেই t সংজ্ঞায়িত');
+  else bad('t নেই এমন জায়গায় t() ডাকা হচ্ছে — চালালেই অ্যাপ ভাঙবে:\n      ' + bad2.join('\n      '));
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);

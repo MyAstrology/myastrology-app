@@ -59,11 +59,12 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      {/* ⚠️ ErrorBoundary সবার বাইরে — কোনো পর্দা রেন্ডারে ভাঙলে React
-          গোটা গাছ খুলে ফেলে আর পাঠক **সাদা পর্দা** দেখেন, বেরোনোর পথ
-          ছাড়া। এখন একটা বার্তা ও 'আবার চেষ্টা করুন' বোতাম থাকে। */}
-      <ErrorBoundary>
+      {/* ⚠️ ErrorBoundary **LanguageProvider-এর ভিতরে** — বাইরে রাখায়
+          ত্রুটির বার্তাটা ভাষা-সারণী পেত না, তাই ইংরেজি ও হিন্দি পাঠকও
+          বাংলায় ক্ষমা-প্রার্থনা পড়তেন। Provider নিজে ভাঙার আশঙ্কার চেয়ে
+          ভুল ভাষায় বার্তা দেখানোটা অনেক বেশি সম্ভাব্য ক্ষতি। */}
       <LanguageProvider>
+      <ErrorBoundary>
       <UserProvider>
         <AuthProvider>
           {fontsLoaded ? (
@@ -92,8 +93,8 @@ function App() {
         {/* প্রথম চালুর ভাষা-পর্দা — ঠিক একবার, নেভিগেশনের উপরে।
             স্প্ল্যাশের নিচে রাখা হয়েছে যাতে ছবিটা শেষ হওয়ার পর দেখা যায়। */}
         <LanguageGate />
-      </LanguageProvider>
       </ErrorBoundary>
+      </LanguageProvider>
       {showSplash && <SplashOverlay opacity={splashOpacity} scale={splashScale} />}
     </SafeAreaProvider>
   );
