@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { HIDE_LANG_SWITCH_JS } from '../utils/hideWebChrome';
 import { handleShareText } from '../utils/webShareBridge';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
@@ -354,7 +355,11 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   // that navigates in-place to another page on the same site (e.g. remoteUrl
   // pages following an in-content link) won't get it re-applied on its own, so
   // onLoadEnd below re-injects it after every navigation, not just the first.
-  const fullInjectedJS = (injectedJS || '') + '\n' + RESULTS_TRACKER_JS;
+  /* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — অ্যাপে ভাষা ঠিক হয়
+     Settings থেকে, আর পাতার নিজের সারি সেটাকে না জানিয়েই বদলে দিত।
+     এক জায়গায় বসানো, তাই প্রতিটি স্ক্রিনেই খাটে। */
+  const fullInjectedJS = (injectedJS || '') + '\n' + RESULTS_TRACKER_JS
+    + '\n' + HIDE_LANG_SWITCH_JS;
 
   // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
   // Vastu/Palmistry/...) এর মানে হলো ওয়েবসাইটের নিজস্ব header/nav/footer-সহ

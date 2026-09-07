@@ -401,5 +401,31 @@ console.log('⑤ পার্স (JSX সহ)');
   else bad('t নেই এমন জায়গায় t() ডাকা হচ্ছে — চালালেই অ্যাপ ভাঙবে:\n      ' + bad2.join('\n      '));
 }
 
+/* ─── ⑩ ভাষা-বদলের সারি অ্যাপে ঢাকা কি না ───
+   অ্যাপে ভাষা ঠিক হয় Settings থেকে। পাতার নিজের সারিটা **সেটাকে না
+   জানিয়েই** ঠিকানা বদলে দেয়, ফলে অ্যাপ ভাবে বাংলা আর পাতা দেখায়
+   ইংরেজি। ⚠️ ওয়েবসাইটে সারিটা থাকতেই হবে (আসল <a href>, আর verify-seo
+   গোনে) — তাই মোছা নয়, কেবল অ্যাপে CSS দিয়ে ঢাকা। */
+{
+  console.log('\n⑩ ভাষা-বদলের সারি অ্যাপে ঢাকা');
+  const hp = path.join(APP, 'src/utils/hideWebChrome.js');
+  if (!fs.existsSync(hp)) { bad('hideWebChrome.js নেই'); }
+  else {
+    const h = fs.readFileSync(hp, 'utf8');
+    if (/\[class\*="mya-lang"\]/.test(h) && /display:none/.test(h))
+      ok('সব রকম mya-lang সুইচার এক নিয়মে ঢাকা');
+    else bad('সুইচারের নিয়মটা নেই — সারিটা অ্যাপে দেখা যাবে');
+
+    /* দুটো WebView, দুটোতেই বসাতে হয় — কুণ্ডলী নিজেরটা চালায়। */
+    for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
+      const src = fs.readFileSync(path.join(APP, f), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+      const used = (src.match(/HIDE_LANG_SWITCH_JS/g) || []).length;
+      if (used >= 2) ok(path.basename(f) + ' — সারিটা ঢাকা হয়');
+      else bad(path.basename(f) + ' — সারিটা ঢাকা হয় না (import + ব্যবহার দুটোই লাগে)');
+    }
+  }
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);

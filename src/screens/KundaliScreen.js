@@ -21,6 +21,7 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { HIDE_LANG_SWITCH_JS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 
@@ -425,7 +426,10 @@ function buildInjectedJS(css, tr) {
 
 /*  ⛔ ধ্রুবক নয়, ফাংশন — module-স্তরে একবার তৈরি হলে ভাষা সেখানেই জমে
     যেত, আর পরে ভাষা বদলালেও ইনজেক্ট হওয়া লেখা বাংলাই থাকত। */
-const makeInjectedJS = (tr) => buildInjectedJS(APP_CSS, tr) + buildBuyOnWebJS('kundali');
+/* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — LocalWebView-এর মতোই।
+   কুণ্ডলী নিজের WebView চালায়, তাই এখানে আলাদা করে বসাতে হয়। */
+const makeInjectedJS = (tr) => buildInjectedJS(APP_CSS, tr) + buildBuyOnWebJS('kundali')
+  + '\n' + HIDE_LANG_SWITCH_JS;
 
 // injectedJavaScript (উপরের INJECTED_JS) পেজ লোড হওয়ার পরে চলে, ততক্ষণে
 // ওয়েবসাইটের নিজস্ব (ডেস্কটপ-সাইট) স্টাইলে header/nav/footer-সহ পুরো পেজ
