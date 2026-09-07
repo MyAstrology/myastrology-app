@@ -392,8 +392,11 @@ function buildInjectedJS(css, tr) {
            _doPrint is called after payment (or promo) when the user clicks
            "রিপোর্ট খুলুন" in the _pdfOpenOverlay. */
     (function(){
-      window._doPrint=function(){
-        if(typeof _preparePayload==='function'){try{_preparePayload();}catch(e){}}
+      /* ⚠️ _premium আর্গুমেন্টটা পাস করতেই হয় — ₹৫০১/₹১৫০১-এর সাফল্যের
+         পর্দা _doPrint(true) ডাকে, আর সেটা না পৌঁছলে ক্রেতা টাকা দিয়ে
+         **ফ্রি PDF-টাই** পেতেন, আর কোথাও কোনো ত্রুটি দেখা যেত না। */
+      window._doPrint=function(_premium){
+        if(typeof _preparePayload==='function'){try{_preparePayload(_premium);}catch(e){}}
         var printData=null;
         try{printData=localStorage.getItem('kundali_print_data');}catch(e){}
         if(!printData&&window._kundaliPrintData){
