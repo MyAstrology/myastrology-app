@@ -416,6 +416,12 @@ console.log('⑤ পার্স (JSX সহ)');
       ok('সব রকম mya-lang সুইচার এক নিয়মে ঢাকা');
     else bad('সুইচারের নিয়মটা নেই — সারিটা অ্যাপে দেখা যাবে');
 
+    /* ⚠️ অ্যাপের ভিতরে "অ্যাপ ডাউনলোড করুন" বিজ্ঞাপন অর্থহীন —
+       পাঠক তো অ্যাপেই আছেন। ওয়েবসাইটে ওটা থাকতেই হবে। */
+    if (/rf-app-card/.test(h) && /play\.google\.com/.test(h))
+      ok('Play-স্টোরের বিজ্ঞাপন অ্যাপে ঢাকা');
+    else bad('অ্যাপের ভিতরেই "অ্যাপ ডাউনলোড করুন" বিজ্ঞাপন দেখা যাবে');
+
     /* দুটো WebView, দুটোতেই বসাতে হয় — কুণ্ডলী নিজেরটা চালায়। */
     for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
       const src = fs.readFileSync(path.join(APP, f), 'utf8')
