@@ -90,6 +90,12 @@ export function buildBuyOnWebJS(page) {
                    : (window.__myaProduct||'')
         }));
       }
+      /* ⚠️ চিহ্নটা পড়ার সঙ্গে সঙ্গেই মুছতে হয়। না মুছলে সেটা আটকে থাকত:
+         ক্রেতা আগে ₹৫০১-এর পর্দা খুলে বাতিল করলে __myaProduct='premiumKundali'
+         রয়ে যেত, তারপর ₹১০১-এর PDF বোতাম চাপলে Play-তে **₹৫০১-ই** কাটা হতো।
+         কোনো পরীক্ষা এটা ধরত না — দুটো পথই আলাদাভাবে ঠিক কাজ করে, ভুলটা
+         কেবল একটার পরে অন্যটা চাপলে। */
+      window.__myaProduct='';
     }
     var MAIN=${JSON.stringify(page)};
     window.openRzp=function(){ return ask(''); };
@@ -107,6 +113,11 @@ export function buildBuyOnWebJS(page) {
     }
     tag('_prmStartPayment','premiumKundali');
     tag('_cspStartPayment','solutionKundali');
+    /* ₹১০১-এর দুটো প্রবেশপথ — এগুলোও চিহ্নিত না করলে ask('') খালি
+       হাতে যেত আর পাতা ধরে অনুমান করতে হতো; একই পাতায় তিনটে দামের
+       জিনিস থাকায় সেটাই উপরের ভুলটার উৎস ছিল। */
+    tag('downloadPDF','kundaliPdf');
+    tag('downloadMatchPDF','mmPdf');
     /* পঞ্জিকার বার্ষিক PDF (₹২১) বোতামটা openRzp ব্যবহারই করে না — সে নিজে
        new Razorpay(...) বানায়। আর তার আগে একটা পাহারা আছে:
          if(typeof Razorpay==='undefined'){closePdfPromo();_doPrint();return;}

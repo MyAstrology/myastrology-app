@@ -254,5 +254,38 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
   else bad('পাওনার চিহ্ন কেবল মেমরিতে — অ্যাপ বন্ধ হলেই টাকাটা হারাত');
 }
 
+/* ─── ⑨ কোন জিনিসটা কেনা হচ্ছে, সেই চিহ্নটা আটকে থাকে না তো ───
+   একই পাতায় ₹১০১ · ₹৫০১ · ₹১৫০১ — তিনটে আলাদা দামের জিনিস। চিহ্নটা
+   না মুছলে আগেরটাই রয়ে যায়, আর পরের বোতামে ভুল দামে টাকা কাটা হয়। */
+{
+  console.log('\n⑨ কোন জিনিস কেনা হচ্ছে — চিহ্নটা আটকে থাকে কি না');
+  const noC = x => x.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+  const ask = noC(bridge.slice(bridge.indexOf('function ask('),
+                               bridge.indexOf("var MAIN=")));
+  if (/__myaProduct\s*=\s*''/.test(ask))
+    ok("ask() চিহ্নটা পড়ার পরেই মুছে দেয়");
+  else bad("চিহ্নটা মোছা হয় না — ₹৫০১ বাতিল করে ₹১০১ চাপলে ₹৫০১ কাটা যেত");
+
+  const tags = noC(bridge);
+  for (const [fn, prod] of [['downloadPDF','kundaliPdf'], ['downloadMatchPDF','mmPdf'],
+                            ['_prmStartPayment','premiumKundali'], ['_cspStartPayment','solutionKundali']]) {
+    if (tags.includes("tag('" + fn + "','" + prod + "')"))
+      ok(fn + ' → ' + prod + ' চিহ্নিত');
+    else bad(fn + ' চিহ্নিত নয় — ask() অনুমানে চলত');
+  }
+
+  /* ⚠️ ওয়েবসাইটের দিকটাও দেখা: প্রোমো-যাচাইয়ের আগে _inApp() ফিরে গেলে
+     অ্যাপে কোড লেখার ঘরটাই খোলে না। */
+  for (const [f, promoMark] of [['kundali.html', '===_PROMO){_preparePayload()'],
+                                ['match-making.html', '===_MM_PROMO){_doMatchPrint()']]) {
+    const src = fs.readFileSync(path.join(SITE, f), 'utf8');
+    const pAt = src.indexOf(promoMark);
+    const gAt = src.indexOf('_inApp()){showToast(') >= 0
+              ? src.indexOf('_inApp()){showToast(') : src.indexOf('if(_inApp()){\n');
+    if (pAt > 0 && gAt > pAt) ok(f + ' — প্রোমো যাচাই অ্যাপ-পাহারার আগে');
+    else bad(f + ' — অ্যাপে প্রোমো কোড লেখার ঘরই খোলে না');
+  }
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);
