@@ -578,7 +578,13 @@ export function KundaliScreen() {
               onMessage={(event) => {
                 try {
                   const msg = JSON.parse(event.nativeEvent.data);
-                  if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
+                  if (msg.__rn === 'buyOnWeb') {
+                    /* Play Billing-এ কেনা হলে ডেলিভারিটা এই WebView-এর ভিতরেই
+                    হয় — তাই ইনজেক্টরটা সঙ্গে দেওয়া হয়। না দিলে অ্যাপ চুপচাপ
+                    ব্রাউজারে পাঠাত, অর্থাৎ Play Billing বসিয়েও কাজে লাগত না। */
+                    handleBuyOnWeb(msg, js => webViewRef.current?.injectJavaScript(js));
+                    return;
+                  }
                   if (msg.type === 'generatePdf') {
                     if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
                       Alert.alert('ত্রুটি', 'কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।');

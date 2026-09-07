@@ -20,6 +20,7 @@ import { Platform } from 'react-native';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '../config/firebase';
 import { PRODUCTS, PRODUCT_IDS, KEY_BY_ID } from '../config/products';
+import { addPending } from './billingPending';
 
 let _iap = null;        // লাইব্রেরি (থাকলে)
 let _tried = false;     // একবারই খোঁজা হয়
@@ -49,6 +50,18 @@ async function connect() {
     try { await flushPending(); } catch (e) {}
   }
   return m;
+}
+
+/** Play-র সঙ্গে যোগাযোগ চালু করা ও আটকে থাকা ক্রয় তুলে আনা।
+ *
+ *  ⛔ কেনার **আগে** এটা ডাকতেই হয়। কারণ flushPending() চলে connect()-এর
+ *  ভিতরে, আর connect() চলে buy()-এর ভিতরে — অর্থাৎ আগের অসম্পূর্ণ ক্রয়টা
+ *  requestPurchase()-এর *পরে* উদ্ধার হতো। অ্যাপ নতুন করে চালু হওয়ার পর
+ *  প্রথম ক্রয়ে তাই পাঠকের **দু'বার** টাকা কাটত: পুরনোটা উদ্ধার হয়ে পাওনা
+ *  হিসেবে জমা পড়ত, আর নতুন ক্রয়ও হয়ে যেত। ব্যর্থ হলে চুপ — তখন
+ *  স্বাভাবিক কেনার পথেই যাওয়া হয়। */
+export async function ensureReady() {
+  try { await connect(); } catch (e) {}
 }
 
 const fns = getFunctions(app, 'asia-south1');
@@ -92,11 +105,18 @@ export async function buy(key) {
   return res.data;
 }
 
-/** অ্যাপ বন্ধ হয়ে যাওয়া বা নেট কেটে যাওয়ায় আটকে থাকা ক্রয় শেষ করা */
+/** অ্যাপ বন্ধ হয়ে যাওয়া বা নেট কেটে যাওয়ায় আটকে থাকা ক্রয় শেষ করা।
+ *
+ *  ⚠️ যাচাই হয়ে গেলেই কাজ শেষ নয় — টাকাটা কাটা হয়েছিল কোনো একটা
+ *  রিপোর্টের জন্য, আর সেই রিপোর্টটা পাঠক এখনো পাননি। consume করা
+ *  বাধ্যতামূলক (নইলে Google ৩ দিনে টাকা ফেরত দেয়), অর্থাৎ Play-র দিকে
+ *  ক্রয়টা আর পড়ে থাকে না। তাই এখানেই "ডেলিভারি বাকি" চিহ্ন বসিয়ে
+ *  রাখা হয় — পাঠক পরের বার ওই বোতামে চাপলে নতুন করে টাকা লাগে না।
+ *  এটা না করলে টাকা কাটা যেত আর জিনিসটা চিরতরে হারিয়ে যেত। */
 export async function flushPending() {
   const m = iap();
-  if (!m) return 0;
-  let n = 0;
+  if (!m) return [];
+  const done = [];
   const pend = await m.getAvailablePurchases();
   for (const p of pend || []) {
     const key = KEY_BY_ID[p.productId];
@@ -104,12 +124,13 @@ export async function flushPending() {
     try {
       const res = await verify({ productId: p.productId, purchaseToken: p.purchaseToken });
       if (res && res.data && res.data.ok) {
+        await addPending(key);
         try { await m.finishTransaction({ purchase: p, isConsumable: true }); } catch (e) {}
-        n++;
+        done.push(key);
       }
     } catch (e) { /* পরে আবার চেষ্টা হবে — এখানে চুপ করে থাকা নিরাপদ */ }
   }
-  return n;
+  return done;
 }
 
 export async function disconnect() {

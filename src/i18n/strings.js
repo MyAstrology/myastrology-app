@@ -1255,5 +1255,33 @@ export const STRINGS = {
   "ড. আচার্য এই নম্বরে হোয়াটসঅ্যাপ বা ফোনে যোগাযোগ করবেন।": {
     "en": "Dr. Acharya will reach you on this number, by WhatsApp or phone.",
     "hi": "डॉ. आचार्य इसी नंबर पर व्हाट्सऐप या फ़ोन से संपर्क करेंगे।"
+  },
+  "আগে সাইন-ইন করুন": {
+    "en": "Sign in first",
+    "hi": "पहले साइन-इन करें"
+  },
+  "কেনা জিনিসটি আপনার অ্যাকাউন্টের সঙ্গে যুক্ত থাকে, তাই ফোন বদলালেও হারায় না। উপরের ডান দিকের বোতাম থেকে সাইন-ইন করে আবার চেষ্টা করুন।": {
+    "en": "What you buy stays linked to your account, so it is not lost if you change phones. Sign in from the button at the top right and try again.",
+    "hi": "आप जो खरीदते हैं वह आपके खाते से जुड़ा रहता है, इसलिए फ़ोन बदलने पर भी खोता नहीं। ऊपर दाएं के बटन से साइन-इन करके फिर कोशिश करें।"
+  },
+  "ঠিক আছে": {
+    "en": "OK",
+    "hi": "ठीक है"
+  },
+  "টাকা জমা পড়েছে": {
+    "en": "Payment received",
+    "hi": "भुगतान मिल गया"
+  },
+  "ক্রয়টি সম্পূর্ণ হয়েছে, কিন্তু রিপোর্টটি খুলতে সমস্যা হলো। গণনা করে আবার একই বোতামে চাপ দিন — নতুন করে টাকা লাগবে না।": {
+    "en": "The purchase went through, but the report could not be opened. Run the calculation and press the same button again — you will not be charged a second time.",
+    "hi": "खरीद पूरी हो गई, पर रिपोर्ट खोलने में समस्या हुई। गणना करके फिर उसी बटन को दबाएँ — दोबारा भुगतान नहीं लगेगा।"
+  },
+  "কেনা সম্পূর্ণ হলো না": {
+    "en": "Purchase did not complete",
+    "hi": "खरीद पूरी नहीं हुई"
+  },
+  "টাকা কাটা হয়ে থাকলে চিন্তা করবেন না — পরের বার অ্যাপ খুলে একই বোতামে চাপ দিলে নতুন করে টাকা লাগবে না। এখনই দরকার হলে ওয়েবসাইট থেকেও নেওয়া যাবে।": {
+    "en": "If you were charged, do not worry — open the app next time and press the same button; you will not be charged again. If you need it right now, you can also get it from the website.",
+    "hi": "यदि भुगतान कट गया हो तो चिंता न करें — अगली बार ऐप खोलकर उसी बटन को दबाएँ, दोबारा भुगतान नहीं लगेगा। अभी चाहिए तो वेबसाइट से भी लिया जा सकता है।"
   }
 };

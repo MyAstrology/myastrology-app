@@ -261,7 +261,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       resultsVisibleRef.current = !!msg.visible;
       return;
     }
-    if (msg.__rn === 'buyOnWeb') { handleBuyOnWeb(msg); return; }
+    if (msg.__rn === 'buyOnWeb') {
+      /* Play Billing-এ কেনা হলে ডেলিভারিটা এই WebView-এর ভিতরেই
+      হয় — তাই ইনজেক্টরটা সঙ্গে দেওয়া হয়। না দিলে অ্যাপ চুপচাপ
+      ব্রাউজারে পাঠাত, অর্থাৎ Play Billing বসিয়েও কাজে লাগত না। */
+      handleBuyOnWeb(msg, js => webViewRef.current?.injectJavaScript(js));
+      return;
+    }
     if (msg.__rn === 'shareText') { handleShareText(msg); return; }
     if (msg.__rn === 'goScreen' && msg.screen) {
       /* ফলাফলের নিচের বুকিং কার্ড থেকে — অ্যাপের নিজের স্ক্রিনে */

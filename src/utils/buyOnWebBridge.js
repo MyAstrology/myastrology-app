@@ -2,6 +2,10 @@ import { Alert, Linking } from 'react-native';
 /* এই ফাইলটা কম্পোনেন্ট নয় (LocalWebView-এর বার্তা-হ্যান্ডলার থেকে ডাকা হয়),
    তাই useLanguage() ডাকা যায় না। tGlobal ভাষাটা **ডাকার সময়** পড়ে। */
 import { tGlobal as t, getCurrentLang } from '../i18n';
+import * as billing from './billing';
+import { UNLOCK_JS, PAGE_MAIN_PRODUCT, unlockJS } from './billingUnlock';
+import { takePending, addPending } from './billingPending';
+import { auth } from '../config/firebase';
 
 // অ্যাপের ভিতরে ₹৫১/₹৫০১ পেমেন্ট ইচ্ছাকৃতভাবে বন্ধ — বান্ডলের app-bridge
 // Razorpay-র জায়গায় শুধু একটা টোস্ট দেখাত ("পেমেন্টের জন্য myastrology.in
@@ -70,18 +74,39 @@ export function buildBuyOnWebJS(page) {
       if(!(y>=1200&&y<=2000)) return '';
       return 'by='+y;
     }
-    function ask(){
+    /* কোন জিনিসটা কেনা হচ্ছে — Play Billing-এ প্রোডাক্ট ধরে টাকা নিতে হয়,
+       পাতা ধরে নয়। একই পাতায় (কুণ্ডলী) তিনটে আলাদা দামের জিনিস আছে, তাই
+       প্রতিটি প্রবেশপথ নিজের প্রোডাক্টটা বসিয়ে দেয়।
+       ⚠️ চেনা না গেলে খালি — তখন অ্যাপ ব্রাউজারেই পাঠায় (আজকের আচরণ)।
+       না চেনা প্রোডাক্টে টাকা নেওয়ার চেয়ে ব্রাউজারে পাঠানো নিরাপদ। */
+    function ask(product){
       var q='';
       try{ q=${page === 'kundali' ? 'kundaliQuery()'
               : page === 'panjika' ? 'panjikaQuery()' : "''"}; }catch(e){}
       if(window.ReactNativeWebView){
         window.ReactNativeWebView.postMessage(JSON.stringify({
-          __rn:'buyOnWeb', page:${JSON.stringify(page)}, query:q
+          __rn:'buyOnWeb', page:${JSON.stringify(page)}, query:q,
+          product: (typeof product==='string' && product) ? product
+                   : (window.__myaProduct||'')
         }));
       }
     }
-    window.openRzp=ask;
-    window.proceedToRazorpay=ask;
+    var MAIN=${JSON.stringify(page)};
+    window.openRzp=function(){ return ask(''); };
+    window.proceedToRazorpay=window.openRzp;
+
+    /* ₹৫০১ ও ₹১৫০১ নিজেরাই new Razorpay(...) বানায়, openRzp ছোঁয় না।
+       তাই ওদের শুরুর ফাংশনটা মুড়ে প্রোডাক্টটা মনে রাখা হয় — তারপর
+       পাতার নিজের কোড যেখানেই আটকাক, ask() ঠিক জিনিসটাই জানে। */
+    function tag(name, product){
+      var orig=window[name];
+      if(typeof orig!=='function' || orig.__myaTagged) return;
+      var w=function(){ window.__myaProduct=product; return orig.apply(this, arguments); };
+      w.__myaTagged=1;
+      window[name]=w;
+    }
+    tag('_prmStartPayment','premiumKundali');
+    tag('_cspStartPayment','solutionKundali');
     /* পঞ্জিকার বার্ষিক PDF (₹২১) বোতামটা openRzp ব্যবহারই করে না — সে নিজে
        new Razorpay(...) বানায়। আর তার আগে একটা পাহারা আছে:
          if(typeof Razorpay==='undefined'){closePdfPromo();_doPrint();return;}
@@ -89,7 +114,7 @@ export function buildBuyOnWebJS(page) {
        window.print() ডাকে — যেটা WebView-এ কিছুই করে না। ফলে বোতামটা
        চাপলে পপআপ বন্ধ হয়ে যেত, আর কিছুই হতো না — একেবারে মরা বোতাম।
        এখন সেটাও ব্রাউজারে পাঠানো হয়, যেখানে পেমেন্ট সত্যিই কাজ করে। */
-    window.pdfPayAndPrint=ask;
+    window.pdfPayAndPrint=function(){ return ask('panjikaPdf'); };
 
     /* আসল আটকে যাওয়ার জায়গাটা openRzp নয়। কুণ্ডলী/যোটক পাতা নিজেই ভিতরে
        _inApp() পরীক্ষা করে, এবং অ্যাপ হলে showToast/alert/_mmShowFormError
@@ -113,7 +138,7 @@ export function buildBuyOnWebJS(page) {
       var orig=window[name];
       if(typeof orig!=='function' || orig.__myaWrapped) return;
       var w=function(msg){
-        if(isBuyMsg(msg)){ ask(); return; }
+        if(isBuyMsg(msg)){ ask(''); return; }
         return orig.apply(this, arguments);
       };
       w.__myaWrapped=1;
@@ -124,9 +149,98 @@ export function buildBuyOnWebJS(page) {
   `;
 }
 
+/* কোন জিনিসটা কেনা হচ্ছে। বার্তায় প্রোডাক্ট থাকলে সেটাই; না থাকলে
+   পাতার প্রধান PDF। কোনোটাই না মিললে খালি — তখন Play Billing চালানো
+   হয় না, ব্রাউজারেই যায়। */
+function productOf(msg) {
+  const p = String((msg && msg.product) || '');
+  if (p) return p;
+  return PAGE_MAIN_PRODUCT[(msg && msg.page) || ''] || '';
+}
+
+function isCancel(e) {
+  const s = String((e && (e.code || e.message)) || '');
+  return /E_USER_CANCELLED|USER_CANCELED|cancell?ed/i.test(s);
+}
+
+async function playBuy(product, inject, msg) {
+  /* ① আগের কোনো ক্রয় টাকা কাটার পরেও ডেলিভারি হয়নি? তাহলে আর টাকা
+        নেওয়া হয় না — পাওনাটাই মিটিয়ে দেওয়া হয়।
+        ⛔ ensureReady() আগে, কারণ আটকে থাকা ক্রয় Play থেকে উদ্ধার হয়
+        ওই ধাপেই। না ডাকলে পাওনাটা জমা পড়ত requestPurchase()-এর পরে —
+        অর্থাৎ পাঠকের দ্বিতীয় বার টাকা কেটে যেত। */
+  try {
+    await billing.ensureReady();
+    if (await takePending(product)) {
+      inject(unlockJS(product, 'RECOVERED'));
+      return;
+    }
+  } catch (e) { /* চিহ্ন পড়া না গেলে স্বাভাবিক কেনার পথেই যাওয়া হয় */ }
+
+  /* ② সার্ভার ক্রয় যাচাই করে uid ধরে — সাইন-ইন ছাড়া সেটা হয় না।
+        টাকা কাটার *আগেই* বলা হয়, পরে নয়। */
+  let user = null;
+  try { user = auth.currentUser; } catch (e) {}
+  if (!user) {
+    Alert.alert(
+      t('আগে সাইন-ইন করুন'),
+      t('কেনা জিনিসটি আপনার অ্যাকাউন্টের সঙ্গে যুক্ত থাকে, তাই ফোন বদলালেও হারায় না। উপরের ডান দিকের বোতাম থেকে সাইন-ইন করে আবার চেষ্টা করুন।'),
+      [{ text: t('ঠিক আছে') }],
+    );
+    return;
+  }
+
+  let paid = false;
+  try {
+    const res = await billing.buy(product);
+    paid = true;
+    inject(unlockJS(product, res && res.orderId));
+  } catch (e) {
+    if (isCancel(e)) return;               // পাঠক নিজেই বাতিল করেছেন — চুপ
+    if (paid) {
+      /* ⚠️ টাকা নেওয়া ও যাচাই হয়ে গেছে, আটকেছে কেবল ডেলিভারিতে। এখানে
+         "আবার কিনুন" বলা মানে দু'বার টাকা নেওয়া। চিহ্ন রেখে দেওয়া হয়,
+         পরের বার বোতাম চাপলে বিনামূল্যেই পাবেন। */
+      addPending(product).catch(() => {});
+      Alert.alert(
+        t('টাকা জমা পড়েছে'),
+        t('ক্রয়টি সম্পূর্ণ হয়েছে, কিন্তু রিপোর্টটি খুলতে সমস্যা হলো। গণনা করে আবার একই বোতামে চাপ দিন — নতুন করে টাকা লাগবে না।'),
+        [{ text: t('ঠিক আছে') }],
+      );
+      return;
+    }
+    /* এখানে টাকা কাটা হয়েছে কি না, নিশ্চিত করে বলা যায় না — Play-তে
+       পেমেন্ট সফল হয়ে যাচাইয়ের ধাপে নেট কেটে গেলেও এখানেই আসা হয়।
+       তাই চুপচাপ ওয়েবসাইটে পাঠানো হয় না; পাঠানো হলে তিনি হয়তো দ্বিতীয়
+       বার টাকা দিয়ে ফেলতেন। আটকে থাকা ক্রয়টা পরের বার অ্যাপ খুললেই
+       flushPending() তুলে আনে, তখন বিনামূল্যেই পাবেন — কথাটা তাঁকে
+       বলে দেওয়া হয়, আর ওয়েবসাইটের পথটা তাঁর নিজের পছন্দে থাকে। */
+    Alert.alert(
+      t('কেনা সম্পূর্ণ হলো না'),
+      t('টাকা কাটা হয়ে থাকলে চিন্তা করবেন না — পরের বার অ্যাপ খুলে একই বোতামে চাপ দিলে নতুন করে টাকা লাগবে না। এখনই দরকার হলে ওয়েবসাইট থেকেও নেওয়া যাবে।'),
+      [
+        { text: t('বাতিল'), style: 'cancel' },
+        { text: t('ওয়েবসাইটে যান'), onPress: () => openOnWeb(msg) },
+      ],
+    );
+  }
+}
+
+/* Play Billing এই বিল্ডে থাকলে অ্যাপের ভিতরেই কেনা হয়; না থাকলে (বা
+   জিনিসটা চেনা না গেলে) আগের মতো ব্রাউজারে। দুটোর মাঝে কোনো তৃতীয় পথ
+   নেই — টাকা নেওয়ার আগে ডেলিভারির পথটা জানা আছে কি না, সেটাই শর্ত। */
+export function handleBuyOnWeb(msg, inject) {
+  const product = productOf(msg);
+  if (typeof inject === 'function' && UNLOCK_JS[product] && billing.isAvailable()) {
+    playBuy(product, inject, msg).catch(() => { openOnWeb(msg); });
+    return;
+  }
+  openOnWeb(msg);
+}
+
 // ফোনের ব্রাউজারে খোলার আগে একবার জানিয়ে দেওয়া — হঠাৎ অ্যাপ ছেড়ে বেরিয়ে
 // যাওয়াটা যেন অপ্রত্যাশিত না লাগে।
-export function handleBuyOnWeb(msg) {
+function openOnWeb(msg) {
   const PAGES = {
     'match-making': 'match-making.html',
     // panjika.html একটা 301 রিডাইরেক্ট (→ /panjika, query অক্ষত থাকে) —
