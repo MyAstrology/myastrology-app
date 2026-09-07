@@ -8,6 +8,18 @@
  *  "period of Rahu" লিখলে সেটা আর জ্যোতিষ থাকে না। (ওয়েবসাইটের একই নিয়ম।)
  */
 export const STRINGS = {
+  "{city} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়": {
+    "en": "{city} — you can change it from the 📍 button on the Panjika tab",
+    "hi": "{city} — पंचांग टैब के 📍 बटन से बदला जा सकता है"
+  },
+  "এই পাতাটি এখনো কেবল বাংলায় আছে।": {
+    "en": "This page is still available in Bengali only.",
+    "hi": "यह पेज फ़िलहाल केवल बांग्ला में उपलब्ध है।"
+  },
+  "নামকরণ রিপোর্ট শেয়ার করুন": {
+    "en": "Share the Namakaran report",
+    "hi": "नामकरण रिपोर्ट शेयर करें"
+  },
   "AI ও পরামর্শ": {
     "en": "AI & Consultation",
     "hi": "AI और परामर्श"
@@ -295,6 +307,14 @@ export const STRINGS = {
   "কোজাগরী পূর্ণিমা (লক্ষ্মী পূজা)": {
     "en": "Kojagari Purnima (Lakshmi Puja)",
     "hi": "कोजागरी पूर्णिमा (लक्ष्मी पूजा)"
+  },
+  "বর্ষফল রিপোর্ট শেয়ার করুন": {
+    "en": "Share the Varshaphala report",
+    "hi": "वर्षफल रिपोर्ट शेयर करें"
+  },
+  "সংখ্যা জ্যোতিষ রিপোর্ট শেয়ার করুন": {
+    "en": "Share the numerology report",
+    "hi": "अंक ज्योतिष रिपोर्ट शेयर करें"
   },
   "কোষ্ঠী মিলন রিপোর্ট শেয়ার করুন": {
     "en": "Share the compatibility report",

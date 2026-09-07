@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
@@ -104,6 +104,14 @@ export function AppHeader() {
               </TouchableOpacity>
             </View>
             <View style={s.drawerDivider} />
+            {/* ⛔ ২২টি সারি — সাধারণ <View>-এ থাকায় পর্দার নিচের সারিগুলো
+                কেটে যেত আর টেনে উপরে তোলা যেত না ("মেনু জ্যাম")। ছোট
+                ফোনে বা লেখা বড় করা থাকলে আরও বেশি কাটত। */}
+            <ScrollView
+              style={s.drawerScroll}
+              contentContainerStyle={s.drawerScrollBody}
+              showsVerticalScrollIndicator={false}
+            >
             {MENU_ITEMS.map(item => (
               <TouchableOpacity
                 key={item.tab}
@@ -116,6 +124,7 @@ export function AppHeader() {
                 <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             ))}
+            </ScrollView>
           </View>
         </View>
       )}
@@ -142,6 +151,11 @@ const s = StyleSheet.create({
   avatarInitial:  { fontSize: 12, fontWeight: '800', color: colors.white },
 
   drawerOverlay: { ...StyleSheet.absoluteFillObject, flexDirection: 'row-reverse', zIndex: 100 },
+  /* flex:1 — না দিলে ScrollView নিজের ভিতরের উচ্চতাতেই বেড়ে যেত
+     আর আবার কেটে যেত; বাকি জায়গাটা নিলে তবেই ভিতরে স্ক্রোল হয়। */
+  drawerScroll:     { flex: 1 },
+  /* নিচে একটু ফাঁকা — শেষ সারিটা bottom-tab বারের নিচে চাপা পড়ে যেত */
+  drawerScrollBody: { paddingBottom: 24 },
   drawer: {
     width: '75%', backgroundColor: colors.card,
     paddingHorizontal: 18, paddingBottom: 32,

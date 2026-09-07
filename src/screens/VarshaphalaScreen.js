@@ -4,6 +4,7 @@ import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/varshaphala';
 import { colors } from '../theme/colors';
+import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 
 const APP_CSS = `
 /* ── Hide website chrome ── */
@@ -231,13 +232,17 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS);
+const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('varshaphala');
 
 export function VarshaphalaScreen() {
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="varshaphala" webPath="varshaphala" html={html} style={s.wv} injectedJS={INJECTED_JS} />
+      {/* ⚠️ pagePrint — এই পাতা নিজেই window.print() ডাকে, আর WebView-এ
+          ওটা কিছুই করত না। ফলে প্রোমো কোড ঠিক দিলেও PDF আসত না। */}
+      <LocalWebView name="varshaphala" webPath="varshaphala" html={html} style={s.wv}
+        injectedJS={INJECTED_JS}
+        pagePrint={{ fileName: 'MyAstrology_varshaphala.pdf', dialogTitle: 'বর্ষফল রিপোর্ট শেয়ার করুন' }} />
     </View>
   );
 }

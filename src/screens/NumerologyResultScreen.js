@@ -5,6 +5,7 @@ import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/result';
 import { colors } from '../theme/colors';
+import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 import { WEB_SHARE_JS } from '../utils/webShareBridge';
 
 // numerology.html's "বিশ্লেষণ করুন" button navigates to result.html?q=... — this
@@ -58,7 +59,7 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS) + WEB_SHARE_JS;
+const INJECTED_JS = buildInjectedJS(APP_CSS) + WEB_SHARE_JS + buildBuyOnWebJS('result');
 
 export function NumerologyResultScreen() {
   const route = useRoute();
@@ -74,6 +75,9 @@ export function NumerologyResultScreen() {
         /* ফলাফল আলাদা পাতায় — ফিরে দেখানোর মতো ফর্ম নেই, তাই ব্যাক চাপলে
            ফলাফল লুকিয়ে সাদা পাতা না দেখিয়ে আগের পর্দায় ফেরাই ঠিক। */
         hideResultsOnBack={false}
+        /* ⚠️ এই পাতাও নিজেই window.print() ডাকে — WebView-এ যা নিষ্ক্রিয়।
+           তাই ₹৫১ দিয়েও বা প্রোমো কোড দিয়েও PDF আসত না। */
+        pagePrint={{ fileName: 'MyAstrology_numerology.pdf', dialogTitle: 'সংখ্যা জ্যোতিষ রিপোর্ট শেয়ার করুন' }}
       />
     </View>
   );

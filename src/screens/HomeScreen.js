@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground, AppState } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
@@ -437,7 +437,21 @@ export function HomeScreen() {
 
   function selectRashi(idx) { haptics.tap(); saveUser({ rashi: idx }); setRashiModal(false); }
 
-  const today = useMemo(() => new Date(), []);
+  /* ⛔ আগে এটা ছিল useMemo(() => new Date(), []) — অর্থাৎ পর্দাটা একবার
+     বসার পরে তারিখ ও সময় **আর কখনো বদলাত না**। অ্যাপ রাতভর মেমরিতে
+     থাকলে সকালে হোম কার্ড আগের রাতের করণ/যোগ দেখাত, আর পঞ্জিকার পাতার
+     সঙ্গে মিলত না (করণ দিনে ~৪ বার বদলায়, তাই ওটাই আগে ধরা পড়ে)।
+     এখন অ্যাপ সামনে এলে আর প্রতি মিনিটে ঘড়িটা নতুন করে পড়া হয়। */
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const bump = () => setNowTick(Date.now());
+    const sub = AppState.addEventListener('change', st => { if (st === 'active') bump(); });
+    /* ৫ মিনিট — করণ দিনে ~৪ বার বদলায়, তাই এর চেয়ে ঘন ঘন হিসাব
+       করার দরকার নেই আর ব্যাটারিও বাঁচে। */
+    const id  = setInterval(bump, 300000);
+    return () => { sub.remove(); clearInterval(id); };
+  }, []);
+  const today = useMemo(() => new Date(nowTick), [nowTick]);
   const iso   = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
   // "আমার রাশি" কার্ডে প্রতিদিন বদলানো তথ্য দেখানোর জন্য — স্থির শুভ রং/সংখ্যা/
@@ -464,7 +478,7 @@ export function HomeScreen() {
                weekday:'—', weekdayNum:0, paksha:'—', bengaliDay:null,
                bengaliMonth:'—', bengaliYear:null, ritu:'—' };
     }
-  }, [iso, city.lat, city.lon, city.tz]);
+  }, [iso, nowTick, city.lat, city.lon, city.tz]);
 
   // "রানাঘাট, ভারত (IST)" — পাঠক যেন জানেন সময়গুলো কোন জায়গা ও কোন ঘড়ির
   const placeLine = `${city.label}${city.country ? ', ' + city.country : ''} (${tzLabel(city.tz)})`;

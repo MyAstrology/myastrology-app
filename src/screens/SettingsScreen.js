@@ -52,7 +52,7 @@ function Row({ icon, label, sub, onPress, right, danger }) {
 export function SettingsScreen({ navigation }) {
   /* Alert-এর শিরোনাম, বার্তা ও বোতামের লেখা পাঠকের ভাষায় */
   const alertT = useAlert();
-  const { lang, setLang, LANGS, LANG_LABEL } = useLanguage();
+  const { lang, setLang, LANGS, LANG_LABEL, t } = useLanguage();
   const { user, loading, signInWithGoogle, signOut, deleteAccount } = useAuth();
   const { clearUser } = useUser();
   const [notifOn, setNotifOn] = useState(false);
@@ -356,7 +356,7 @@ export function SettingsScreen({ navigation }) {
               icon="map-marker-outline"
               label="পঞ্চাঙ্গের অবস্থান"
               sub={panchangCity
-                ? `${panchangCity.label} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়`
+                ? t('{city} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়').replace('{city}', panchangCity.label)
                 : 'লোড হচ্ছে…'}
             />
             <View style={s.divider} />

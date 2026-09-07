@@ -127,6 +127,23 @@ export function buildBuyOnWebJS(page) {
        এখন সেটাও ব্রাউজারে পাঠানো হয়, যেখানে পেমেন্ট সত্যিই কাজ করে। */
     window.pdfPayAndPrint=function(){ return ask('panjikaPdf'); };
 
+    /* বর্ষফল ও সংখ্যা-জ্যোতিষের ₹৫১ বোতামও openRzp ছোঁয় না — নিজেরাই
+       new Razorpay(...) বানায়, তাই অ্যাপের ভিতরেই Razorpay-র পর্দা খুলে
+       যেত (Play-র নিয়মে যা চলে না, আর WebView-এ কাজও করে না)।
+       ⚠️ পাতার ফাংশনগুলো তৈরি হওয়ার আগেই এই স্ক্রিপ্ট একবার চলে, তাই
+          window.X= দিয়ে সোজা বসিয়ে দিলে পরে পাতার নিজের সংজ্ঞা ওটাকে
+          মুছে দিত। tag()-এর মতোই প্রতিবার নতুন করে দেখা হয় — LocalWebView
+          স্ক্রিপ্টটা লোডের আগে ও পরে দু'বার ইনজেক্ট করে। */
+    function replace(name, product){
+      var orig=window[name];
+      if(typeof orig!=='function' || orig.__myaReplaced) return;
+      var w=function(){ return ask(product); };
+      w.__myaReplaced=1;
+      window[name]=w;
+    }
+    replace('vpPayAndPrint','varshaphalaPdf');
+    replace('nuPayAndPrint','numerologyPdf');
+
     /* আসল আটকে যাওয়ার জায়গাটা openRzp নয়। কুণ্ডলী/যোটক পাতা নিজেই ভিতরে
        _inApp() পরীক্ষা করে, এবং অ্যাপ হলে showToast/alert/_mmShowFormError
        দিয়ে "ওয়েবসাইট ব্যবহার করুন" লিখে return করে দেয় — openRzp পর্যন্ত

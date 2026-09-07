@@ -4,6 +4,7 @@ import { View, ActivityIndicator, StyleSheet, Linking, BackHandler } from 'react
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
 import { Text } from '../i18n/Text';
+import { useAlert } from '../i18n/Text';
 import { WebView } from 'react-native-webview';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -13,6 +14,7 @@ import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { HIDE_LANG_SWITCH_JS, RESULTS_CONTAINER_IDS, FORM_CONTAINER_IDS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { handleShareText } from '../utils/webShareBridge';
+import { PAGE_PRINT_JS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
 import { useLanguage } from '../context/LanguageContext';
@@ -157,7 +159,13 @@ const makeResultsTrackerJS = (tr) => {
  */
 const SITE = 'https://myastrology.in/';
 
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, webPath, hideResultsOnBack = true }) {
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, webPath, hideResultsOnBack = true, pagePrint }) {
+  /* pagePrint = {fileName, dialogTitle} — যে পাতাগুলো নিজেরাই ছাপে
+     (বর্ষফল, সংখ্যা-জ্যোতিষ)। WebView-এ window.print() কিছুই করে না,
+     তাই ওটা ধরে expo-print দিয়ে আসল PDF বানানো হয়। */
+  const pdfAlertT = useAlert();
+  const pdfStore = useRef({ parts: [], total: 0 });
+  const [makingPdf, setMakingPdf] = useState(false);
   const { lang, t } = useLanguage();
   /* ভাষা **রেন্ডারের সময়** পড়া হয়, মডিউল লোডে নয় — নইলে চালুর সময়ের
      ভাষা জমে যেত আর সেটিংসে বদলালেও পাতা বাংলাই থাকত। */
@@ -166,6 +174,20 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     : null;
   const [fellBack, setFellBack] = useState(false);
   const useLang = !!langUrl && !fellBack;
+
+  /* ⚠️ ব্লগ, রত্ন, হস্তরেখা, জ্যোতিষ-শাস্ত্র, উৎসব — এগুলোর en/hi
+     সংস্করণ নেই (মেপে সিদ্ধান্ত: ওই ভাষায় চাহিদা প্রায় শূন্য)। মেনু
+     থেকে জিনিসগুলো তুলে দিলে হিন্দি/ইংরেজি পাঠক কম পেতেন; তাই রাখা
+     হয়েছে, কিন্তু নীরবে বাংলা দেখানো হয় না — একবার বলা হয়, তারপর
+     লাইনটা নিজে থেকেই সরে যায়। */
+  const bnOnly = !!remoteUrl && lang !== 'bn';
+  const [showBnOnly, setShowBnOnly] = useState(false);
+  useEffect(() => {
+    if (!bnOnly) { setShowBnOnly(false); return; }
+    setShowBnOnly(true);
+    const id = setTimeout(() => setShowBnOnly(false), 6000);
+    return () => clearTimeout(id);
+  }, [bnOnly, remoteUrl]);
   const [uri,   setUri]   = useState(remoteUrl || langUrl || null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
@@ -268,6 +290,17 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       return;
     }
     if (msg.__rn === 'shareText') { handleShareText(msg); return; }
+    if (msg.__rn === 'pagePdfChunk') {
+      const full = collectPdfChunk(msg, pdfStore.current);
+      if (!full) { setMakingPdf(true); return; }
+      deliverPdf(full, {
+        alertT: pdfAlertT,
+        fileName: (pagePrint && pagePrint.fileName) || 'MyAstrology.pdf',
+        dialogTitle: t((pagePrint && pagePrint.dialogTitle) || 'MyAstrology'),
+      }).catch(() => pdfAlertT('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'))
+        .finally(() => setMakingPdf(false));
+      return;
+    }
     if (msg.__rn === 'goScreen' && msg.screen) {
       /* ফলাফলের নিচের বুকিং কার্ড থেকে — অ্যাপের নিজের স্ক্রিনে */
       try { navigation.navigate(msg.screen); } catch (_) {}
@@ -298,7 +331,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       const prefillQuery = qIdx >= 0 ? msg.url.slice(qIdx + 1) : '';
       navigation.navigate(screen, prefillQuery ? { prefillQuery } : undefined);
     }
-  }, [navigation, name, onPrint, uid]);
+  }, [navigation, name, onPrint, uid, pagePrint, pdfAlertT, t]);
 
   // Intercepts window.location.href = 'page.html' navigations (e.g. _mmGoTo in match-making).
   // Returns false to block the WebView from actually navigating away.
@@ -351,7 +384,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
      Settings থেকে, আর পাতার নিজের সারি সেটাকে না জানিয়েই বদলে দিত।
      এক জায়গায় বসানো, তাই প্রতিটি স্ক্রিনেই খাটে। */
   const fullInjectedJS = (injectedJS || '') + '\n' + React.useMemo(() => makeResultsTrackerJS(t), [t])
-    + '\n' + HIDE_LANG_SWITCH_JS;
+    + '\n' + HIDE_LANG_SWITCH_JS
+    + (pagePrint ? '\n' + PAGE_PRINT_JS : '');
 
   // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
   // Vastu/Palmistry/...) এর মানে হলো ওয়েবসাইটের নিজস্ব header/nav/footer-সহ
@@ -425,6 +459,21 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         )}
       />
       <WebViewErrorOverlay webError={webError} onRetry={handleRetry} />
+      {/* PDF বানাতে কয়েক সেকেন্ড লাগে — ঢাকনা না দিলে অ্যাপটা জমে
+          গেছে মনে হয় (কুণ্ডলী ও পঞ্জিকার পর্দায় শেখা)। */}
+      {makingPdf && (
+        <View style={s.pdfVeil}>
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={s.msg}>PDF তৈরি হচ্ছে…</Text>
+        </View>
+      )}
+      {showBnOnly && (
+        <View style={s.langNote}>
+          <Text style={s.langNoteText} numberOfLines={2}>
+            {t('এই পাতাটি এখনো কেবল বাংলায় আছে।')}
+          </Text>
+        </View>
+      )}
       {fellBack && !!langUrl && (
         <View style={s.langNote}>
           <Text style={s.langNoteText} numberOfLines={2}>
@@ -444,6 +493,11 @@ const s = StyleSheet.create({
   },
   langNoteText: { color: '#fff', fontSize: 12, textAlign: 'center', lineHeight: 17 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  pdfVeil: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(254,250,242,0.92)',
+  },
   msg:    { marginTop: 10, color: colors.textSecondary, fontSize: 13 },
   err:    { color: '#DC2626', fontSize: 13, textAlign: 'center', paddingHorizontal: 20 },
 });
