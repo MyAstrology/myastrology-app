@@ -222,10 +222,22 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
      কোনো বান্ডলে MyaI18n/ENGINE_I18N ঢুকে পড়লে রুটিংয়ের যুক্তিটাই বদলে যায়। */
   const wh = path.join(APP, 'src/web-html');
   let withI18n = 0;
+  /* ⚠️ একটাই ব্যতিক্রম, আর সেটা উল্টো দিক থেকেও যাচাই করা হয়:
+     kundali-print.js কোনো ক্যালকুলেটর নয় — পাঠক ওটায় যানই না। ওটা
+     পর্দার বাইরে এঁকে expo-print দিয়ে PDF বানানো হয়, তাই ওখানে
+     MyaI18n **থাকতেই হবে**; না থাকলে ইংরেজি/হিন্দি ক্রেতা টাকা দিয়ে
+     বাংলা PDF পেতেন (২০২৬-০৯-০৭-এ ঠিক সেটাই হচ্ছিল)। */
+  const PRINT_NEEDS_I18N = 'kundali-print.js';
   for (const f of fs.readdirSync(wh)) {
     if (!f.endsWith('.js')) continue;
     const src = fs.readFileSync(path.join(wh, f), 'utf8');
-    if (/MyaI18n|ENGINE_I18N|MyaEngineI18n/.test(src)) { bad(`web-html/${f}-এ অনুবাদ-যন্ত্রপাতি ঢুকেছে — রুটিংয়ের যুক্তি আবার দেখুন`); withI18n++; }
+    const has = /MyaI18n|ENGINE_I18N|MyaEngineI18n/.test(src);
+    if (f === PRINT_NEEDS_I18N) {
+      has ? ok('kundali-print.js-এ MyaI18n আছে — অনূদিত PDF সম্ভব')
+          : bad('kundali-print.js-এ MyaI18n নেই — en/hi ক্রেতা বাংলা PDF পাবেন');
+      continue;
+    }
+    if (has) { bad(`web-html/${f}-এ অনুবাদ-যন্ত্রপাতি ঢুকেছে — রুটিংয়ের যুক্তি আবার দেখুন`); withI18n++; }
   }
   if (!withI18n) ok('দশটি বান্ডলের একটিতেও অনুবাদ-যন্ত্রপাতি নেই (তাই লাইভ পাতায় রুট করা)');
 

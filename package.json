@@ -17,7 +17,8 @@
     "verify-play-billing": "node scripts/verify-play-billing.js",
     "verify-app-a11y": "node scripts/verify-app-a11y.js",
     "build-kundali-print": "node scripts/build-kundali-print.js",
-    "verify-print-bundle": "node scripts/verify-print-bundle.js"
+    "verify-print-bundle": "node scripts/verify-print-bundle.js",
+    "check:startup": "node scripts/check-startup-weight.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
