@@ -168,7 +168,8 @@ function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRas
             start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
             style={s.rashiHeroLeft}
           >
-            <Pressable onPress={onChangePress} style={s.rashiHeroAvatarWrap}>
+            <Pressable onPress={onChangePress} style={s.rashiHeroAvatarWrap}
+              accessibilityRole="button" accessibilityLabel={t('রাশি পরিবর্তন করুন')}>
               <Image source={RASHI_IMAGES[rashiIdx]} style={s.rashiHeroAvatarImg} resizeMode="contain" />
             </Pressable>
             <Text style={s.rashiHeroName}>{RASHI_NAMES[rashiIdx]}</Text>

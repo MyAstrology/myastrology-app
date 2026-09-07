@@ -652,10 +652,12 @@ export function PanchangScreen() {
           <Text style={s.brand}>MYASTROLOGY</Text>
           <Text style={s.tagline}>জ্যোতিষ · পঞ্জিকা · কুণ্ডলী</Text>
         </View>
-        <TouchableOpacity style={s.hamBtn} onPress={openCitySelector} activeOpacity={0.7}>
+        <TouchableOpacity style={s.hamBtn} onPress={openCitySelector} activeOpacity={0.7}
+          accessibilityRole="button" accessibilityLabel={t('শহর বাছুন')}>
           <MaterialCommunityIcons name="map-marker-outline" size={22} color={colors.gold} />
         </TouchableOpacity>
-        <TouchableOpacity style={s.hamBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+        <TouchableOpacity style={s.hamBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}
+          accessibilityRole="button" accessibilityLabel={t('মেনু খুলুন')}>
           <MaterialCommunityIcons name="menu" size={24} color={colors.gold} />
         </TouchableOpacity>
       </View>
@@ -707,11 +709,15 @@ export function PanchangScreen() {
       {/* ── Drawer ── */}
       {menuOpen && (
         <View style={s.drawerOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuOpen(false)} activeOpacity={1} />
+          {/* পর্দাজোড়া অদৃশ্য ব্যাকড্রপ — লেবেল ছাড়া স্ক্রিন-রিডার এটাকে
+              নামহীন একটা বোতাম হিসেবে পড়ত। */}
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuOpen(false)} activeOpacity={1}
+            accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')} />
           <View style={[s.drawer, { paddingTop: insets.top + 8 }]}>
             <View style={s.drawerHeader}>
               <Text style={s.drawerTitle}>MENU</Text>
-              <TouchableOpacity onPress={() => setMenuOpen(false)}>
+              <TouchableOpacity onPress={() => setMenuOpen(false)}
+                accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')}>
                 <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>

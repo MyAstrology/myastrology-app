@@ -13,6 +13,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { BottomTabs } from './src/navigation/BottomTabs';
 import { linking } from './src/navigation/linking';
 import { SplashOverlay } from './src/components/SplashOverlay';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { initOneSignal } from './src/utils/onesignal';
 import { logScreenView } from './src/utils/analytics';
 
@@ -58,6 +59,10 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      {/* ⚠️ ErrorBoundary সবার বাইরে — কোনো পর্দা রেন্ডারে ভাঙলে React
+          গোটা গাছ খুলে ফেলে আর পাঠক **সাদা পর্দা** দেখেন, বেরোনোর পথ
+          ছাড়া। এখন একটা বার্তা ও 'আবার চেষ্টা করুন' বোতাম থাকে। */}
+      <ErrorBoundary>
       <LanguageProvider>
       <UserProvider>
         <AuthProvider>
@@ -88,6 +93,7 @@ function App() {
             স্প্ল্যাশের নিচে রাখা হয়েছে যাতে ছবিটা শেষ হওয়ার পর দেখা যায়। */}
         <LanguageGate />
       </LanguageProvider>
+      </ErrorBoundary>
       {showSplash && <SplashOverlay opacity={splashOpacity} scale={splashScale} />}
     </SafeAreaProvider>
   );

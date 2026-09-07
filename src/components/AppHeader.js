@@ -11,6 +11,9 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { useAuth } from '../context/AuthContext';
+/* ⚠️ কেবল-আইকন বোতামের জন্য — স্ক্রিন-রিডার লেখা ছাড়া কিছুই পড়তে
+   পারে না, তাই ওগুলোর accessibilityLabel পাঠকের ভাষাতেই দরকার। */
+import { useT } from '../context/LanguageContext';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -19,6 +22,7 @@ const LOGO = require('../../assets/logo.png');
 // সরাসরি Google সাইন-ইন শুরু হয়ে যায়; লগইন থাকলে প্রোফাইল ছবি/অক্ষর দেখায়
 // এবং ট্যাপে Settings-এর অ্যাকাউন্ট সেকশনে নিয়ে যায় (সাইন-আউট/প্রোফাইল দেখতে)।
 function HeaderAuthButton() {
+  const t = useT();
   /* Alert-এর লেখা পাঠকের ভাষায় */
   const alertT = useAlert();
   const navigation = useNavigation();
@@ -40,7 +44,9 @@ function HeaderAuthButton() {
   if (loading) return <View style={s.iconBtn} />;
 
   return (
-    <TouchableOpacity style={s.iconBtn} onPress={handlePress} activeOpacity={0.7} disabled={busy}>
+    <TouchableOpacity style={s.iconBtn} onPress={handlePress} activeOpacity={0.7} disabled={busy}
+      accessibilityRole="button"
+      accessibilityLabel={user ? t('অ্যাকাউন্ট') : t('সাইন ইন করুন')}>
       {busy ? (
         <ActivityIndicator size="small" color={colors.gold} />
       ) : user ? (
@@ -59,6 +65,7 @@ function HeaderAuthButton() {
 }
 
 export function AppHeader() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,21 +79,27 @@ export function AppHeader() {
           <Text style={s.tagline}>জ্যোতিষ · পঞ্জিকা · কুণ্ডলী</Text>
         </View>
         <HeaderAuthButton />
-        <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Settings')} activeOpacity={0.7}>
+        <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Settings')} activeOpacity={0.7}
+          accessibilityRole="button" accessibilityLabel={t('বিজ্ঞপ্তি ও সেটিংস')}>
           <MaterialCommunityIcons name="bell-outline" size={22} color={colors.gold} />
         </TouchableOpacity>
-        <TouchableOpacity style={s.iconBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+        <TouchableOpacity style={s.iconBtn} onPress={() => setMenuOpen(true)} activeOpacity={0.7}
+          accessibilityRole="button" accessibilityLabel={t('মেনু খুলুন')}>
           <MaterialCommunityIcons name="menu" size={24} color={colors.gold} />
         </TouchableOpacity>
       </View>
 
       {menuOpen && (
         <View style={s.drawerOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuOpen(false)} activeOpacity={1} />
+          {/* পর্দাজোড়া অদৃশ্য ব্যাকড্রপ — লেবেল ছাড়া স্ক্রিন-রিডার এটাকে
+              নামহীন একটা বোতাম হিসেবে পড়ত। */}
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuOpen(false)} activeOpacity={1}
+            accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')} />
           <View style={[s.drawer, { paddingTop: insets.top + 8 }]}>
             <View style={s.drawerHeader}>
               <Text style={s.drawerTitle}>MENU</Text>
-              <TouchableOpacity onPress={() => setMenuOpen(false)}>
+              <TouchableOpacity onPress={() => setMenuOpen(false)}
+                accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')}>
                 <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
