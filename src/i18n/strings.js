@@ -1375,5 +1375,13 @@ export const STRINGS = {
   "শহর বাছুন": {
     "en": "Choose a city",
     "hi": "शहर चुनें"
+  },
+  "ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন": {
+    "en": "Talk to Dr. Prodyut Acharya directly",
+    "hi": "डॉ. प्रद्युत आचार्य से सीधे बात करें"
+  },
+  "১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক": {
+    "en": "15+ years of experience · PhD gold medallist",
+    "hi": "15+ वर्षों का अनुभव · PhD स्वर्ण पदक"
   }
 };

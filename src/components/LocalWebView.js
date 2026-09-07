@@ -73,7 +73,12 @@ const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection', 'resultsSection',
 //   বর্ষফল → inputSection · যোটক বিচার → mmInputSection
 //   নামকরণ/প্রশ্ন জ্যোতিষ → formSection
 const FORM_CONTAINER_IDS = ['inputSection', 'mmInputSection', 'formSection'];
-const RESULTS_TRACKER_JS = `(function(){
+/* ⚠️ ফাংশন, ধ্রুবক নয় — ভিতরের তিনটে লেখা পাঠকের ভাষায় লাগে। মডিউল-স্তরে
+   একবার তৈরি হলে ওগুলো চিরকালের জন্য বাংলা হয়ে যেত, আর ইংরেজি পাতার
+   নিচে বাংলা পরামর্শ-কার্ড বসত (সহকর্মী ঠিক সেটাই ধরেছেন)। */
+const makeResultsTrackerJS = (tr) => {
+  const T = (x) => JSON.stringify(tr ? tr(x) : x);
+  return `(function(){
   var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
   function findEl(){for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)return el;}return null;}
   function report(el){
@@ -95,13 +100,13 @@ const RESULTS_TRACKER_JS = `(function(){
       +'padding:11px 14px;background:linear-gradient(135deg,#2a1206 0%,#5a2410 55%,#2a1206 100%);'
       +'box-shadow:0 4px 16px rgba(90,36,16,.25);text-align:center;font-family:inherit');
     d.innerHTML='<div style="font-size:.88rem;color:#fff;font-weight:800;line-height:1.45">'
-      +'ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন</div>'
+      +${T('ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন')}+'</div>'
       +'<div style="font-size:.68rem;color:rgba(255,255,255,.72);line-height:1.5;margin:2px 0 9px">'
-      +'১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক</div>'
+      +${T('১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক')}+'</div>'
       +'<button type="button" id="__myaBookBtn" style="border:none;cursor:pointer;'
       +'background:linear-gradient(135deg,#f5b800,#e08a00);color:#2a1206;font-weight:800;'
       +'font-size:.83rem;font-family:inherit;padding:8px 24px;border-radius:999px;'
-      +'box-shadow:0 2px 10px rgba(245,184,0,.32)">পরামর্শ বুকিং করুন</button>';
+      +'box-shadow:0 2px 10px rgba(245,184,0,.32)">'+${T('পরামর্শ বুকিং করুন')}+'</button>';
     el.appendChild(d);
     var b=document.getElementById('__myaBookBtn');
     if(b) b.addEventListener('click',function(){
@@ -118,6 +123,7 @@ const RESULTS_TRACKER_JS = `(function(){
   }
   start();
 })();true;`;
+};
 
 // LocalWebView renders a bundled HTML page from a local file:// URI.
 // It bridges cross-page navigation and print requests back to React Native:
@@ -358,7 +364,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   /* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — অ্যাপে ভাষা ঠিক হয়
      Settings থেকে, আর পাতার নিজের সারি সেটাকে না জানিয়েই বদলে দিত।
      এক জায়গায় বসানো, তাই প্রতিটি স্ক্রিনেই খাটে। */
-  const fullInjectedJS = (injectedJS || '') + '\n' + RESULTS_TRACKER_JS
+  const fullInjectedJS = (injectedJS || '') + '\n' + React.useMemo(() => makeResultsTrackerJS(t), [t])
     + '\n' + HIDE_LANG_SWITCH_JS;
 
   // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
