@@ -15,9 +15,20 @@ export const RASHI_SIGNS = [
   { name: 'মীন',     dailySlug: 'meen',     weeklySlug: 'pisces'      },
 ];
 
-export function rashifalUrl(rashiIndex, mode) {
+/*  পাঠকের ভাষার পাতাটাই খোলা হয়।
+ *
+ *  ⚠️ বারোটি রাশির চিরসবুজ পাতা **ও** সাপ্তাহিক পাতা — দুটোরই `/en/` ও
+ *  `/hi/` সংস্করণ সাইটে প্রকাশিত (মাপা: en/hi-তে দৃশ্যমান বাংলা ০)।
+ *  আগে ভাষা নির্বিশেষে বাংলা ঠিকানাই খুলত, ফলে ইংরেজি অ্যাপের ভিতরে
+ *  পুরো রাশিফলটাই বাংলায় আসত — সেই "অনূদিত খোলস, বাংলা ভিতর" ব্যর্থতা
+ *  যা এই দুই রিপোতে বারবার নথিভুক্ত।
+ *
+ *  ⚠️ দৈনিক **তারিখ-পাতা** (`/rashifal/2026-09-07`) কেবল বাংলাতেই আছে —
+ *  ওগুলো এখানে খোলা হয় না, তাই কোনো ৪০৪-এর ঝুঁকি নেই। */
+export function rashifalUrl(rashiIndex, mode, lang) {
   const sign = RASHI_SIGNS[rashiIndex];
+  const pre = (lang === 'en' || lang === 'hi') ? lang + '/' : '';
   return mode === 'weekly'
-    ? `https://myastrology.in/rashifal/saptahik/${sign.weeklySlug}.html`
-    : `https://myastrology.in/rashifal/${sign.dailySlug}.html`;
+    ? `https://myastrology.in/${pre}rashifal/saptahik/${sign.weeklySlug}.html`
+    : `https://myastrology.in/${pre}rashifal/${sign.dailySlug}.html`;
 }

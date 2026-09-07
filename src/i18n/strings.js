@@ -1283,5 +1283,49 @@ export const STRINGS = {
   "টাকা কাটা হয়ে থাকলে চিন্তা করবেন না — পরের বার অ্যাপ খুলে একই বোতামে চাপ দিলে নতুন করে টাকা লাগবে না। এখনই দরকার হলে ওয়েবসাইট থেকেও নেওয়া যাবে।": {
     "en": "If you were charged, do not worry — open the app next time and press the same button; you will not be charged again. If you need it right now, you can also get it from the website.",
     "hi": "यदि भुगतान कट गया हो तो चिंता न करें — अगली बार ऐप खोलकर उसी बटन को दबाएँ, दोबारा भुगतान नहीं लगेगा। अभी चाहिए तो वेबसाइट से भी लिया जा सकता है।"
+  },
+  "GPS সমর্থন নেই": {
+    "en": "GPS not supported",
+    "hi": "GPS समर्थित नहीं"
+  },
+  "লোকেশন অনুসন্ধান হচ্ছে...": {
+    "en": "Finding your location…",
+    "hi": "आपका स्थान खोजा जा रहा है…"
+  },
+  "লোকেশন পাওয়া গেছে": {
+    "en": "Location found",
+    "hi": "स्थान मिल गया"
+  },
+  "লোকেশন পাওয়া যায়নি": {
+    "en": "Location not found",
+    "hi": "स्थान नहीं मिला"
+  },
+  "কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।": {
+    "en": "No chart data found. Please calculate the chart first.",
+    "hi": "कुंडली का डेटा नहीं मिला। पहले कुंडली की गणना करें।"
+  },
+  "কুণ্ডলী PDF শেয়ার করুন": {
+    "en": "Share the Kundali PDF",
+    "hi": "कुंडली PDF साझा करें"
+  },
+  "⏳ পেমেন্ট গেটওয়ে লোড হচ্ছে, ধীর ইন্টারনেটে কিছুটা সময় লাগতে পারে…": {
+    "en": "⏳ Loading the payment gateway; on a slow connection this can take a moment…",
+    "hi": "⏳ भुगतान गेटवे लोड हो रहा है; धीमे इंटरनेट पर कुछ समय लग सकता है…"
+  },
+  "❌ পেমেন্ট গেটওয়ে লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।": {
+    "en": "❌ The payment gateway could not be loaded. Check your internet connection and try again.",
+    "hi": "❌ भुगतान गेटवे लोड नहीं हो सका। इंटरनेट कनेक्शन जाँचकर फिर कोशिश करें।"
+  },
+  "PDF তৈরি করা যায়নি।": {
+    "en": "The PDF could not be created.",
+    "hi": "PDF नहीं बनाई जा सकी।"
+  },
+  "ইন্টারনেট নেই — পঞ্জিকা আপাতত বাংলাতেই দেখানো হচ্ছে।": {
+    "en": "No internet — the panjika is being shown in Bengali for now.",
+    "hi": "इंटरनेट नहीं है — पंजिका फ़िलहाल बांग्ला में ही दिखाई जा रही है।"
+  },
+  "ফলাফল কপি হয়েছে!": {
+    "en": "Result copied!",
+    "hi": "परिणाम कॉपी हो गया!"
   }
 };

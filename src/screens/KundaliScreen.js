@@ -287,7 +287,13 @@ tr.ds-cur-pd>td{background:#fff3e0!important;font-weight:700!important;}
 .toast-success{border-color:#a0c8a0!important;}
 `;
 
-function buildInjectedJS(css) {
+/*  ⚠️ `tr` = পাঠকের ভাষার অনুবাদক। এই স্ক্রিপ্টটা WebView-এর **ভিতরে**
+    চলে, তাই এর লেখাগুলো পাতার নিজস্ব i18n-এর নাগালের বাইরে — অ্যাপ
+    ইনজেক্ট করছে বলে অনুবাদটাও অ্যাপকেই করতে হয়। আগে module-স্তরে একবার
+    তৈরি হয়ে বসে থাকত, ফলে ইংরেজি পাতাতেও মাসের নাম ও GPS-বার্তা
+    বাংলাতেই যেত। */
+function buildInjectedJS(css, tr) {
+  const T = s => JSON.stringify(tr ? tr(s) : s);
   return `(function(){
   /* 1 — CSS */
   var st=document.getElementById('__kNative__');
@@ -313,8 +319,8 @@ function buildInjectedJS(css) {
 
     var mo=document.getElementById('dobMonth');
     if(mo&&mo.options.length<=1){
-      ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন',
-       'জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'
+      [${T('জানুয়ারি')},${T('ফেব্রুয়ারি')},${T('মার্চ')},${T('এপ্রিল')},${T('মে')},${T('জুন')},
+       ${T('জুলাই')},${T('আগস্ট')},${T('সেপ্টেম্বর')},${T('অক্টোবর')},${T('নভেম্বর')},${T('ডিসেম্বর')}
       ].forEach(function(m,i){var o=document.createElement('option');o.value=i+1;o.textContent=m;mo.appendChild(o);});
     }
 
@@ -334,17 +340,17 @@ function buildInjectedJS(css) {
     if(typeof getGPSLocation==='undefined'){
       window.getGPSLocation=function(){
         var msg=document.getElementById('gpsMsg');
-        if(!navigator.geolocation){if(msg)msg.textContent='GPS সমর্থন নেই';return;}
-        if(msg)msg.textContent='লোকেশন অনুসন্ধান হচ্ছে...';
+        if(!navigator.geolocation){if(msg)msg.textContent=${T('GPS সমর্থন নেই')};return;}
+        if(msg)msg.textContent=${T('লোকেশন অনুসন্ধান হচ্ছে...')};
         navigator.geolocation.getCurrentPosition(
           function(pos){
             var la=document.getElementById('lat'),lo=document.getElementById('lon');
             if(la)la.value=pos.coords.latitude.toFixed(4);
             if(lo)lo.value=pos.coords.longitude.toFixed(4);
-            if(msg)msg.textContent='লোকেশন পাওয়া গেছে';
+            if(msg)msg.textContent=${T('লোকেশন পাওয়া গেছে')};
             if(typeof validateForm==='function')validateForm();
           },
-          function(){if(msg)msg.textContent='লোকেশন পাওয়া যায়নি';}
+          function(){if(msg)msg.textContent=${T('লোকেশন পাওয়া যায়নি')};}
         );
       };
     }
@@ -394,7 +400,7 @@ function buildInjectedJS(css) {
           try{printData=JSON.stringify(window._kundaliPrintData);}catch(e){}
         }
         if(!printData){
-          if(typeof showToast==='function')showToast('কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।','error');
+          if(typeof showToast==='function')showToast(${T('কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।')},'error');
           return;
         }
         if(window.ReactNativeWebView){
@@ -414,7 +420,9 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('kundali');
+/*  ⛔ ধ্রুবক নয়, ফাংশন — module-স্তরে একবার তৈরি হলে ভাষা সেখানেই জমে
+    যেত, আর পরে ভাষা বদলালেও ইনজেক্ট হওয়া লেখা বাংলাই থাকত। */
+const makeInjectedJS = (tr) => buildInjectedJS(APP_CSS, tr) + buildBuyOnWebJS('kundali');
 
 // injectedJavaScript (উপরের INJECTED_JS) পেজ লোড হওয়ার পরে চলে, ততক্ষণে
 // ওয়েবসাইটের নিজস্ব (ডেস্কটপ-সাইট) স্টাইলে header/nav/footer-সহ পুরো পেজ
@@ -460,6 +468,8 @@ export function KundaliScreen() {
      আগের মতোই বান্ডল, অর্থাৎ ইন্টারনেট ছাড়াও চলে।
      ⚠️ ভাষা রেন্ডারের সময় পড়া হয়, মডিউল লোডে নয়। */
   const { lang, t } = useLanguage();
+  /* ভাষা বদলালেই নতুন করে তৈরি — ইনজেক্ট হওয়া লেখাও তখন পাঠকের ভাষায় */
+  const injectedJS = React.useMemo(() => makeInjectedJS(t), [t]);
   const [langFellBack, setLangFellBack] = useState(false);
   const langBase = ((lang === 'en' || lang === 'hi') && !langFellBack)
     ? 'https://myastrology.in/' + lang + '/kundali'
@@ -561,7 +571,7 @@ export function KundaliScreen() {
               geolocationEnabled={true}
               scrollEnabled={true}
               injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
-              injectedJavaScript={INJECTED_JS}
+              injectedJavaScript={injectedJS}
               onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
               onShouldStartLoadWithRequest={req => {
                 return req.url.startsWith('file://') || req.url === 'about:blank';
@@ -702,7 +712,7 @@ export function KundaliScreen() {
                     text: 'শেয়ার করুন',
                     onPress: () => Sharing.shareAsync(uri, {
                       mimeType: 'application/pdf',
-                      dialogTitle: 'কুণ্ডলী PDF শেয়ার করুন',
+                      dialogTitle: t('কুণ্ডলী PDF শেয়ার করুন'),
                       UTI: 'com.adobe.pdf',
                     }),
                   },

@@ -27,6 +27,18 @@ const { BN_G, strip } = require('./bn-scan.js');
    "ব্যতিক্রম" মানে দাঁড়াত "যা খুশি অনূদিত না রাখার ছাড়পত্র"। */
 const NO_TRANSLATE = new Set(['src/components/LanguageGate.js']);
 
+/*  একক লেখার ছাড় — ফাইল ধরে ছাড় দিলে ওই ফাইলের ভবিষ্যতের সব লেখাও
+    নীরবে ছাড় পেয়ে যেত। তাই ঠিক এই লেখাগুলোই, আর প্রতিটির কারণ লেখা।
+    ছাড়টা নিজেও পরীক্ষা করা হয় — "কারণ"টা সত্যিই কোডে আছে কি না দেখা হয়,
+    নইলে ছাড় মানে দাঁড়াত যা খুশি বাংলায় রেখে দেওয়ার ছাড়পত্র। */
+const NO_TRANSLATE_TEXT = {
+  /* CSS সিলেক্টরের ভিতরের লেখা — পাতার নিজের aria-label ধরে মেলানো হয়।
+     অনুবাদ করলে সিলেক্টরটাই আর কিছু ধরত না। */
+  '\u09aa\u09c7\u099c\u09c7 \u09af\u09be\u09a8': { file: 'src/screens/KundaliScreen.js', within: 'aria-label*=' },
+};
+
+const SERVICES2 = process.env.SERVICES || '/home/user/services';
+
 let checks = 0, fail = 0;
 const ok  = m => { checks++; console.log('  \x1b[32m✓\x1b[0m ' + m); };
 const bad = m => { checks++; fail++; console.log('  \x1b[31m✗\x1b[0m ' + m); };
@@ -64,12 +76,26 @@ const found = new Map();   // লেখা → কোন ফাইলে
 for (const f of files) {
   const src = strip(fs.readFileSync(f, 'utf8'));
   let m;
-  while ((m = LIT.exec(src))) {
-    const s = m[2];
-    if (s.length > 140 || /[\n{<]/.test(s)) continue;
-    BN_G.lastIndex = 0;
-    if (BN_G.test(s) && !found.has(s.trim())) found.set(s.trim(), f);
-  }
+  /* ⛔ আগে পুরো ফাইলটা একবারে স্ক্যান করা হতো, আর তাতে **একটা**
+     বেজোড় উদ্ধৃতি-চিহ্ন (বাংলা লেখার ভিতরের অ্যাপোস্ট্রফি, যেমন
+     `দু'বার`) গোটা ফাইলের বাকি অংশের পার্সিং সরিয়ে দিত। মেপে দেখা:
+     PanchangScreen.js-এ ডজনখানেক বাংলা লেখার মধ্যে মাত্র ৫টা ধরা পড়ত,
+     আর নতুন লেখা যোগ করলেও পরীক্ষা **সবুজই থাকত** — মিথ্যে সবুজ।
+     লাইন ধরে স্ক্যান করলে একটা বেজোড় চিহ্ন কেবল ওই লাইনটাই নষ্ট করে।
+     পুরো-ফাইল পাসটাও রাখা হয়েছে (দুটোর মিলন), যাতে আগে যা ধরা পড়ত
+     তার একটাও হারিয়ে না যায়। */
+  const scan = (text) => {
+    LIT.lastIndex = 0;
+    let x;
+    while ((x = LIT.exec(text))) {
+      const v = x[2];
+      if (v.length > 140 || /[\n{<]/.test(v)) continue;
+      BN_G.lastIndex = 0;
+      if (BN_G.test(v) && !found.has(v.trim())) found.set(v.trim(), f);
+    }
+  };
+  scan(src);
+  for (const line of src.split('\n')) scan(line);
   while ((m = JSXTXT.exec(src))) {
     const s = m[1].trim();
     if (!s || s.length > 140) continue;
@@ -83,6 +109,7 @@ console.log('① প্রতিটি বাংলা লেখার en ও hi
   const miss = [];
   for (const [s, f] of found) {
     if (NO_TRANSLATE.has(path.relative(APP, f))) continue;
+    if (NO_TRANSLATE_TEXT[s]) continue;
     const h = TABLE[nfc(s)];
     if (!h || !h.en || !h.hi) miss.push([s, path.relative(APP, f)]);
   }
@@ -103,6 +130,23 @@ console.log('② অনুবাদের ভিতরে বাংলা');
   }
   if (!n) ok(`${Object.keys(TABLE).length}টি অনুবাদের একটিতেও বাংলা অক্ষর নেই`);
   else bad(`মোট ${n}টি অনুবাদে বাংলা রয়ে গেছে`);
+}
+
+/*  ছাড়গুলো সত্যিই ন্যায্য কি না */
+{
+  const badEx = [];
+  for (const k in NO_TRANSLATE_TEXT) {
+    const e = NO_TRANSLATE_TEXT[k];
+    let src = '';
+    try { src = fs.readFileSync(path.join(APP, e.file), 'utf8'); }
+    catch (x) { badEx.push(k + ' \u2014 file missing'); continue; }
+    const at = src.indexOf(k);
+    if (at < 0) { badEx.push(k + ' \u2014 no longer in that file'); continue; }
+    const line = src.slice(src.lastIndexOf('\n', at) + 1, src.indexOf('\n', at));
+    if (line.indexOf(e.within) < 0) badEx.push(k + ' \u2014 not inside ' + e.within + ' any more');
+  }
+  if (badEx.length) badEx.forEach(m => bad('\u099b\u09be\u09dc \u0986\u09b0 \u09a8\u09cd\u09af\u09be\u09af\u09cd\u09af \u09a8\u09df \u2014 ' + m));
+  else ok(Object.keys(NO_TRANSLATE_TEXT).length + '\u099f\u09bf \u0985\u09a8\u09c1\u09ac\u09be\u09a6-\u099b\u09be\u09dc\u09c7\u09b0 \u0995\u09be\u09b0\u09a3 \u0995\u09cb\u09a1\u09c7 \u098f\u0996\u09a8\u09cb \u09b8\u09a4\u09cd\u09af');
 }
 
 console.log('③ terms.js ওয়েবসাইটের অভিধান থেকেই');
@@ -194,8 +238,31 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
   /* নীরব ফলব্যাক নয় — নেট না থাকলে পাঠককে বলা হয় */
   const lw = fs.readFileSync(path.join(APP, 'src/components/LocalWebView.js'), 'utf8');
   const note = 'ইন্টারনেট নেই';
-  if (lw.includes(note) && ks.includes(note)) ok('নেট না থাকলে বাংলায় ফেরার কথা পাঠককে বলা হয় (নীরব নয়)');
+  const pjs = fs.readFileSync(path.join(APP, 'src/screens/PanchangScreen.js'), 'utf8');
+  if (lw.includes(note) && ks.includes(note) && pjs.includes(note))
+    ok('নেট না থাকলে বাংলায় ফেরার কথা পাঠককে বলা হয় (নীরব নয়)');
   else bad('অফলাইন ফলব্যাক নীরব — পাঠক ইংরেজি খোলসে বাংলা ভিতর দেখতেন, কিছু না জেনে');
+
+  /*  পঞ্জিকা ও রাশিফল — দুটোই নিজের WebView/remoteUrl চালায়, তাই
+      webPath-এর তালিকায় পড়ে না এবং অনেক দিন ভাষা নির্বিশেষে বাংলাই
+      দেখাত। দুটোই সাইটের সবচেয়ে বেশি-পড়া অংশ, তাই আলাদা করে পাহারা। */
+  if (/myastrology\.in\/\$\{lang\}\/panjika/.test(pjs)) ok('পঞ্জিকা স্ক্রিনেও ভাষা-রুটিং বসানো');
+  else bad('PanchangScreen-এ ভাষা-রুটিং নেই — ইংরেজি পাঠক বাংলা পঞ্জিকা পেতেন');
+
+  const rs = fs.readFileSync(path.join(APP, 'src/data/rashifalSigns.js'), 'utf8');
+  const rd = fs.readFileSync(path.join(APP, 'src/screens/RashifalDetailScreen.js'), 'utf8');
+  if (/rashifalUrl\(rashiIndex, mode, lang\)/.test(rd) && /\$\{pre\}rashifal/.test(rs))
+    ok('রাশিফলের ঠিকানাও পাঠকের ভাষায়');
+  else bad('রাশিফল সবসময় বাংলা ঠিকানা খুলত — সাইটের সবচেয়ে বড় অংশ');
+
+  {
+    const need = ['panjika.html', 'rashifal/tula.html', 'rashifal/saptahik/libra.html'];
+    const gone = [];
+    for (const rel of need) for (const l of ['en', 'hi'])
+      if (!fs.existsSync(path.join(SERVICES2, l, rel))) gone.push(l + '/' + rel);
+    if (gone.length) bad('ওয়েবসাইটে নেই: ' + gone.join(', ') + ' — ওই ভাষায় ৪০৪ হতো');
+    else ok('পঞ্জিকা ও রাশিফলের দুই ভাষার পাতাই ওয়েবসাইটে আছে');
+  }
 }
 
 console.log('⑦ প্রথম চালুর ভাষা-পর্দা');

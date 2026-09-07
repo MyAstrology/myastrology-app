@@ -99,13 +99,23 @@ const seen = new Set();
 for (const f of files) {
   const src = strip(fs.readFileSync(f, 'utf8'));
   let m;
-  while ((m = LIT.exec(src))) {
+  /* ⛔ পুরো ফাইল একবারে স্ক্যান করলে একটামাত্র বেজোড় উদ্ধৃতি-চিহ্ন
+     (বাংলা লেখার ভিতরের অ্যাপোস্ট্রফি) বাকি ফাইলের পার্সিং সরিয়ে দেয় —
+     verify-app-i18n-এ মেপে ধরা পড়েছে। লাইন ধরে স্ক্যান করলে ক্ষতি ওই
+     লাইনটুকুতেই থামে। দুটো পাসের মিলন নেওয়া হয়, যাতে আগে যা ধরা পড়ত
+     তার একটাও না হারায়। */
+  const chunks = [src].concat(src.split('\n'));
+  for (const chunk of chunks) {
+  LIT.lastIndex = 0;
+  while ((m = LIT.exec(chunk))) {
     const s = m[2];
     /* বড় CSS/JS ব্লব বা মার্কআপ বাদ — ওগুলো পাঠকের লেখা নয় */
     if (s.length > 140 || /[\n{<]/.test(s)) continue;
     BN_G.lastIndex = 0;
     if (BN_G.test(s)) seen.add(s.trim());
   }
+  }
+
   while ((m = JSXTXT.exec(src))) {
     const s = m[1].trim();
     if (!s || s.length > 140) continue;

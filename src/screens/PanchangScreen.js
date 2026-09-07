@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, forwardRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef } from 'react';
 import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
@@ -13,6 +13,8 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import PANJIKA_HTML from '../web-html/panjika';
 import { ensureWebFile } from '../utils/webAssetFile';
+import { useLanguage } from '../context/LanguageContext';
+import { useAlert } from '../i18n/Text';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
@@ -398,7 +400,7 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 // earlyJS আলাদা প্রপ — কারণ ডিফল্ট EARLY_CSS_JS-এ পঞ্জিকা পাতার জন্য লেখা
 // `body>*:not(main):not(...)` ব্ল্যাঙ্কেট রুল আছে। উৎসব-হাব পাতার গঠন আলাদা,
 // ওখানে ওই রুল চাপালে প্রায় পুরো পাতাটাই লুকিয়ে যেত।
-const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS, onReady, onUtsab }, ref) {
+const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS, onReady, onUtsab, onLoadFail }, ref) {
   const navigation = useNavigation();
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
 
@@ -462,8 +464,11 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
         onMessage={onMessage}
         onShouldStartLoadWithRequest={handleNavRequest}
         onLoadStart={onLoadStart}
-        onError={onError}
-        onHttpError={onHttpError}
+        /* ⚠️ en/hi-তে লাইভ পাতা খোলা হয় — নেট না থাকলে onLoadFail() সাড়া
+           দিলে বাংলা বান্ডলে ফিরে যাওয়া হয়, তাই ত্রুটির পর্দা দেখানো হয় না।
+           নীরবে ফেরা হয় না; নিচে এক লাইনে পাঠককে বলা হয়। */
+        onError={(e) => { if (onLoadFail && onLoadFail()) return; onError(e); }}
+        onHttpError={(e) => { if (onLoadFail && onLoadFail()) return; onHttpError(e); }}
         renderError={renderError}
         renderLoading={() => (
           <View style={[s.loadCenter, StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
@@ -493,6 +498,27 @@ export function PanchangScreen() {
   const webViewRef   = useRef(null);  // shared across tabs — only one PjWebView is mounted at a time
 
   const pjUri = usePjUri();
+
+  /* ── পাঠকের ভাষার পঞ্জিকা ────────────────────────────────────────────
+     `/en/panjika` ও `/hi/panjika` সাইটে সম্পূর্ণ অনূদিত (মাপা: দৃশ্যমান
+     বাংলা কেবল ভাষা-পিলের নিজের লেবেল)। বান্ডলে অনুবাদ-যন্ত্রপাতি নেই,
+     তাই en/hi-তে লাইভ পাতাই খোলা হয় — LocalWebView-এর প্রমাণিত ধাঁচ।
+     ⚠️ বাংলা পাঠকের কিছুই বদলায়নি: বাংলায় আগের মতোই বান্ডল, অফলাইনেও চলে। */
+  const { lang, t } = useLanguage();
+  const alertT = useAlert();   /* Alert-এর শিরোনাম, বার্তা ও বোতামও পাঠকের ভাষায় */
+  const [pjFellBack, setPjFellBack] = useState(false);
+  const langUri = (lang === 'en' || lang === 'hi')
+    ? `https://myastrology.in/${lang}/panjika` : null;
+  const useLangPage = !!langUri && !pjFellBack;
+  const tabUri = useLangPage ? langUri : pjUri;
+  /* ভাষা বদলালে ফলব্যাকের চিহ্নও নতুন করে শুরু — নইলে একবার নেট গেলে
+     পরে ভাষা বদলেও বাংলাতেই আটকে থাকত। */
+  useEffect(() => { setPjFellBack(false); }, [lang]);
+  const onPjLoadFail = useCallback(() => {
+    if (!useLangPage) return false;
+    setPjFellBack(true);
+    return true;
+  }, [useLangPage]);
 
   // হোম স্ক্রিন থেকে নির্দিষ্ট ট্যাব চেয়ে আসা যায় — যেমন আত্মপর্যালোচনা
   // কার্ডে চাপ দিলে navigate('Panchang',{tab:'today',scrollTo:'srCard'})।
@@ -593,7 +619,7 @@ export function PanchangScreen() {
                   );
                   const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
                   await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
-                  Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
+                  alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
                 }
               } catch (_) {
                 await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
@@ -609,7 +635,7 @@ export function PanchangScreen() {
       );
     } catch (e) {
       haptics.error();
-      Alert.alert('ত্রুটি', 'PDF তৈরি করা যায়নি।');
+      alertT('ত্রুটি', 'PDF তৈরি করা যায়নি।');
     } finally {
       pdfBusyRef.current = false;
       setPdfGenerating(false);
@@ -653,11 +679,20 @@ export function PanchangScreen() {
 
       {/* ── Content ── */}
       <View style={s.content}>
-        {activeTab === 'today'    && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} onReady={handleTabReady} onUtsab={goUtsab} />}
-        {activeTab === 'calendar' && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} onUtsab={goUtsab} />}
-        {activeTab === 'events'   && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'today'    && <PjWebView ref={webViewRef} key={`today-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} onReady={handleTabReady} onUtsab={goUtsab} />}
+        {activeTab === 'calendar' && <PjWebView ref={webViewRef} key={`calendar-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'events'   && <PjWebView ref={webViewRef} key={`events-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} onUtsab={goUtsab} />}
         {activeTab === 'utsab'    && <PjWebView ref={webViewRef} key={utsabSlug} uri={UTSAB_URL + utsabSlug} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} onUtsab={goUtsab} />}
-        {activeTab === 'old'      && <PjWebView ref={webViewRef} uri={pjUri} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'old'      && <PjWebView ref={webViewRef} key={`old-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {/* ⚠️ নীরবে বাংলায় ফেরা হয় না — "ইংরেজি খোলস, বাংলা ভিতর" নীরবে
+            দেখানোটাই এই দুই রিপোর সবচেয়ে বেশিবার নথিভুক্ত ব্যর্থতা। */}
+        {pjFellBack && !!langUri && activeTab !== 'utsab' && (
+          <View style={s.langNote}>
+            <Text style={s.langNoteText} numberOfLines={2}>
+              {t('ইন্টারনেট নেই — পঞ্জিকা আপাতত বাংলাতেই দেখানো হচ্ছে।')}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* ── PDF generation overlay — otherwise the wait (rendering a whole
@@ -700,6 +735,11 @@ export function PanchangScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
+  langNote: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(122,46,46,0.94)', paddingVertical: 7, paddingHorizontal: 14,
+  },
+  langNoteText: { color: '#fff', fontSize: 12, textAlign: 'center', lineHeight: 17 },
   root:    { flex: 1, backgroundColor: colors.background },
 
   /* Header */

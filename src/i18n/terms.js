@@ -75,6 +75,10 @@ export const TERMS = {
     "en": "Contact on WhatsApp",
     "hi": "WhatsApp पर संपर्क करें"
   },
+  "অক্টোবর": {
+    "en": "October",
+    "hi": "अक्टूबर"
+  },
   "অক্ষয় তৃতীয়া": {
     "en": "Akshaya Tritiya",
     "hi": "अक्षय तृतीया"
@@ -182,6 +186,10 @@ export const TERMS = {
   "অসৃক (সিদ্ধি)": {
     "en": "Siddhi",
     "hi": "असृक (सिद्धि)"
+  },
+  "আগস্ট": {
+    "en": "August",
+    "hi": "अगस्त"
   },
   "আজ": {
     "en": "Today",
@@ -394,6 +402,10 @@ export const TERMS = {
   "একাদশী": {
     "en": "Ekadashi",
     "hi": "एकादशी"
+  },
+  "এপ্রিল": {
+    "en": "April",
+    "hi": "अप्रैल"
   },
   "ঐন্দ্র": {
     "en": "Aindra",
@@ -779,6 +791,10 @@ export const TERMS = {
     "en": "Kojagari Lakshmi Puja",
     "hi": "कोजागरी लक्ष्मी पूजा"
   },
+  "কোষ্ঠী মিলন PDF": {
+    "en": "Match-making PDF",
+    "hi": "कुंडली मिलान PDF"
+  },
   "কৌলব": {
     "en": "Kaulava",
     "hi": "कौलव"
@@ -1063,6 +1079,10 @@ export const TERMS = {
     "en": "National Mourning Day (Bangladesh)",
     "hi": "राष्ट्रीय शोक दिवस (बांग्लादेश)"
   },
+  "জানুয়ারি": {
+    "en": "January",
+    "hi": "जनवरी"
+  },
   "জামাই ষষ্ঠী": {
     "en": "Jamai Sasthi",
     "hi": "जामाई षष्ठी"
@@ -1070,6 +1090,14 @@ export const TERMS = {
   "জালিয়ানওয়ালাবাগ দিবস": {
     "en": "Jallianwala Bagh Day",
     "hi": "जलियाँवाला बाग़ दिवस"
+  },
+  "জুন": {
+    "en": "June",
+    "hi": "जून"
+  },
+  "জুলাই": {
+    "en": "July",
+    "hi": "जुलाई"
   },
   "জৈন মন্দিরে পূজা ও দান করুন।": {
     "en": "Worship and give in charity at a Jain temple.",
@@ -1158,6 +1186,10 @@ export const TERMS = {
   "ড. সর্বপল্লী রাধাকৃষ্ণান": {
     "en": "Dr. Sarvepalli Radhakrishnan",
     "hi": "डॉ. सर्वपल्ली राधाकृष्णन"
+  },
+  "ডিসেম্বর": {
+    "en": "December",
+    "hi": "दिसंबर"
   },
   "তপস্যা করুন": {
     "en": "Practise tapasya",
@@ -1342,6 +1374,10 @@ export const TERMS = {
   "নবমী": {
     "en": "Navami",
     "hi": "नवमी"
+  },
+  "নভেম্বর": {
+    "en": "November",
+    "hi": "नवंबर"
   },
   "না": {
     "en": "Na",
@@ -1622,6 +1658,10 @@ export const TERMS = {
   "ফাল্গুনী শুক্লা চতুর্দশী। হোলির আগের রাতে হলিকা দহন। প্রহ্লাদের ভক্তির জয় ও অহংকারী হলিকার পতনের উদযাপন।": {
     "en": "Phalguni Shukla Chaturdashi. Holika Dahan on the night before Holi — a celebration of the victory of Prahlada's devotion and the fall of the proud Holika.",
     "hi": "फाल्गुन शुक्ल चतुर्दशी। होली से पूर्व रात्रि में होलिका दहन। प्रह्लाद की भक्ति की विजय और अहंकारी होलिका के पतन का उत्सव।"
+  },
+  "ফেব্রুয়ারি": {
+    "en": "February",
+    "hi": "फ़रवरी"
   },
   "ফোন করুন": {
     "en": "Call",
@@ -2339,6 +2379,10 @@ export const TERMS = {
     "en": "Express your love for your mother. Take care of her.",
     "hi": "माँ के प्रति प्रेम व्यक्त करें। उनकी देखभाल करें।"
   },
+  "মার্চ": {
+    "en": "March",
+    "hi": "मार्च"
+  },
   "মিত্র": {
     "en": "Mitra",
     "hi": "मित्र"
@@ -2382,6 +2426,10 @@ export const TERMS = {
   "মৃগশিরা": {
     "en": "Mrigashira",
     "hi": "मृगशिरा"
+  },
+  "মে": {
+    "en": "Me",
+    "hi": "मे"
   },
   "মে দিবস / শ্রমিক দিবস": {
     "en": "May Day / Labour Day",
@@ -2546,10 +2594,6 @@ export const TERMS = {
   "রামা একাদশী": {
     "en": "Rama Ekadashi",
     "hi": "रमा एकादशी"
-  },
-  "রাশিতে": {
-    "en": "sign",
-    "hi": "राशि में"
   },
   "রাশিফল": {
     "en": "Horoscope",
@@ -2754,6 +2798,10 @@ export const TERMS = {
   "ষষ্ঠী": {
     "en": "Shashthi",
     "hi": "षष्ठी"
+  },
+  "সংখ্যা জ্যোতিষ PDF": {
+    "en": "Numerology PDF",
+    "hi": "अंक ज्योतिष PDF"
   },
   "সংখ্যাতত্ত্ব": {
     "en": "Numerology",
@@ -3066,6 +3114,10 @@ export const TERMS = {
   "সূর্যোদয়ের সময়": {
     "en": "At sunrise",
     "hi": "सूर्योदय के समय"
+  },
+  "সেপ্টেম্বর": {
+    "en": "September",
+    "hi": "सितंबर"
   },
   "সোমবার": {
     "en": "Monday",

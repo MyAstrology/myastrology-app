@@ -5,6 +5,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
 import { Text } from '../i18n/Text';
 import { useRoute } from '@react-navigation/native';
+import { useLanguage } from '../context/LanguageContext';
 import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import { RASHI_SIGNS, rashifalUrl } from '../data/rashifalSigns';
@@ -51,8 +52,9 @@ export function RashifalDetailScreen() {
   // নতুন রাশি বাছলে আগের ট্যাবে আটকে না থেকে যেটা চাওয়া হয়েছে সেখান থেকে শুরু
   useEffect(() => { setMode(wantMode); }, [rashiIndex, wantMode]);
 
+  const { lang } = useLanguage();
   const sign = RASHI_SIGNS[rashiIndex];
-  const url = rashifalUrl(rashiIndex, mode);
+  const url = rashifalUrl(rashiIndex, mode, lang);
 
   return (
     <View style={s.root}>
@@ -74,7 +76,7 @@ export function RashifalDetailScreen() {
         </TouchableOpacity>
       </View>
       <LocalWebView
-        key={`${mode}-${rashiIndex}`}
+        key={`${mode}-${rashiIndex}-${lang}`}
         name={`rashifal-${mode}-${sign.dailySlug}`}
         remoteUrl={url}
         style={s.wv}
