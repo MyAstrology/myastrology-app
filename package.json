@@ -15,7 +15,9 @@
     "verify-app-i18n": "node scripts/verify-app-i18n.js",
     "build-app-terms": "node scripts/build-app-terms.js",
     "verify-play-billing": "node scripts/verify-play-billing.js",
-    "verify-app-a11y": "node scripts/verify-app-a11y.js"
+    "verify-app-a11y": "node scripts/verify-app-a11y.js",
+    "build-kundali-print": "node scripts/build-kundali-print.js",
+    "verify-print-bundle": "node scripts/verify-print-bundle.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

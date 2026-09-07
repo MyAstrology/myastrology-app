@@ -27,14 +27,23 @@ import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '.
 
 const LOGO = require('../../assets/logo.png');
 
-function injectDataIntoPrintHtml(printDataJson) {
+function injectDataIntoPrintHtml(printDataJson, lang) {
   let html = KUNDALI_PRINT_HTML;
   // Encode < as < so the HTML parser never sees </script> inside the JSON
   // payload. The JS engine correctly decodes < back to <.
   // We use function replacements (not string replacements) so that any $
   // characters in the JSON payload are never misinterpreted as back-references.
   const safeJs = JSON.stringify(printDataJson).replace(/</g, '\\u003c');
-  html = html.replace('<head>', () => `<head><script>window.__kData=${safeJs};<\/script>`);
+  /* ⚠️ ভাষাটা <html data-mya-lang>-এ বসাতেই হয়। js/i18n.js localStorage
+     থেকে ভাষা পড়ে, আর অ্যাপের file:// WebView-এ সেই খাতা খালি — তাই
+     ইংরেজি/হিন্দি ক্রেতাও বাংলা PDF পেতেন। data-mya-lang localStorage-এর
+     চেয়ে অগ্রাধিকার পায়, আর এই ইনলাইন স্ক্রিপ্ট defer-করা i18n.js-এর
+     আগেই চলে। */
+  const L = (lang === 'en' || lang === 'hi') ? lang : 'bn';
+  html = html.replace('<head>', () =>
+    `<head><script>window.__kData=${safeJs};` +
+    `try{document.documentElement.setAttribute('data-mya-lang',${JSON.stringify(L)});}catch(e){}` +
+    `<\/script>`);
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
     () => `try{raw=window.__kData||null;}catch(e){}`
@@ -661,7 +670,7 @@ export function KundaliScreen() {
           style={s.pdfRenderer}
           javaScriptEnabled={true}
           domStorageEnabled={true}
-          source={{ html: injectDataIntoPrintHtml(pdfRenderState.printData) }}
+          source={{ html: injectDataIntoPrintHtml(pdfRenderState.printData, lang) }}
           onLoadEnd={() => {
             // kundali-print.js waits for document.fonts.ready then setTimeout(go, 600).
             // Poll until #printRoot has children, then capture.
