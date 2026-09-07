@@ -102,6 +102,19 @@ for (const f of files) {
     BN_G.lastIndex = 0;
     if (BN_G.test(s) && !found.has(s)) found.set(s, f);
   }
+
+  /*  ⛔ বহু-লাইনে লেখা JSX টেক্সট — `<Text …>` আর লেখাটা আলাদা লাইনে।
+      উপরের JSXTXT-এ `\n` বাদ দেওয়া আছে, তাই এই আকৃতিটা সে **দেখতেই
+      পেত না**। মেপে: চারটি এমন লেখা আছে, আর নতুন একটা যোগ করার পরেও
+      পরীক্ষা সবুজ থাকছিল — অর্থাৎ নতুন লেখা নীরবে অনূদিত না-হয়ে যেত। */
+  const JSXML = />\s*\n\s*([^<>{}]+?)\s*\n\s*</g;
+  JSXML.lastIndex = 0;
+  while ((m = JSXML.exec(src))) {
+    const v = m[1].trim();
+    if (!v || v.length > 140 || /[\n]/.test(v)) continue;
+    BN_G.lastIndex = 0;
+    if (BN_G.test(v) && !found.has(v)) found.set(v, f);
+  }
 }
 
 console.log('① প্রতিটি বাংলা লেখার en ও hi অনুবাদ');

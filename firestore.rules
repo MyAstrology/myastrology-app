@@ -71,6 +71,22 @@ service cloud.firestore {
                         && resource.data.uid == request.auth.uid
                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['booking']));
       allow delete: if isAdmin();
+
+      // ── তৈরি হওয়া প্রিমিয়াম রিপোর্ট ──
+      // Gemini-র লেখা এখানে, অর্ডার-ডকুমেন্টে নয়: ওই ডকুমেন্টে ইতিমধ্যেই
+      // printHtml (৯০০ KB পর্যন্ত) থাকে আর Firestore-এর সীমা ১ MiB —
+      // একসঙ্গে রাখলে লেখাটাই ব্যর্থ হতো, আর .catch() সেটা নীরবে গিলে
+      // ফেলত: জ্যোতিষী ভাবতেন পাঠানো হয়েছে, ক্রেতা কিছুই পেতেন না।
+      // সাব-কালেকশনের নিজের ১ MiB বাজেট আছে।
+      // ⚠️ get() একটা বাড়তি পড়া, কিন্তু মালিকানা যাচাইয়ের অন্য উপায় নেই —
+      // uid সাব-ডকুমেন্টে নকল করে রাখলে দুটো জায়গা একদিন সরে যেত।
+      // ⚠️ লেখা কেবল অ্যাডমিন — ক্রেতা নিজের রিপোর্ট বদলাতে পারেন না।
+      match /report/{docId} {
+        allow read: if isAdmin()
+                    || (request.auth != null
+                        && get(/databases/$(database)/documents/orders/$(orderId)).data.uid == request.auth.uid);
+        allow write: if isAdmin();
+      }
     }
 
     // ── Play Billing-এ কেনা অধিকার ──

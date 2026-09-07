@@ -33,8 +33,12 @@ import { typography } from '../theme/typography';
 const STATUS = {
   new:      { label: 'অপেক্ষমাণ',      color: '#B8860B', icon: 'clock-outline' },
   working:  { label: 'তৈরি হচ্ছে',      color: '#2980B9', icon: 'progress-clock' },
+  /* 'ready' লেখে অ্যাডমিনের "গ্রাহককে দিন" সুইচ — তখনই রিপোর্টটা
+     ক্রেতার নিজের হাতে নামানোর জন্য তৈরি। */
+  ready:    { label: 'প্রস্তুত',        color: '#1E874B', icon: 'check-circle-outline' },
   done:     { label: 'প্রস্তুত',        color: '#1E874B', icon: 'check-circle-outline' },
 };
+const READY = (st) => st === 'ready' || st === 'done';
 const PID_LABEL = {
   premiumKundali:  'প্রিমিয়াম কুণ্ডলী রিপোর্ট',
   solutionKundali: 'VIP পরামর্শ ও সমাধান',
@@ -142,9 +146,9 @@ export function MyReportsScreen({ navigation }) {
                 </Text>
               ) : null}
 
-              {item.status !== 'done' ? (
+              {!READY(item.status) ? (
                 <Text style={s.wait}>
-                  আপনার রিপোর্ট তৈরি হচ্ছে — ২৪ ঘণ্টার মধ্যে প্রস্তুত হলে জানানো হবে।
+                  ড. প্রদ্যুৎ আচার্য ব্যক্তিগতভাবে বিশ্লেষণ করছেন — প্রস্তুত হলে এখানেই ডাউনলোড করতে পারবেন।
                 </Text>
               ) : null}
 
@@ -157,7 +161,17 @@ export function MyReportsScreen({ navigation }) {
                 </Pressable>
               ) : null}
 
-              {item.status === 'done' && item.deliveryUrl ? (
+              {/* ⛔ PDF-টা ওয়েবসাইটের /my-reports পাতায় তৈরি হয় — সেখানেই
+                  premium-merge.js দিয়ে ইঞ্জিনের রিপোর্ট ও বিশ্লেষণ মেশানো
+                  হয়। অ্যাপে দ্বিতীয় একটা মেশানোর কোড লিখলে একদিন দু'দিকের
+                  PDF আলাদা হয়ে যেত। WebView-এ সাইন-ইন সেতু দিয়ে যায়, তাই
+                  আবার লগইন করতে হয় না। */}
+              {READY(item.status) ? (
+                <Pressable style={s.cta}
+                  onPress={() => navigation.navigate('WebPage', { path: 'my-reports' })}>
+                  <Text style={s.ctaText}>সম্পূর্ণ রিপোর্ট ডাউনলোড করুন</Text>
+                </Pressable>
+              ) : item.deliveryUrl ? (
                 <Pressable style={s.cta} onPress={() => Linking.openURL(item.deliveryUrl).catch(() => {})}>
                   <Text style={s.ctaText}>রিপোর্ট দেখুন</Text>
                 </Pressable>

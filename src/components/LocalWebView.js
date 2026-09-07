@@ -189,7 +189,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   // ক্লাউড-সিঙ্ক অ্যাপ থেকেও কাজ করে। অ্যাপে সাইন-আউট করলে WebView-ও
   // সাইন-আউট হয়ে যায় (একই ডিভাইসে ভিন্ন অ্যাকাউন্টের ডেটা যেন না মেশে)।
   useEffect(() => {
-    if (remoteUrl || !uri || !webViewRef.current || authLoading) return;
+    /* ⚠️ আগে যেকোনো remoteUrl-এ সেতুটা বন্ধ ছিল ("mya-auth.js শুধু বান্ডলে
+       আছে")। কিন্তু আমাদের **নিজের সাইটের** পাতাগুলোতেও ওটা আছে — আর
+       /my-reports-এ সাইন-ইন ছাড়া ক্রেতা নিজের রিপোর্টই দেখতে পেতেন না।
+       বাইরের কোনো ঠিকানায় টোকেন পাঠানো হয় না; আর পাতায় myaAuth না থাকলে
+       ইনজেক্ট করা স্ক্রিপ্ট ২০ বার চেষ্টা করে চুপচাপ থেমে যায়। */
+    const ownSite = !remoteUrl || /^https:\/\/myastrology\.in\//.test(remoteUrl);
+    if (!ownSite || !(uri || remoteUrl) || !webViewRef.current || authLoading) return;
     let cancelled = false;
     if (uid) {
       fetchWebViewAuthToken().then((token) => {
