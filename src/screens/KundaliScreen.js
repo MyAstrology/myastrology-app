@@ -180,6 +180,11 @@ svg.tab-icon{stroke:rgba(255,255,255,0.55)!important;fill:none!important;width:1
   background:linear-gradient(135deg,#0f9d6a,#0a6b48)!important;
   border-color:rgba(255,255,255,0.35)!important;
 }
+/* ⚠️ #tabNav ওয়েবসাইটে `position:fixed;top:66px` — ওই ৬৬px হলো সাইটের
+   নিজের হেডারের উচ্চতা। অ্যাপে সেই হেডার লুকোনো, আর উপরে অ্যাপের নিজের
+   হেডার নেটিভভাবে আঁকা — তাই ৬৬px-এর ফাঁকটা অর্থহীন হয়ে দাম-বারটা
+   পাতার মাঝখানে চার্টের উপর বসে যেত। WebView-এর একেবারে উপরেই বসানো। */
+#tabNav{top:0!important;}
 /* ── Hide external-navigation tabs (যোটক, পঞ্জিকা, বর্ষফল, প্রশ্ন, রাশিফল) ── */
 .tab-btn[aria-label*="পেজে যান"],
 .tab-btn[onclick*="goToYotak"],
