@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
-import { HIDE_LANG_SWITCH_JS } from '../utils/hideWebChrome';
+import { HIDE_LANG_SWITCH_JS, RESULTS_CONTAINER_IDS, FORM_CONTAINER_IDS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { handleShareText } from '../utils/webShareBridge';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
@@ -61,18 +61,7 @@ function parsePageName(url) {
 // React Navigation's tab history — which otherwise exits straight to whatever
 // tab was open before this screen (e.g. Home), skipping over the in-screen
 // form/results distinction the user actually expects "back" to respect.
-const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection', 'resultsSection',
-  /* সংখ্যা জ্যোতিষের ফলাফল আলাদা পাতায় (result.html), ঘরের নাম আলাদা */
-  'resultContent'];
-
-// "গণনা করুন" চাপলে পেজগুলো ফলাফল দেখানোর পাশাপাশি ফর্মটাও লুকিয়ে ফেলে
-// (display:none)। ব্যাক চাপলে আগে শুধু ফলাফলটা লুকানো হতো — ফর্ম ফিরিয়ে আনা
-// হতো না, ফলে দুটোই লুকানো অবস্থায় পুরো পাতা ফাঁকা হয়ে যেত এবং মনে হতো ব্যাক
-// কাজই করছে না (বর্ষফলে সবচেয়ে স্পষ্ট)। তাই ফলাফল লুকানোর সাথে সাথে ফর্মের
-// কনটেইনারটাও আবার দেখানো হয়। প্রতি পেজে নাম আলাদা, তাই সবগুলোই এখানে:
-//   বর্ষফল → inputSection · যোটক বিচার → mmInputSection
-//   নামকরণ/প্রশ্ন জ্যোতিষ → formSection
-const FORM_CONTAINER_IDS = ['inputSection', 'mmInputSection', 'formSection'];
+/* তালিকা দুটো src/utils/hideWebChrome.js-এ — দুই স্ক্রিনই একই উৎস পড়ে */
 /* ⚠️ ফাংশন, ধ্রুবক নয় — ভিতরের তিনটে লেখা পাঠকের ভাষায় লাগে। মডিউল-স্তরে
    একবার তৈরি হলে ওগুলো চিরকালের জন্য বাংলা হয়ে যেত, আর ইংরেজি পাতার
    নিচে বাংলা পরামর্শ-কার্ড বসত (সহকর্মী ঠিক সেটাই ধরেছেন)। */
@@ -235,21 +224,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
          চাপলে ফলাফলটা লুকিয়ে যেত আর দেখানোর কিছু থাকত না — সাদা পাতা।
          ওই পর্দায় ব্যাক মানে আগের পর্দায় ফেরা, তাই নিচে গড়িয়ে যেতে দেওয়া। */
       if (hideResultsOnBack && resultsVisibleRef.current && webViewRef.current) {
-        const hideJs = `(function(){
-          var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
-          var hid=false;
-          for(var i=0;i<ids.length;i++){
-            var el=document.getElementById(ids[i]);
-            if(el&&getComputedStyle(el).display!=='none'){el.style.setProperty('display','none','important');hid=true;break;}
-          }
-          if(!hid) return;
-          var fids=${JSON.stringify(FORM_CONTAINER_IDS)};
-          for(var j=0;j<fids.length;j++){
-            var f=document.getElementById(fids[j]);
-            if(f){f.style.setProperty('display','block','important');}
-          }
-          window.scrollTo(0,0);
-        })();true;`;
+        const hideJs = makeHideResultsJS();
         webViewRef.current.injectJavaScript(hideJs);
         resultsVisibleRef.current = false;
         return true;

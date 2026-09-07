@@ -422,6 +422,19 @@ console.log('⑤ পার্স (JSX সহ)');
       ok('Play-স্টোরের বিজ্ঞাপন অ্যাপে ঢাকা');
     else bad('অ্যাপের ভিতরেই "অ্যাপ ডাউনলোড করুন" বিজ্ঞাপন দেখা যাবে');
 
+    /* ব্যাক চাপলে ফাঁকা পর্দা — তালিকা দুটো এক জায়গায় থাকা চাই,
+       আর দুই WebView-ই সেটাই পড়া চাই। */
+    if (/RESULTS_CONTAINER_IDS/.test(h) && /FORM_CONTAINER_IDS/.test(h))
+      ok('ব্যাক-এ ফর্ম ফেরানোর তালিকা এক উৎসে');
+    else bad('তালিকাদুটো শেয়ার্ড ফাইলে নেই — দুই কপি একদিন সরে যাবে');
+    for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
+      const src = fs.readFileSync(path.join(APP, f), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+      if ((src.match(/makeHideResultsJS/g) || []).length >= 2)
+        ok(path.basename(f) + ' — ব্যাক-এ ফর্ম ফিরিয়ে আনে');
+      else bad(path.basename(f) + ' — ব্যাক চাপলে পর্দা ফাঁকা হয়ে যাবে');
+    }
+
     /* দুটো WebView, দুটোতেই বসাতে হয় — কুণ্ডলী নিজেরটা চালায়। */
     for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
       const src = fs.readFileSync(path.join(APP, f), 'utf8')

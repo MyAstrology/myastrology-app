@@ -31,3 +31,30 @@ export const HIDE_LANG_SWITCH_JS = `(function(){try{
     (document.head||document.documentElement).appendChild(el);}
   el.textContent=${JSON.stringify(HIDE_LANG_SWITCH_CSS)};
 }catch(e){}})();true;`;
+
+/*  ব্যাক চাপলে ফলাফল লুকিয়ে ফর্ম ফিরিয়ে আনা।
+    ⚠️ পাতাগুলো গণনার সময় ফর্মটাও display:none করে দেয়। কেবল ফলাফল
+    লুকোলে দুটোই লুকানো অবস্থায় পর্দা **সম্পূর্ণ ফাঁকা** হয়ে যায় —
+    সহকর্মী ঠিক সেটাই দেখেছেন (কুণ্ডলী → ব্যাক → আবার কুণ্ডলী)।
+    ⚠️ তালিকা দুটো এখানেই থাকুক — LocalWebView ও KundaliScreen দুই
+    জায়গায় কপি রাখলে একদিন সরে যেত, আর একটাতে ফাঁকা পর্দা ফিরত। */
+export const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection', 'resultsSection',
+  /* সংখ্যা জ্যোতিষের ফলাফল আলাদা পাতায় (result.html), ঘরের নাম আলাদা */
+  'resultContent'];
+export const FORM_CONTAINER_IDS = ['inputSection', 'mmInputSection', 'formSection'];
+
+export const makeHideResultsJS = () => `(function(){
+  var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
+  var hid=false;
+  for(var i=0;i<ids.length;i++){
+    var el=document.getElementById(ids[i]);
+    if(el&&getComputedStyle(el).display!=='none'){el.style.setProperty('display','none','important');hid=true;break;}
+  }
+  if(!hid) return;
+  var fids=${JSON.stringify(FORM_CONTAINER_IDS)};
+  for(var j=0;j<fids.length;j++){
+    var f=document.getElementById(fids[j]);
+    if(f){f.style.setProperty('display','block','important');}
+  }
+  window.scrollTo(0,0);
+})();true;`;

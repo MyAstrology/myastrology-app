@@ -21,7 +21,7 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
-import { HIDE_LANG_SWITCH_JS } from '../utils/hideWebChrome';
+import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 
@@ -530,6 +530,14 @@ export function KundaliScreen() {
 
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      /* ⚠️ আগে সোজা goBack() ডাকা হতো। কুণ্ডলীর পাতা গণনার সময় ফর্মটাও
+         display:none করে দেয়, তাই ইতিহাসে এক ধাপ পিছিয়ে গেলে ফলাফল ও ফর্ম
+         **দুটোই** লুকানো থেকে যেত আর পর্দা সম্পূর্ণ ফাঁকা হয়ে যেত।
+         LocalWebView-এ এই সংশোধনটা আগেই ছিল; কুণ্ডলী নিজের WebView চালায়
+         বলে এখানে পৌঁছয়নি। এখন দুটোই একই শেয়ার্ড কোড পড়ে। */
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(makeHideResultsJS());
+      }
       if (webCanGoBack && webViewRef.current) {
         webViewRef.current.goBack();
         return true;
