@@ -83,6 +83,17 @@ const makeResultsTrackerJS = (tr) => {
     /* ঘরটা তৈরি থাকলেই হবে না — ভিতরে সত্যিই ফলাফল আছে কি না দেখা হয়।
        নইলে ফলাফল আসার আগেই ফাঁকা পাতায় কার্ডটা একা বসে যেত। */
     if((el.innerText||'').trim().length<300) return;
+    /* ⚠️ পাতাটা নিজেই পরামর্শের ব্যবস্থা দিলে অ্যাপ দ্বিতীয় কার্ড বসায় না।
+       কুণ্ডলী ও যোটক-বিচারের ফলাফলে ওয়েবসাইটের নিজের কার্ড আছে
+       ("WhatsApp consultation"), ফলে দুটো কার্ড একটার নিচে আরেকটা বসত —
+       একই কথা দু'বার। যে পাতায় কিছু নেই, সেখানে অ্যাপেরটা আগের মতোই বসে।
+       ⚠️ লেখা নয়, **লিংক** দেখে ঠিক করা হয় — লেখা তিন ভাষায় বদলায়,
+       ঠিকানা বদলায় না। শেয়ার-বোতামের wa.me/?text=... এতে ধরা পড়ে না,
+       কারণ পরামর্শের লিংকে wa.me-র পরেই ফোন নম্বরের অঙ্ক থাকে। */
+    try{
+      var wa=el.querySelector('a[href*="wa.me/9"],a[href*="wa.me/+9"],a[href*="api.whatsapp.com/send?phone"]');
+      if(wa) return;
+    }catch(e){}
     var d=document.createElement('div');
     d.id='__myaBookCard';
     d.setAttribute('style','margin:20px auto 6px;max-width:600px;border-radius:13px;'
