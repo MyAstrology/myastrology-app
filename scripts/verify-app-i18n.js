@@ -114,11 +114,20 @@ for (const f of files) {
       উপরের JSXTXT-এ `\n` বাদ দেওয়া আছে, তাই এই আকৃতিটা সে **দেখতেই
       পেত না**। মেপে: চারটি এমন লেখা আছে, আর নতুন একটা যোগ করার পরেও
       পরীক্ষা সবুজ থাকছিল — অর্থাৎ নতুন লেখা নীরবে অনূদিত না-হয়ে যেত। */
-  const JSXML = />\s*\n\s*([^<>{}]+?)\s*\n\s*</g;
+  /* ⛔ তৃতীয় অন্ধ দিক: **দুই বা তার বেশি লাইনে** লেখা JSX টেক্সট।
+     নিচের প্যাটার্নটা ঠিক এক লাইনই ধরত, তাই
+       <Text>
+         প্রথম লাইন
+         দ্বিতীয় লাইন
+       </Text>
+     ধরা পড়ত না — আর ওটাই AboutAstrologerScreen-এর পরিচিতি অনুচ্ছেদ,
+     যা হিন্দি পাতাতেও বাংলাই থাকত। ফাঁক এক করে চাবি বানানো হয়
+     (src/i18n/index.js-ও একই নিয়মে খোঁজে)। */
+  const JSXML = />\s*\n((?:\s*[^<>{}\n]+\n)+)\s*</g;
   JSXML.lastIndex = 0;
   while ((m = JSXML.exec(src))) {
-    const v = m[1].trim();
-    if (!v || v.length > 140 || /[\n]/.test(v)) continue;
+    const v = m[1].replace(/\s+/g, ' ').trim();
+    if (!v || v.length > 300) continue;
     BN_G.lastIndex = 0;
     if (BN_G.test(v) && !found.has(v)) found.set(v, f);
   }

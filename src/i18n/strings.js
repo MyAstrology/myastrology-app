@@ -20,6 +20,10 @@ export const STRINGS = {
     "en": "Share the Namakaran report",
     "hi": "नामकरण रिपोर्ट शेयर करें"
   },
+  "রানাঘাট, পশ্চিমবঙ্গের গোল্ড মেডেলিস্ট PhD জ্যোতিষী ও হস্তরেখাবিদ। বৈদিক জ্যোতিষ, হস্তরেখা বিচার, কুণ্ডলী বিশ্লেষণ, সংখ্যাতত্ত্ব, রত্ন থেরাপি ও বাস্তু শাস্ত্রে ১৫ বছরের বেশি অভিজ্ঞতা।": {
+    "en": "A gold-medallist PhD astrologer and palmist of Ranaghat, West Bengal. More than 15 years of experience in Vedic astrology, palmistry, Kundali analysis, numerology, gem therapy and Vastu Shastra.",
+    "hi": "राणाघाट, पश्चिम बंगाल के स्वर्ण पदक प्राप्त PhD ज्योतिषी एवं हस्तरेखाविद। वैदिक ज्योतिष, हस्तरेखा विचार, कुंडली विश्लेषण, अंकशास्त्र, रत्न चिकित्सा एवं वास्तु शास्त्र में 15 वर्षों से अधिक का अनुभव।"
+  },
   "AI ও পরামর্শ": {
     "en": "AI & Consultation",
     "hi": "AI और परामर्श"
