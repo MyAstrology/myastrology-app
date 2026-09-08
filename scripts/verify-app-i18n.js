@@ -505,6 +505,14 @@ console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্য
   if (/return req\.url\.startsWith\('file:\/\/'\)/.test(ks))
     bad('KundaliScreen-এ পুরনো file://-only পাহারা ফিরে এসেছে');
   else ok('পুরনো file://-only পাহারা ফেরেনি');
+
+  /* দুই WebView, দুটোতেই প্রোফাইল-সেতু লাগে — কুণ্ডলী নিজেরটা চালায় */
+  for (const f of ["src/components/LocalWebView.js", "src/screens/KundaliScreen.js"]) {
+    const src = fs.readFileSync(path.join(APP, f), "utf8");
+    if (/pullProfiles\s*\(/.test(src) && /buildProfileSyncJS\s*\(/.test(src))
+      ok(path.basename(f) + " — সেভ করা প্রোফাইল টেনে আনে");
+    else bad(f + " — লগইন করেও সেভ করা নাম দেখা যাবে না");
+  }
 }
 
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);

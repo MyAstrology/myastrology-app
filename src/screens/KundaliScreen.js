@@ -21,6 +21,7 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { pullProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { resolveWebNav, isExternalHandoffUrl } from '../utils/webNav';
 import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
@@ -516,8 +517,18 @@ export function KundaliScreen() {
         if (cancelled || !token || !webViewRef.current) return;
         webViewRef.current.injectJavaScript(buildBridgeSignInJS(token));
       });
+      /* ⛔ ২০২৬-০৯-০৮ — টোকেন-সেতুটা এখানে ছিল, কিন্তু প্রোফাইল টেনে আনার
+         অংশটা ছিল না (LocalWebView-এ দুটোই আছে)। ফলে লগইন করেও
+         ওয়েবসাইটে সেভ করা নাম কুণ্ডলী পাতায় দেখা যেত না — পাতা
+         বলত "কোনো প্রোফাইল সেভ করা নেই"। নেটিভ Firebase দিয়ে সরাসরি
+         আনা হয়, তাই টোকেন-সেতু ব্যর্থ হলেও এটা কাজ করে। */
+      pullProfiles(uid).then((list) => {
+        if (cancelled || list === null || !webViewRef.current) return;
+        webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
+      });
     } else {
       webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
+      webViewRef.current.injectJavaScript(PROFILE_CLEAR_JS);
     }
     return () => { cancelled = true; };
   }, [uid, sourceUri, authLoading]);
