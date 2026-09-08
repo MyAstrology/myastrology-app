@@ -1,5 +1,6 @@
 import v from '../vsop87-planets';
 import PEph from './panjika-ephemeris';
+import { panchangSpans, karanaName } from './panjika_trans';
 
 const BN_MONTH_NAMES = ['বৈশাখ','জ্যৈষ্ঠ','আষাঢ়','শ্রাবণ','ভাদ্র','আশ্বিন','কার্তিক','অগ্রহায়ণ','পৌষ','মাঘ','ফাল্গুন','চৈত্র'];
 const BN_RITU        = ['গ্রীষ্মকাল','গ্রীষ্মকাল','বর্ষাকাল','বর্ষাকাল','শরৎকাল','শরৎকাল','হেমন্তকাল','হেমন্তকাল','শীতকাল','শীতকাল','বসন্তকাল','বসন্তকাল'];
@@ -387,6 +388,39 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON, tz = D
   const kSt = jdHM(findStartJD(v.getKarana,    curJD, p.karana.index), TZ);
   const kEn = jdHM(findEndJD  (v.getKarana,    curJD, p.karana.index), TZ);
 
+  /* ⛔ ২০২৬-০৯-০৮ — হোম কার্ড আর পঞ্জিকা পর্দা একই দিনে আলাদা শেষ-সময়
+     দেখাত (নক্ষত্র ১৬:৪১ বনাম ১৬:৪০, যোগ ০০:৪২ বনাম ০০:৪০)। নাম এক,
+     সময় আলাদা — কারণ হোম vsop87 দিয়ে খুঁজত, আর পঞ্জিকা পাতা ছাপা-
+     পঞ্জিকা-যাচাই করা PD সারণী দিয়ে। রানাঘাট/কলকাতায় ও PD-র সীমার
+     ভিতরে এখন হোমও PD-ই পড়ে, অর্থাৎ দুই পর্দায় এক উত্তর।
+     সীমার বাইরে বা অন্য শহরে আগের হিসাবই অক্ষত থাকে। */
+  let tEnd = tEn, nEnd = nEn, yEnd = yEn, kEnd = kEn;
+  let tithiIndex = tIdx, nakIndex = p.nakshatra.index,
+      yogaIndex = p.yoga.index, karanaLabel = p.karana.name;
+  if (atHome) {
+    try {
+      const nextD = new Date(Date.UTC(y, m - 1, d) + 86400000);
+      const nextRise = PEph.getSunrise(
+        nextD.getUTCFullYear() + '-' +
+        String(nextD.getUTCMonth() + 1).padStart(2, '0') + '-' +
+        String(nextD.getUTCDate()).padStart(2, '0'));
+      const rise = PEph.getSunrise(dateStr);
+      const sp = (rise != null && nextRise != null)
+        ? panchangSpans(dateStr, rise, nextRise, TZ) : null;
+      if (sp) {
+        const hm = h => (h == null) ? null
+          : String(Math.floor(((h % 24) + 24) % 24)).padStart(2, '0') + ':' +
+            String(Math.floor(((((h % 24) + 24) % 24) % 1) * 60)).padStart(2, '0');
+        tithiIndex = sp.tithi.idx;      tEnd = hm(sp.tithi.endH)     || tEn;
+        nakIndex   = sp.nakshatra.idx;  nEnd = hm(sp.nakshatra.endH) || nEn;
+        yogaIndex  = sp.yoga.idx;       yEnd = hm(sp.yoga.endH)      || yEn;
+        karanaLabel = karanaName(sp.karana.idx) || karanaLabel;
+        kEnd = hm(sp.karana.endH) || kEn;
+      }
+    } catch (_) { /* PD না পেলে আগের হিসাবই থাকে */ }
+  }
+  const pakshaFinal = tithiIndex < 15 ? 'শুক্লপক্ষ' : 'কৃষ্ণপক্ষ';
+
   const ay      = p.ayanamsa || 0;
   const ayDeg   = Math.floor(ay);
   const ayMin   = Math.floor((ay - ayDeg) * 60);
@@ -403,23 +437,23 @@ export function getPanchangForDate(dateStr, lat = DEF_LAT, lon = DEF_LON, tz = D
     bengaliMonth: bnDate ? bnDate.monthName : '—',
     bengaliYear:  bnDate ? bnDate.year      : null,
     ritu:         bnDate ? bnDate.ritu      : '—',
-    tithiStart:     tSt,  tithiEnd:     tEn,
-    nakshatraStart: nSt,  nakshatraEnd: nEn,
-    yogaStart:      ySt,  yogaEnd:      yEn,
-    karanaStart:    kSt,  karanaEnd:    kEn,
+    tithiStart:     tSt,  tithiEnd:     tEnd,
+    nakshatraStart: nSt,  nakshatraEnd: nEnd,
+    yogaStart:      ySt,  yogaEnd:      yEnd,
+    karanaStart:    kSt,  karanaEnd:    kEnd,
     sunrise:  peSunriseHM || (riseH != null ? decToHM(riseH) : '—'),
     sunset:   peSunsetHM  || (setH  != null ? decToHM(setH)  : '—'),
     calibrated,
     transit:  p.transit  ? p.transit.substring(0,5)  : '—',
-    tithi:        TITHI_NAMES[tIdx]                    || '—',
-    tithiIdx:     tIdx,
-    paksha,
-    nakshatra:    NAKSHATRA_NAMES[p.nakshatra.index]   || '—',
-    nakshatraIdx: p.nakshatra.index,
+    tithi:        TITHI_NAMES[tithiIndex]              || '—',
+    tithiIdx:     tithiIndex,
+    paksha:       pakshaFinal,
+    nakshatra:    NAKSHATRA_NAMES[nakIndex]            || '—',
+    nakshatraIdx: nakIndex,
     pada:         p.nakshatra.pada,
     padaName:     PADA_NAMES[(p.nakshatra.pada || 1) - 1] || '',
-    yoga:         YOGA_NAMES[p.yoga.index]             || '—',
-    karana:       p.karana.name                        || '—',
+    yoga:         YOGA_NAMES[yogaIndex]                || '—',
+    karana:       karanaLabel                          || '—',
     lagnaRashi:   RASHI_NAMES[p.lagna.rashi]           || '—',
     janmaRashi:   RASHI_NAMES[p.janmaRashi]            || '—',
     ayanamsa:     ayanamsaStr,
