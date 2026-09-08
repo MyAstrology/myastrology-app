@@ -49,7 +49,11 @@ const INNER_TABS = [
 // /utsab হাব পাতা থেকে সাইটের হেডার/ফুটার/নেভিগেশন সরিয়ে শুধু খোঁজার
 // অংশ ও উৎসব-তালিকা রাখা হয় — অ্যাপের নিজস্ব হেডার ও ট্যাব বার তো
 // উপরেই আছে, ওগুলো দুবার দেখানোর মানে হয় না।
-const UTSAB_URL = 'https://myastrology.in/utsab/';
+/* ⚠️ ২০২৬-০৯-০৮ — ঠিকানাটা বাংলায় হার্ডকোড ছিল, তাই ইংরেজি/হিন্দি
+   পাঠক 'উৎসব খোঁজা' ট্যাবে বাংলা পাতাই পেতেন। /utsab/-এর en ও hi
+   কপি ২০২৬-০৯-০৬ থেকে সাইটে আছে। */
+const utsabBase = (lang) => 'https://myastrology.in/'
+  + ((lang === 'en' || lang === 'hi') ? lang + '/' : '') + 'utsab/';
 const UTSAB_CSS = `
 .site-header,.sidenav,.sidenav-overlay,.breadcrumb,.site-footer,
 .fab-wrap,.wa-float,#btt,nav.nav,#navMenu,#navOverlay{display:none!important;}
@@ -704,7 +708,7 @@ export function PanchangScreen() {
         {activeTab === 'today'    && <PjWebView ref={webViewRef} key={`today-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_TODAY}    onMessage={handleWebMessage} onReady={handleTabReady} onUtsab={goUtsab} />}
         {activeTab === 'calendar' && <PjWebView ref={webViewRef} key={`calendar-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_CALENDAR} onMessage={handleWebMessage} onUtsab={goUtsab} />}
         {activeTab === 'events'   && <PjWebView ref={webViewRef} key={`events-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_EVENTS}   onMessage={handleWebMessage} onUtsab={goUtsab} />}
-        {activeTab === 'utsab'    && <PjWebView ref={webViewRef} key={utsabSlug} uri={UTSAB_URL + utsabSlug} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} onUtsab={goUtsab} />}
+        {activeTab === 'utsab'    && <PjWebView ref={webViewRef} key={lang + '|' + utsabSlug} uri={utsabBase(lang) + utsabSlug} injectedJavaScript={UTSAB_JS} earlyJS={UTSAB_JS} onMessage={handleWebMessage} onUtsab={goUtsab} />}
         {activeTab === 'old'      && <PjWebView ref={webViewRef} key={`old-${lang}-${pjFellBack}`} uri={tabUri} onLoadFail={onPjLoadFail} injectedJavaScript={JS_OLD}      onMessage={handleWebMessage} onUtsab={goUtsab} />}
         {/* ⚠️ নীরবে বাংলায় ফেরা হয় না — "ইংরেজি খোলস, বাংলা ভিতর" নীরবে
             দেখানোটাই এই দুই রিপোর সবচেয়ে বেশিবার নথিভুক্ত ব্যর্থতা। */}

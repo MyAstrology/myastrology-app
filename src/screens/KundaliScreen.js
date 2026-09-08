@@ -549,6 +549,18 @@ export function KundaliScreen() {
     }
   }, [kUri, langBase, route.params?.prefillQuery]);
 
+  /* ⚠️ LocalWebView-এর মতোই: পাতা নিজের ভিতরে নতুন ঠিকানায় গেলে
+     `canGoBack` চিরকাল true হয়ে যেত আর ব্যাক কখনো পর্দা ছাড়ত না।
+     কতবার সামনে গেছি সেটা নিজেরা গুনে রাখা হয়। */
+  const backDepthRef = useRef(0);
+  const goingBackRef = useRef(false);
+  const lastUrlRef   = useRef(null);
+  const firstNavRef  = useRef(false);
+  useEffect(() => {
+    backDepthRef.current = 0; goingBackRef.current = false;
+    lastUrlRef.current = null; firstNavRef.current = false;
+  }, [sourceUri]);
+
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
       /* ⚠️ আগে সোজা goBack() ডাকা হতো। কুণ্ডলীর পাতা গণনার সময় ফর্মটাও
@@ -559,7 +571,8 @@ export function KundaliScreen() {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(makeHideResultsJS());
       }
-      if (webCanGoBack && webViewRef.current) {
+      if (backDepthRef.current > 0 && webCanGoBack && webViewRef.current) {
+        goingBackRef.current = true;
         webViewRef.current.goBack();
         return true;
       }
@@ -614,7 +627,21 @@ export function KundaliScreen() {
               scrollEnabled={true}
               injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
               injectedJavaScript={injectedJS}
-              onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
+              onNavigationStateChange={state => {
+                setWebCanGoBack(state.canGoBack);
+                if (state.loading) return;
+                const u = state.url || '';
+                if (!u || u === lastUrlRef.current) return;
+                lastUrlRef.current = u;
+                if (goingBackRef.current) {
+                  goingBackRef.current = false;
+                  backDepthRef.current = Math.max(0, backDepthRef.current - 1);
+                } else if (firstNavRef.current) {
+                  backDepthRef.current += 1;
+                } else {
+                  firstNavRef.current = true;
+                }
+              }}
               onShouldStartLoadWithRequest={req => {
                 /* ⛔ আগে এখানে ছিল কেবল `req.url.startsWith('file://')` — অর্থাৎ
                                       ইংরেজি/হিন্দিতে (যেখানে লাইভ পাতা খোলে) কুণ্ডলী পাতার

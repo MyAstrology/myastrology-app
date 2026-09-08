@@ -195,9 +195,24 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const webViewRef = useRef(null);
   const { webError, onLoadStart: onWebLoadStart, onError: handleWebError, onHttpError: handleHttpError, retry: handleRetry, renderError: renderWebError } = useWebViewError(webViewRef);
   const canGoBackRef = useRef(false);
+  /* ⚠️ ২০২৬-০৯-০৮ — ব্যাক চেপে সংখ্যা-জ্যোতিষের পাতা থেকে বেরোনো যেত না।
+     কারণ ক্যাটাগরি বাছলে পাতাটা **নিজের ভিতরেই** নতুন ঠিকানায় যায়, তাই
+     WebView-এর ইতিহাস বাড়তে থাকে আর `canGoBack` চিরকাল true — ব্যাক
+     প্রতিবার goBack() ডাকত, পর্দা কখনো ছাড়ত না (অ্যাপ বন্ধ করতে হতো)।
+     এখন আমরা নিজেরাই গুনি কতবার সামনে গেছি; শূন্যে নামলে ব্যাক নিচে
+     গড়িয়ে যায় আর আগের পর্দায় ফেরা যায়। */
+  const backDepthRef = useRef(0);
+  const goingBackRef = useRef(false);
+  const lastUrlRef   = useRef(null);
+  const firstNavRef  = useRef(false);
   const resultsVisibleRef = useRef(false);
   const { user, loading: authLoading } = useAuth() || {};
   const uid = user?.uid || null;
+
+  useEffect(() => {
+    backDepthRef.current = 0; goingBackRef.current = false;
+    lastUrlRef.current = null; firstNavRef.current = false;
+  }, [uri, queryString]);
 
   useEffect(() => {
     if (remoteUrl) { setUri(remoteUrl); return; }
@@ -263,7 +278,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         resultsVisibleRef.current = false;
         return true;
       }
-      if (canGoBackRef.current && webViewRef.current) {
+      if (backDepthRef.current > 0 && canGoBackRef.current && webViewRef.current) {
+        goingBackRef.current = true;
         webViewRef.current.goBack();
         return true;
       }
@@ -447,7 +463,21 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         // (কুণ্ডলী/ম্যাচমেকিং ইত্যাদি) এটা চালু থাকলে টেনে ধরলে ভরা ফর্মের ডেটা
         // মুছে পুরো পেজ রিলোড হয়ে যেত, যা অনিচ্ছাকৃত ডেটা-লস তৈরি করত।
         pullToRefreshEnabled={!!remoteUrl}
-        onNavigationStateChange={(state) => { canGoBackRef.current = state.canGoBack; }}
+        onNavigationStateChange={(state) => {
+          canGoBackRef.current = state.canGoBack;
+          if (state.loading) return;
+          const u = state.url || '';
+          if (!u || u === lastUrlRef.current) return;
+          lastUrlRef.current = u;
+          if (goingBackRef.current) {
+            goingBackRef.current = false;
+            backDepthRef.current = Math.max(0, backDepthRef.current - 1);
+          } else if (firstNavRef.current) {
+            backDepthRef.current += 1;
+          } else {
+            firstNavRef.current = true;   /* প্রথম লোডটা 'সামনে যাওয়া' নয় */
+          }
+        }}
         onMessage={handleMessage}
         onShouldStartLoadWithRequest={handleNavRequest}
         injectedJavaScriptBeforeContentLoaded={earlyInjectedJS}
