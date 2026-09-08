@@ -9,7 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
+import { MenuDrawer } from './MenuDrawer';
 import { useAuth } from '../context/AuthContext';
 /* ⚠️ কেবল-আইকন বোতামের জন্য — স্ক্রিন-রিডার লেখা ছাড়া কিছুই পড়তে
    পারে না, তাই ওগুলোর accessibilityLabel পাঠকের ভাষাতেই দরকার। */
@@ -89,45 +89,8 @@ export function AppHeader() {
         </TouchableOpacity>
       </View>
 
-      {menuOpen && (
-        <View style={s.drawerOverlay}>
-          {/* পর্দাজোড়া অদৃশ্য ব্যাকড্রপ — লেবেল ছাড়া স্ক্রিন-রিডার এটাকে
-              নামহীন একটা বোতাম হিসেবে পড়ত। */}
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuOpen(false)} activeOpacity={1}
-            accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')} />
-          <View style={[s.drawer, { paddingTop: insets.top + 8 }]}>
-            <View style={s.drawerHeader}>
-              <Text style={s.drawerTitle}>MENU</Text>
-              <TouchableOpacity onPress={() => setMenuOpen(false)}
-                accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')}>
-                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={s.drawerDivider} />
-            {/* ⛔ ২২টি সারি — সাধারণ <View>-এ থাকায় পর্দার নিচের সারিগুলো
-                কেটে যেত আর টেনে উপরে তোলা যেত না ("মেনু জ্যাম")। ছোট
-                ফোনে বা লেখা বড় করা থাকলে আরও বেশি কাটত। */}
-            <ScrollView
-              style={s.drawerScroll}
-              contentContainerStyle={s.drawerScrollBody}
-              showsVerticalScrollIndicator={false}
-            >
-            {MENU_ITEMS.map(item => (
-              <TouchableOpacity
-                key={item.tab}
-                style={s.menuItem}
-                onPress={() => { setMenuOpen(false); navigation.navigate(item.tab); }}
-                activeOpacity={0.7}
-              >
-                <MenuIcon tab={item.tab} icon={item.icon} size={20} color={colors.primary} />
-                <Text style={s.menuLabel}>{item.label}</Text>
-                <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ))}
-            </ScrollView>
-          </View>
-        </View>
-      )}
+      <MenuDrawer visible={menuOpen} onClose={() => setMenuOpen(false)}
+                  navigation={navigation} insetTop={insets.top} />
     </>
   );
 }
@@ -149,27 +112,4 @@ const s = StyleSheet.create({
   avatarFallback: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primary,
                     alignItems: 'center', justifyContent: 'center' },
   avatarInitial:  { fontSize: 12, fontWeight: '800', color: colors.white },
-
-  drawerOverlay: { ...StyleSheet.absoluteFillObject, flexDirection: 'row-reverse', zIndex: 100 },
-  /* flex:1 — না দিলে ScrollView নিজের ভিতরের উচ্চতাতেই বেড়ে যেত
-     আর আবার কেটে যেত; বাকি জায়গাটা নিলে তবেই ভিতরে স্ক্রোল হয়। */
-  drawerScroll:     { flex: 1 },
-  /* নিচে একটু ফাঁকা — শেষ সারিটা bottom-tab বারের নিচে চাপা পড়ে যেত */
-  drawerScrollBody: { paddingBottom: 24 },
-  drawer: {
-    width: '75%', backgroundColor: colors.card,
-    paddingHorizontal: 18, paddingBottom: 32,
-    borderLeftWidth: 1, borderLeftColor: colors.cardBorder,
-    elevation: 16, shadowColor: '#000',
-    shadowOffset: { width: -4, height: 0 }, shadowOpacity: 0.12, shadowRadius: 12,
-  },
-  drawerHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  drawerTitle:   { fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 3 },
-  drawerDivider: { height: 1, backgroundColor: colors.cardBorder, marginBottom: 14 },
-  menuItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.divider,
-  },
-  menuLabel: { flex: 1, fontSize: 14, color: colors.text, fontWeight: '600',
-               fontFamily: 'NotoSerifBengali-Regular' },
 });

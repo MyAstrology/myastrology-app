@@ -24,6 +24,10 @@ export function MenuIcon({ tab, icon, size = 20, color }) {
 // NumerologyResult ও RashifalDetail ইচ্ছাকৃতভাবে বাদ — এগুলো নিজে থেকে
 // দেখার মতো স্ক্রিন না (route params ছাড়া অর্থহীন ফলাফল/ডিফল্ট দেখাবে),
 // অন্য স্ক্রিন থেকে navigate করেই এখানে আসা উচিত।
+// bnOnly — যে পাতাগুলোর ইংরেজি/হিন্দি সংস্করণ সাইটে নেই (মেপে সিদ্ধান্ত:
+// ওই ভাষায় চাহিদা প্রায় শূন্য)। মেনু থেকে তোলা হয়নি; চাপার আগেই একটা
+// ছোট "বাংলা" চিহ্ন দেখানো হয়। verify-app-i18n মিলিয়ে দেখে যে ঠিক এই
+// স্ক্রিনগুলোই remoteUrl (বাংলা লাইভ পাতা) ব্যবহার করে।
 export const MENU_ITEMS = [
   { tab: 'Home',           icon: 'home-variant',            label: 'হোম'            },
   { tab: 'Panchang',       icon: 'calendar-month',          label: 'পঞ্জিকা'         },
@@ -34,15 +38,15 @@ export const MENU_ITEMS = [
   { tab: 'Namakaran',      icon: 'baby-face-outline',       label: 'নামকরণ'          },
   { tab: 'Varshaphala',    icon: 'chart-timeline-variant',  label: 'বর্ষফল'          },
   { tab: 'Prashna',        icon: 'help-circle-outline',     label: 'প্রশ্ন জ্যোতিষ'  },
-  { tab: 'VedicAstrology', icon: 'star-four-points-outline',label: 'জ্যোতিষ শাস্ত্র' },
-  { tab: 'Palmistry',      icon: 'hand-back-right-outline', label: 'হস্তরেখা বিচার'  },
-  { tab: 'Gemstone',       icon: 'diamond-stone',           label: 'রত্নপাথর পরামর্শ'},
-  { tab: 'Vastu',          icon: 'home-city-outline',       label: 'বাস্তু শাস্ত্র'   },
-  { tab: 'Learning',       icon: 'school-outline',          label: 'জ্যোতিষ শিক্ষা'  },
-  { tab: 'Blog',           icon: 'post-outline',            label: 'ব্লগ'            },
-  { tab: 'News',           icon: 'newspaper-variant-outline',label: 'মহাজাগতিক সংবাদ' },
-  { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           },
-  { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   },
+  { tab: 'VedicAstrology', icon: 'star-four-points-outline',label: 'জ্যোতিষ শাস্ত্র' , bnOnly: true },
+  { tab: 'Palmistry',      icon: 'hand-back-right-outline', label: 'হস্তরেখা বিচার'  , bnOnly: true },
+  { tab: 'Gemstone',       icon: 'diamond-stone',           label: 'রত্নপাথর পরামর্শ', bnOnly: true },
+  { tab: 'Vastu',          icon: 'home-city-outline',       label: 'বাস্তু শাস্ত্র'   , bnOnly: true },
+  { tab: 'Learning',       icon: 'school-outline',          label: 'জ্যোতিষ শিক্ষা'  , bnOnly: true },
+  { tab: 'Blog',           icon: 'post-outline',            label: 'ব্লগ'            , bnOnly: true },
+  { tab: 'News',           icon: 'newspaper-variant-outline',label: 'মহাজাগতিক সংবাদ' , bnOnly: true },
+  { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           , bnOnly: true },
+  { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   , bnOnly: true },
   { tab: 'AboutAstrologer',icon: 'account-star-outline',    label: 'জ্যোতিষী সম্পর্কে'},
   { tab: 'MyReports',      icon: 'file-document-multiple-outline', label: 'আমার রিপোর্ট'   },
   { tab: 'Settings',       icon: 'cog-outline',             label: 'সেটিংস'          },

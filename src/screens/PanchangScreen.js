@@ -17,7 +17,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAlert } from '../i18n/Text';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
+import { MenuDrawer } from '../components/MenuDrawer';
 import { haptics } from '../utils/haptics';
 import { RASHI_SIGNS } from '../data/rashifalSigns';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
@@ -730,34 +730,8 @@ export function PanchangScreen() {
         </View>
       )}
 
-      {/* ── Drawer ── */}
-      {menuOpen && (
-        <View style={s.drawerOverlay}>
-          {/* পর্দাজোড়া অদৃশ্য ব্যাকড্রপ — লেবেল ছাড়া স্ক্রিন-রিডার এটাকে
-              নামহীন একটা বোতাম হিসেবে পড়ত। */}
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuOpen(false)} activeOpacity={1}
-            accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')} />
-          <View style={[s.drawer, { paddingTop: insets.top + 8 }]}>
-            <View style={s.drawerHeader}>
-              <Text style={s.drawerTitle}>MENU</Text>
-              <TouchableOpacity onPress={() => setMenuOpen(false)}
-                accessibilityRole="button" accessibilityLabel={t('মেনু বন্ধ করুন')}>
-                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={s.drawerDivider} />
-            {MENU_ITEMS.map(item => (
-              <TouchableOpacity key={item.tab} style={s.menuItem}
-                onPress={() => { setMenuOpen(false); navigation.navigate(item.tab); }}
-                activeOpacity={0.7}>
-                <MenuIcon tab={item.tab} icon={item.icon} size={20} color={colors.primary} />
-                <Text style={s.menuLabel}>{item.label}</Text>
-                <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      )}
+      <MenuDrawer visible={menuOpen} onClose={() => setMenuOpen(false)}
+                  navigation={navigation} insetTop={insets.top} />
     </View>
   );
 }
@@ -817,22 +791,4 @@ const s = StyleSheet.create({
   pdfOverlayText: {
     marginTop: 14, color: '#fff', fontSize: 15, textAlign: 'center', lineHeight: 22,
     fontFamily: 'NotoSerifBengali-Regular',
-  },
-  drawerOverlay: { ...StyleSheet.absoluteFillObject, flexDirection: 'row-reverse', zIndex: 100 },
-  drawer: {
-    width: '75%', backgroundColor: colors.card,
-    paddingHorizontal: 18, paddingBottom: 32,
-    borderLeftWidth: 1, borderLeftColor: colors.cardBorder,
-    elevation: 16, shadowColor: '#000',
-    shadowOffset: { width: -4, height: 0 }, shadowOpacity: 0.12, shadowRadius: 12,
-  },
-  drawerHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  drawerTitle:   { fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: 3 },
-  drawerDivider: { height: 1, backgroundColor: colors.cardBorder, marginBottom: 14 },
-  menuItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.divider,
-  },
-  menuLabel: { flex: 1, fontSize: 14, color: colors.text, fontWeight: '600',
-               fontFamily: 'NotoSerifBengali-Regular' },
-});
+  },});

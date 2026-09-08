@@ -515,5 +515,42 @@ console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্য
   }
 }
 
+/* ─── ⑪ মেনুর ড্রয়ার এক কপি, আর bnOnly চিহ্নটা সত্যি ───
+   ড্রয়ারটা AppHeader ও PanchangScreen — দু'জায়গায় হুবহু লেখা ছিল, আর
+   ScrollView বসেছিল শুধু একটাতে; ফলে পঞ্জিকা পর্দার মেনু "জ্যাম" হয়ে
+   ছিল। আর bnOnly হাতে লেখা তালিকা — স্ক্রিন সত্যিই remoteUrl (বাংলা
+   লাইভ পাতা) পড়ে কি না, সেটা না মিলিয়ে দেখলে চিহ্নটা একদিন মিথ্যে হবে। */
+{
+  console.log('\n⑪ মেনুর ড্রয়ার ও bnOnly চিহ্ন');
+  const drawer = fs.readFileSync(path.join(APP, 'src/components/MenuDrawer.js'), 'utf8');
+  if (/<ScrollView/.test(drawer)) ok('MenuDrawer-এ ScrollView আছে');
+  else bad('MenuDrawer-এ ScrollView নেই — লম্বা মেনু আবার কেটে যাবে');
+
+  for (const f of ['src/components/AppHeader.js', 'src/screens/PanchangScreen.js']) {
+    const src = fs.readFileSync(path.join(APP, f), 'utf8');
+    if (/<MenuDrawer\b/.test(src) && !/MENU_ITEMS\.map/.test(src))
+      ok(path.basename(f) + ' — শেয়ার্ড MenuDrawer ব্যবহার করে');
+    else bad(f + ' — ড্রয়ারের দ্বিতীয় কপি ফিরে এসেছে');
+  }
+
+  const mi = fs.readFileSync(path.join(APP, 'src/navigation/menuItems.js'), 'utf8');
+  const marked = new Set();
+  for (const m of mi.matchAll(/\{ tab: '(\w+)',[^\n]*bnOnly: true/g)) marked.add(m[1]);
+  const tabs = [...mi.matchAll(/\{ tab: '(\w+)'/g)].map(m => m[1]);
+  let mism = 0;
+  for (const tab of tabs) {
+    const f = path.join(APP, 'src/screens/' + tab + 'Screen.js');
+    if (!fs.existsSync(f)) continue;
+    const remote = /remoteUrl=/.test(fs.readFileSync(f, 'utf8'));
+    if (remote !== marked.has(tab)) {
+      bad(tab + ' — bnOnly=' + marked.has(tab) + ' কিন্তু স্ক্রিনে remoteUrl=' + remote);
+      mism++;
+    }
+  }
+  if (!mism) ok(marked.size + 'টি bnOnly চিহ্নই স্ক্রিনের সঙ্গে মেলে');
+  if (/item\.bnOnly/.test(drawer)) ok('MenuDrawer চিহ্নটা সত্যিই দেখায়');
+  else bad('bnOnly তালিকা আছে কিন্তু কেউ পড়ে না — নীরব no-op');
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);
