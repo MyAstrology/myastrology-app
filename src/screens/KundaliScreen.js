@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, BackHandler, Alert } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, BackHandler, Alert, Linking } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
@@ -21,6 +21,7 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { resolveWebNav, isExternalHandoffUrl } from '../utils/webNav';
 import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
@@ -604,7 +605,22 @@ export function KundaliScreen() {
               injectedJavaScript={injectedJS}
               onNavigationStateChange={state => setWebCanGoBack(state.canGoBack)}
               onShouldStartLoadWithRequest={req => {
-                return req.url.startsWith('file://') || req.url === 'about:blank';
+                /* ⛔ আগে এখানে ছিল কেবল `req.url.startsWith('file://')` — অর্থাৎ
+                                      ইংরেজি/হিন্দিতে (যেখানে লাইভ পাতা খোলে) কুণ্ডলী পাতার
+                                      পঞ্জিকা · রাশিফল · প্রশ্ন ট্যাব চাপলে কিছুই হতো না, আর
+                                      বাংলাতেও `window.location.href='panjika'` একটা নেই-ফাইলে
+                                      যেত। এখন চেনা পথ অ্যাপের নিজের পর্দায় যায়। */
+                const u = req.url || '';
+                if (u === 'about:blank') return true;
+                if (isExternalHandoffUrl(u)) { Linking.openURL(u).catch(() => {}); return false; }
+                const nav = resolveWebNav(u);
+                if (nav && nav.screen !== 'Kundali') {
+                  navigation.navigate(nav.screen, nav.query ? { prefillQuery: nav.query } : undefined);
+                  return false;
+                }
+                if (u.startsWith('file://')) return true;
+                if (nav && nav.screen === 'Kundali') return true;
+                return false;
               }}
               onLoadStart={onLoadStart}
               onError={(e) => {

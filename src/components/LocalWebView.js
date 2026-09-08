@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { resolveWebNav } from '../utils/webNav';
 import { View, ActivityIndicator, StyleSheet, Linking, BackHandler } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
@@ -339,6 +340,16 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     const url = request.url || '';
     if (isExternalHandoffUrl(url)) {
       Linking.openURL(url).catch(() => {});
+      return false;
+    }
+    /* ⚠️ ২০২৬-০৯-০৮ — আগে এখানে শুধু file:// দেখা হতো, আর নামটা বার করা
+       হতো `.html` ধরে। কিন্তু পাতাগুলো লেখে window.location.href='panjika'
+       (`.html` ছাড়া), আর en/hi-তে ঠিকানা https://myastrology.in/en/panjika।
+       দুটোর একটাও মিলত না, তাই ওই ট্যাবগুলো নীরবে মরে যেত।
+       webNav.js দুটো রূপই বোঝে, আর ভাষা-উপসর্গ ছেঁটে নেয়। */
+    const nav2 = resolveWebNav(url);
+    if (nav2 && nav2.page !== name) {
+      navigation.navigate(nav2.screen, nav2.query ? { prefillQuery: nav2.query } : undefined);
       return false;
     }
     if (!url.startsWith('file://')) return true;

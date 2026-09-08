@@ -483,5 +483,29 @@ console.log('⑤ পার্স (JSX সহ)');
   }
 }
 
+
+
+
+console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্যাপের পর্দায় যায়');
+{
+  const navSrc = fs.readFileSync(path.join(APP, 'src/utils/webNav.js'), 'utf8');
+  for (const pg of ['panjika', 'rashifal', 'prashna', 'match-making', 'varshaphala'])
+    if (new RegExp("'" + pg + "':").test(navSrc)) ok('webNav — ' + pg);
+    else bad('webNav-এ ' + pg + ' নেই — ওই ট্যাব অ্যাপে মরা থাকবে');
+  /* দুই WebView, দুই ফাইল — একটায় বসিয়ে অন্যটা ভুলে যাওয়াই এই রিপোর
+     সবচেয়ে বেশিবার-করা ভুল। */
+  for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
+    const src = fs.readFileSync(path.join(APP, f), 'utf8');
+    if (/resolveWebNav\s*\(/.test(src)) ok(path.basename(f) + ' — resolveWebNav ডাকে');
+    else bad(f + ' — resolveWebNav ডাকে না, ভিতরের লিংক আবার মরে যাবে');
+  }
+  /* পুরনো পাহারা ফিরলে ইংরেজি/হিন্দিতে সব লিংক আবার আটকে যেত */
+  const ks = fs.readFileSync(path.join(APP, 'src/screens/KundaliScreen.js'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  if (/return req\.url\.startsWith\('file:\/\/'\)/.test(ks))
+    bad('KundaliScreen-এ পুরনো file://-only পাহারা ফিরে এসেছে');
+  else ok('পুরনো file://-only পাহারা ফেরেনি');
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);
