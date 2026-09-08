@@ -44,6 +44,7 @@
     "onesignal-expo-plugin": "2.0.3",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-iap": "^16.5.1",
     "react-native-onesignal": "5.2.13",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
