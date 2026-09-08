@@ -53,16 +53,32 @@ const UTSAB_URL = 'https://myastrology.in/utsab/';
 const UTSAB_CSS = `
 .site-header,.sidenav,.sidenav-overlay,.breadcrumb,.site-footer,
 .fab-wrap,.wa-float,#btt,nav.nav,#navMenu,#navOverlay{display:none!important;}
+/* ভাষা-সারি অ্যাপে দেখানো হয় না — ভাষা ঠিক হয় Settings থেকে, আর পাতার
+   নিজের সারি সেটাকে না জানিয়েই বদলে দিত। */
+[class*="mya-lang"]{display:none!important;}
 html{overflow-x:hidden!important;scrollbar-width:none!important;}
 body{background:#FAF8F3!important;padding:0!important;margin:0!important;overflow-x:hidden!important;}
 main,#main-content{padding:8px 12px 24px!important;margin:0!important;}
 ::-webkit-scrollbar{display:none!important;width:0!important;}
 *{-webkit-tap-highlight-color:transparent!important;box-sizing:border-box!important;}
 `;
+/* ⛔ আগে এটা সরাসরি document.head.appendChild করত। কিন্তু স্ক্রিপ্টটা
+   পেজের কনটেন্ট লোড হওয়ার **আগেও** একবার চালানো হয়, তখন document.head
+   এখনো নেই — TypeError, আর গোটা স্ক্রিপ্টটাই থেমে যেত। ফলে সাইটের নিজের
+   হেডার ("MyAstrology · লগইন · ☰") অ্যাপের ভিতরে দেখা যেত।
+   এখন head না থাকলে requestAnimationFrame-এ অপেক্ষা করা হয় (LocalWebView-এর
+   প্রমাণিত ধাঁচ), আর পুরোটা try/catch-এ। */
 const UTSAB_JS = `(function(){
-  var st=document.getElementById('__utsabNative__');
-  if(!st){st=document.createElement('style');st.id='__utsabNative__';document.head.appendChild(st);}
-  st.textContent=${JSON.stringify(UTSAB_CSS)};
+  function run(){
+    try{
+      var root=document.head||document.documentElement;
+      if(!root){ requestAnimationFrame(run); return; }
+      var st=document.getElementById('__utsabNative__');
+      if(!st){st=document.createElement('style');st.id='__utsabNative__';root.appendChild(st);}
+      st.textContent=${JSON.stringify(UTSAB_CSS)};
+    }catch(e){}
+  }
+  run();
 })();true;`;
 
 // ── Local panjika.html URI (written once per session) ─────────────────────────
@@ -89,6 +105,10 @@ function usePjUri() {
 // padding-bottom on panels prevents last rows from being obscured.
 
 const APP_CSS = `
+/* "নির্দিষ্ট উৎসবের তারিখ খুঁজছেন?" কার্ডটা /utsab-এ পাঠায় — কিন্তু
+   অ্যাপে ঠিক উপরেই "উৎসব খোঁজা" ট্যাব আছে, তাই একই জিনিস দু'বার।
+   ওয়েবসাইটে কার্ডটা রাখা হয়েছে (সেখানে ওটা মাপা প্রবেশপথ)। */
+.utsab-find{display:none!important;}
 /* whitelist approach, but #acModalOverlay (শুভ দিনের তালিকা মডাল), #pdfPromoOverlay
    ও #payOverlay (প্রমো/Razorpay পেমেন্ট মডাল), #yearlyPanjikaView (পুরনো/
    ভবিষ্যৎ বছরের পঞ্জিকা full view), এবং #cityModal (শহর/দেশ-ভিত্তিক

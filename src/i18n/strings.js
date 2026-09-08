@@ -8,6 +8,22 @@
  *  "period of Rahu" লিখলে সেটা আর জ্যোতিষ থাকে না। (ওয়েবসাইটের একই নিয়ম।)
  */
 export const STRINGS = {
+  "{city} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়": {
+    "en": "{city} — you can change it from the 📍 button on the Panjika tab",
+    "hi": "{city} — पंचांग टैब के 📍 बटन से बदला जा सकता है"
+  },
+  "এই পাতাটি এখনো কেবল বাংলায় আছে।": {
+    "en": "This page is still available in Bengali only.",
+    "hi": "यह पेज फ़िलहाल केवल बांग्ला में उपलब्ध है।"
+  },
+  "নামকরণ রিপোর্ট শেয়ার করুন": {
+    "en": "Share the Namakaran report",
+    "hi": "नामकरण रिपोर्ट शेयर करें"
+  },
+  "রানাঘাট, পশ্চিমবঙ্গের গোল্ড মেডেলিস্ট PhD জ্যোতিষী ও হস্তরেখাবিদ। বৈদিক জ্যোতিষ, হস্তরেখা বিচার, কুণ্ডলী বিশ্লেষণ, সংখ্যাতত্ত্ব, রত্ন থেরাপি ও বাস্তু শাস্ত্রে ১৫ বছরের বেশি অভিজ্ঞতা।": {
+    "en": "A gold-medallist PhD astrologer and palmist of Ranaghat, West Bengal. More than 15 years of experience in Vedic astrology, palmistry, Kundali analysis, numerology, gem therapy and Vastu Shastra.",
+    "hi": "राणाघाट, पश्चिम बंगाल के स्वर्ण पदक प्राप्त PhD ज्योतिषी एवं हस्तरेखाविद। वैदिक ज्योतिष, हस्तरेखा विचार, कुंडली विश्लेषण, अंकशास्त्र, रत्न चिकित्सा एवं वास्तु शास्त्र में 15 वर्षों से अधिक का अनुभव।"
+  },
   "AI ও পরামর্শ": {
     "en": "AI & Consultation",
     "hi": "AI और परामर्श"
@@ -295,6 +311,14 @@ export const STRINGS = {
   "কোজাগরী পূর্ণিমা (লক্ষ্মী পূজা)": {
     "en": "Kojagari Purnima (Lakshmi Puja)",
     "hi": "कोजागरी पूर्णिमा (लक्ष्मी पूजा)"
+  },
+  "বর্ষফল রিপোর্ট শেয়ার করুন": {
+    "en": "Share the Varshaphala report",
+    "hi": "वर्षफल रिपोर्ट शेयर करें"
+  },
+  "সংখ্যা জ্যোতিষ রিপোর্ট শেয়ার করুন": {
+    "en": "Share the numerology report",
+    "hi": "अंक ज्योतिष रिपोर्ट शेयर करें"
   },
   "কোষ্ঠী মিলন রিপোর্ট শেয়ার করুন": {
     "en": "Share the compatibility report",
@@ -1375,5 +1399,13 @@ export const STRINGS = {
   "শহর বাছুন": {
     "en": "Choose a city",
     "hi": "शहर चुनें"
+  },
+  "ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন": {
+    "en": "Talk to Dr. Prodyut Acharya directly",
+    "hi": "डॉ. प्रद्युत आचार्य से सीधे बात करें"
+  },
+  "১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক": {
+    "en": "15+ years of experience · PhD gold medallist",
+    "hi": "15+ वर्षों का अनुभव · PhD स्वर्ण पदक"
   }
 };

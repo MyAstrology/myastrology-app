@@ -4,6 +4,7 @@ import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/namakaran';
 import { colors } from '../theme/colors';
+import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 
 const APP_CSS = `
 /* ── Hide website chrome ── */
@@ -321,13 +322,17 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS);
+const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('namakaran');
 
 export function NamakaranScreen() {
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView name="namakaran" webPath="namakaran" html={html} style={s.wv} injectedJS={INJECTED_JS} />
+      {/* ⚠️ ছাপার বোতামটা window.print() ডাকে — WebView-এ ওটা নিঃশব্দে
+          কিছুই করত না, তাই "PDF অপশন খুঁজে পাচ্ছি না" মনে হতো। */}
+      <LocalWebView name="namakaran" webPath="namakaran" html={html} style={s.wv}
+        injectedJS={INJECTED_JS}
+        pagePrint={{ fileName: 'MyAstrology_namakaran.pdf', dialogTitle: 'নামকরণ রিপোর্ট শেয়ার করুন' }} />
     </View>
   );
 }

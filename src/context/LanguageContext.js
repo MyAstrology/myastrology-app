@@ -52,8 +52,13 @@ export function LanguageProvider({ children }) {
     } catch (e) {}
   }, []);
 
-  /* হুকের বাইরের কোড (buyOnWebBridge ইত্যাদি) যেন একই ভাষা পায় */
-  useEffect(() => { setCurrentLang(lang); }, [lang]);
+  /* হুকের বাইরের কোড (buyOnWebBridge, tGlobal, numText …) যেন একই ভাষা পায়।
+     ⚠️ এটা আগে useEffect-এ ছিল, আর effect চলে **রেন্ডারের পরে** — তাই
+     ভাষা বদলের ঠিক পরের রেন্ডারে মডিউলের মান পুরনোটাই থাকত। ফল: পর্দার
+     লেবেল বাংলা অথচ সময় "Morning 5:24" আর অঙ্ক ল্যাটিন — একই কার্ডে
+     দুই ভাষা। রেন্ডারের সময়েই বসানোয় দুটো আর কখনো আলাদা হতে পারে না।
+     (একটা মডিউল-চলকে একই মান বসানো idempotent, তাই রেন্ডারে নিরাপদ।) */
+  setCurrentLang(lang);
 
   const value = useMemo(() => ({
     lang,

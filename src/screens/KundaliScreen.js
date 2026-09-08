@@ -21,19 +21,29 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 
 const LOGO = require('../../assets/logo.png');
 
-function injectDataIntoPrintHtml(printDataJson) {
+function injectDataIntoPrintHtml(printDataJson, lang) {
   let html = KUNDALI_PRINT_HTML;
   // Encode < as < so the HTML parser never sees </script> inside the JSON
   // payload. The JS engine correctly decodes < back to <.
   // We use function replacements (not string replacements) so that any $
   // characters in the JSON payload are never misinterpreted as back-references.
   const safeJs = JSON.stringify(printDataJson).replace(/</g, '\\u003c');
-  html = html.replace('<head>', () => `<head><script>window.__kData=${safeJs};<\/script>`);
+  /* ⚠️ ভাষাটা <html data-mya-lang>-এ বসাতেই হয়। js/i18n.js localStorage
+     থেকে ভাষা পড়ে, আর অ্যাপের file:// WebView-এ সেই খাতা খালি — তাই
+     ইংরেজি/হিন্দি ক্রেতাও বাংলা PDF পেতেন। data-mya-lang localStorage-এর
+     চেয়ে অগ্রাধিকার পায়, আর এই ইনলাইন স্ক্রিপ্ট defer-করা i18n.js-এর
+     আগেই চলে। */
+  const L = (lang === 'en' || lang === 'hi') ? lang : 'bn';
+  html = html.replace('<head>', () =>
+    `<head><script>window.__kData=${safeJs};` +
+    `try{document.documentElement.setAttribute('data-mya-lang',${JSON.stringify(L)});}catch(e){}` +
+    `<\/script>`);
   html = html.replace(
     "try{raw=localStorage.getItem('kundali_print_data');}catch(e){}",
     () => `try{raw=window.__kData||null;}catch(e){}`
@@ -179,6 +189,11 @@ svg.tab-icon{stroke:rgba(255,255,255,0.55)!important;fill:none!important;width:1
   background:linear-gradient(135deg,#0f9d6a,#0a6b48)!important;
   border-color:rgba(255,255,255,0.35)!important;
 }
+/* ⚠️ #tabNav ওয়েবসাইটে position:fixed;top:66px — ওই ৬৬px হলো সাইটের
+   নিজের হেডারের উচ্চতা। অ্যাপে সেই হেডার লুকোনো, আর উপরে অ্যাপের নিজের
+   হেডার নেটিভভাবে আঁকা — তাই ৬৬px-এর ফাঁকটা অর্থহীন হয়ে দাম-বারটা
+   পাতার মাঝখানে চার্টের উপর বসে যেত। WebView-এর একেবারে উপরেই বসানো। */
+#tabNav{top:0!important;}
 /* ── Hide external-navigation tabs (যোটক, পঞ্জিকা, বর্ষফল, প্রশ্ন, রাশিফল) ── */
 .tab-btn[aria-label*="পেজে যান"],
 .tab-btn[onclick*="goToYotak"],
@@ -425,7 +440,10 @@ function buildInjectedJS(css, tr) {
 
 /*  ⛔ ধ্রুবক নয়, ফাংশন — module-স্তরে একবার তৈরি হলে ভাষা সেখানেই জমে
     যেত, আর পরে ভাষা বদলালেও ইনজেক্ট হওয়া লেখা বাংলাই থাকত। */
-const makeInjectedJS = (tr) => buildInjectedJS(APP_CSS, tr) + buildBuyOnWebJS('kundali');
+/* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — LocalWebView-এর মতোই।
+   কুণ্ডলী নিজের WebView চালায়, তাই এখানে আলাদা করে বসাতে হয়। */
+const makeInjectedJS = (tr) => buildInjectedJS(APP_CSS, tr) + buildBuyOnWebJS('kundali')
+  + '\n' + HIDE_LANG_SWITCH_JS;
 
 // injectedJavaScript (উপরের INJECTED_JS) পেজ লোড হওয়ার পরে চলে, ততক্ষণে
 // ওয়েবসাইটের নিজস্ব (ডেস্কটপ-সাইট) স্টাইলে header/nav/footer-সহ পুরো পেজ
@@ -521,6 +539,14 @@ export function KundaliScreen() {
 
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      /* ⚠️ আগে সোজা goBack() ডাকা হতো। কুণ্ডলীর পাতা গণনার সময় ফর্মটাও
+         display:none করে দেয়, তাই ইতিহাসে এক ধাপ পিছিয়ে গেলে ফলাফল ও ফর্ম
+         **দুটোই** লুকানো থেকে যেত আর পর্দা সম্পূর্ণ ফাঁকা হয়ে যেত।
+         LocalWebView-এ এই সংশোধনটা আগেই ছিল; কুণ্ডলী নিজের WebView চালায়
+         বলে এখানে পৌঁছয়নি। এখন দুটোই একই শেয়ার্ড কোড পড়ে। */
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(makeHideResultsJS());
+      }
       if (webCanGoBack && webViewRef.current) {
         webViewRef.current.goBack();
         return true;
@@ -644,7 +670,7 @@ export function KundaliScreen() {
           style={s.pdfRenderer}
           javaScriptEnabled={true}
           domStorageEnabled={true}
-          source={{ html: injectDataIntoPrintHtml(pdfRenderState.printData) }}
+          source={{ html: injectDataIntoPrintHtml(pdfRenderState.printData, lang) }}
           onLoadEnd={() => {
             // kundali-print.js waits for document.fonts.ready then setTimeout(go, 600).
             // Poll until #printRoot has children, then capture.

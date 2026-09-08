@@ -4,6 +4,7 @@ import { View, ActivityIndicator, StyleSheet, Linking, BackHandler } from 'react
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
 import { Text } from '../i18n/Text';
+import { useAlert } from '../i18n/Text';
 import { WebView } from 'react-native-webview';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -11,7 +12,9 @@ import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
 import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { HIDE_LANG_SWITCH_JS, RESULTS_CONTAINER_IDS, FORM_CONTAINER_IDS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { handleShareText } from '../utils/webShareBridge';
+import { PAGE_PRINT_JS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
 import { useLanguage } from '../context/LanguageContext';
@@ -60,19 +63,13 @@ function parsePageName(url) {
 // React Navigation's tab history — which otherwise exits straight to whatever
 // tab was open before this screen (e.g. Home), skipping over the in-screen
 // form/results distinction the user actually expects "back" to respect.
-const RESULTS_CONTAINER_IDS = ['resultsArea', 'resultSection', 'resultsSection',
-  /* সংখ্যা জ্যোতিষের ফলাফল আলাদা পাতায় (result.html), ঘরের নাম আলাদা */
-  'resultContent'];
-
-// "গণনা করুন" চাপলে পেজগুলো ফলাফল দেখানোর পাশাপাশি ফর্মটাও লুকিয়ে ফেলে
-// (display:none)। ব্যাক চাপলে আগে শুধু ফলাফলটা লুকানো হতো — ফর্ম ফিরিয়ে আনা
-// হতো না, ফলে দুটোই লুকানো অবস্থায় পুরো পাতা ফাঁকা হয়ে যেত এবং মনে হতো ব্যাক
-// কাজই করছে না (বর্ষফলে সবচেয়ে স্পষ্ট)। তাই ফলাফল লুকানোর সাথে সাথে ফর্মের
-// কনটেইনারটাও আবার দেখানো হয়। প্রতি পেজে নাম আলাদা, তাই সবগুলোই এখানে:
-//   বর্ষফল → inputSection · যোটক বিচার → mmInputSection
-//   নামকরণ/প্রশ্ন জ্যোতিষ → formSection
-const FORM_CONTAINER_IDS = ['inputSection', 'mmInputSection', 'formSection'];
-const RESULTS_TRACKER_JS = `(function(){
+/* তালিকা দুটো src/utils/hideWebChrome.js-এ — দুই স্ক্রিনই একই উৎস পড়ে */
+/* ⚠️ ফাংশন, ধ্রুবক নয় — ভিতরের তিনটে লেখা পাঠকের ভাষায় লাগে। মডিউল-স্তরে
+   একবার তৈরি হলে ওগুলো চিরকালের জন্য বাংলা হয়ে যেত, আর ইংরেজি পাতার
+   নিচে বাংলা পরামর্শ-কার্ড বসত (সহকর্মী ঠিক সেটাই ধরেছেন)। */
+const makeResultsTrackerJS = (tr) => {
+  const T = (x) => JSON.stringify(tr ? tr(x) : x);
+  return `(function(){
   var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
   function findEl(){for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)return el;}return null;}
   function report(el){
@@ -88,19 +85,30 @@ const RESULTS_TRACKER_JS = `(function(){
     /* ঘরটা তৈরি থাকলেই হবে না — ভিতরে সত্যিই ফলাফল আছে কি না দেখা হয়।
        নইলে ফলাফল আসার আগেই ফাঁকা পাতায় কার্ডটা একা বসে যেত। */
     if((el.innerText||'').trim().length<300) return;
+    /* ⚠️ পাতাটা নিজেই পরামর্শের ব্যবস্থা দিলে অ্যাপ দ্বিতীয় কার্ড বসায় না।
+       কুণ্ডলী ও যোটক-বিচারের ফলাফলে ওয়েবসাইটের নিজের কার্ড আছে
+       ("WhatsApp consultation"), ফলে দুটো কার্ড একটার নিচে আরেকটা বসত —
+       একই কথা দু'বার। যে পাতায় কিছু নেই, সেখানে অ্যাপেরটা আগের মতোই বসে।
+       ⚠️ লেখা নয়, **লিংক** দেখে ঠিক করা হয় — লেখা তিন ভাষায় বদলায়,
+       ঠিকানা বদলায় না। শেয়ার-বোতামের wa.me/?text=... এতে ধরা পড়ে না,
+       কারণ পরামর্শের লিংকে wa.me-র পরেই ফোন নম্বরের অঙ্ক থাকে। */
+    try{
+      var wa=el.querySelector('a[href*="wa.me/9"],a[href*="wa.me/+9"],a[href*="api.whatsapp.com/send?phone"]');
+      if(wa) return;
+    }catch(e){}
     var d=document.createElement('div');
     d.id='__myaBookCard';
     d.setAttribute('style','margin:20px auto 6px;max-width:600px;border-radius:13px;'
       +'padding:11px 14px;background:linear-gradient(135deg,#2a1206 0%,#5a2410 55%,#2a1206 100%);'
       +'box-shadow:0 4px 16px rgba(90,36,16,.25);text-align:center;font-family:inherit');
     d.innerHTML='<div style="font-size:.88rem;color:#fff;font-weight:800;line-height:1.45">'
-      +'ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন</div>'
+      +${T('ড. প্রদ্যুৎ আচার্যের সাথে সরাসরি কথা বলুন')}+'</div>'
       +'<div style="font-size:.68rem;color:rgba(255,255,255,.72);line-height:1.5;margin:2px 0 9px">'
-      +'১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক</div>'
+      +${T('১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক')}+'</div>'
       +'<button type="button" id="__myaBookBtn" style="border:none;cursor:pointer;'
       +'background:linear-gradient(135deg,#f5b800,#e08a00);color:#2a1206;font-weight:800;'
       +'font-size:.83rem;font-family:inherit;padding:8px 24px;border-radius:999px;'
-      +'box-shadow:0 2px 10px rgba(245,184,0,.32)">পরামর্শ বুকিং করুন</button>';
+      +'box-shadow:0 2px 10px rgba(245,184,0,.32)">'+${T('পরামর্শ বুকিং করুন')}+'</button>';
     el.appendChild(d);
     var b=document.getElementById('__myaBookBtn');
     if(b) b.addEventListener('click',function(){
@@ -117,6 +125,7 @@ const RESULTS_TRACKER_JS = `(function(){
   }
   start();
 })();true;`;
+};
 
 // LocalWebView renders a bundled HTML page from a local file:// URI.
 // It bridges cross-page navigation and print requests back to React Native:
@@ -150,7 +159,13 @@ const RESULTS_TRACKER_JS = `(function(){
  */
 const SITE = 'https://myastrology.in/';
 
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, webPath, hideResultsOnBack = true }) {
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, webPath, hideResultsOnBack = true, pagePrint }) {
+  /* pagePrint = {fileName, dialogTitle} — যে পাতাগুলো নিজেরাই ছাপে
+     (বর্ষফল, সংখ্যা-জ্যোতিষ)। WebView-এ window.print() কিছুই করে না,
+     তাই ওটা ধরে expo-print দিয়ে আসল PDF বানানো হয়। */
+  const pdfAlertT = useAlert();
+  const pdfStore = useRef({ parts: [], total: 0 });
+  const [makingPdf, setMakingPdf] = useState(false);
   const { lang, t } = useLanguage();
   /* ভাষা **রেন্ডারের সময়** পড়া হয়, মডিউল লোডে নয় — নইলে চালুর সময়ের
      ভাষা জমে যেত আর সেটিংসে বদলালেও পাতা বাংলাই থাকত। */
@@ -159,6 +174,20 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     : null;
   const [fellBack, setFellBack] = useState(false);
   const useLang = !!langUrl && !fellBack;
+
+  /* ⚠️ ব্লগ, রত্ন, হস্তরেখা, জ্যোতিষ-শাস্ত্র, উৎসব — এগুলোর en/hi
+     সংস্করণ নেই (মেপে সিদ্ধান্ত: ওই ভাষায় চাহিদা প্রায় শূন্য)। মেনু
+     থেকে জিনিসগুলো তুলে দিলে হিন্দি/ইংরেজি পাঠক কম পেতেন; তাই রাখা
+     হয়েছে, কিন্তু নীরবে বাংলা দেখানো হয় না — একবার বলা হয়, তারপর
+     লাইনটা নিজে থেকেই সরে যায়। */
+  const bnOnly = !!remoteUrl && lang !== 'bn';
+  const [showBnOnly, setShowBnOnly] = useState(false);
+  useEffect(() => {
+    if (!bnOnly) { setShowBnOnly(false); return; }
+    setShowBnOnly(true);
+    const id = setTimeout(() => setShowBnOnly(false), 6000);
+    return () => clearTimeout(id);
+  }, [bnOnly, remoteUrl]);
   const [uri,   setUri]   = useState(remoteUrl || langUrl || null);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
@@ -228,21 +257,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
          চাপলে ফলাফলটা লুকিয়ে যেত আর দেখানোর কিছু থাকত না — সাদা পাতা।
          ওই পর্দায় ব্যাক মানে আগের পর্দায় ফেরা, তাই নিচে গড়িয়ে যেতে দেওয়া। */
       if (hideResultsOnBack && resultsVisibleRef.current && webViewRef.current) {
-        const hideJs = `(function(){
-          var ids=${JSON.stringify(RESULTS_CONTAINER_IDS)};
-          var hid=false;
-          for(var i=0;i<ids.length;i++){
-            var el=document.getElementById(ids[i]);
-            if(el&&getComputedStyle(el).display!=='none'){el.style.setProperty('display','none','important');hid=true;break;}
-          }
-          if(!hid) return;
-          var fids=${JSON.stringify(FORM_CONTAINER_IDS)};
-          for(var j=0;j<fids.length;j++){
-            var f=document.getElementById(fids[j]);
-            if(f){f.style.setProperty('display','block','important');}
-          }
-          window.scrollTo(0,0);
-        })();true;`;
+        const hideJs = makeHideResultsJS();
         webViewRef.current.injectJavaScript(hideJs);
         resultsVisibleRef.current = false;
         return true;
@@ -275,6 +290,17 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       return;
     }
     if (msg.__rn === 'shareText') { handleShareText(msg); return; }
+    if (msg.__rn === 'pagePdfChunk') {
+      const full = collectPdfChunk(msg, pdfStore.current);
+      if (!full) { setMakingPdf(true); return; }
+      deliverPdf(full, {
+        alertT: pdfAlertT,
+        fileName: (pagePrint && pagePrint.fileName) || 'MyAstrology.pdf',
+        dialogTitle: t((pagePrint && pagePrint.dialogTitle) || 'MyAstrology'),
+      }).catch(() => pdfAlertT('ত্রুটি', 'PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'))
+        .finally(() => setMakingPdf(false));
+      return;
+    }
     if (msg.__rn === 'goScreen' && msg.screen) {
       /* ফলাফলের নিচের বুকিং কার্ড থেকে — অ্যাপের নিজের স্ক্রিনে */
       try { navigation.navigate(msg.screen); } catch (_) {}
@@ -305,7 +331,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       const prefillQuery = qIdx >= 0 ? msg.url.slice(qIdx + 1) : '';
       navigation.navigate(screen, prefillQuery ? { prefillQuery } : undefined);
     }
-  }, [navigation, name, onPrint, uid]);
+  }, [navigation, name, onPrint, uid, pagePrint, pdfAlertT, t]);
 
   // Intercepts window.location.href = 'page.html' navigations (e.g. _mmGoTo in match-making).
   // Returns false to block the WebView from actually navigating away.
@@ -354,7 +380,12 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   // that navigates in-place to another page on the same site (e.g. remoteUrl
   // pages following an in-content link) won't get it re-applied on its own, so
   // onLoadEnd below re-injects it after every navigation, not just the first.
-  const fullInjectedJS = (injectedJS || '') + '\n' + RESULTS_TRACKER_JS;
+  /* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — অ্যাপে ভাষা ঠিক হয়
+     Settings থেকে, আর পাতার নিজের সারি সেটাকে না জানিয়েই বদলে দিত।
+     এক জায়গায় বসানো, তাই প্রতিটি স্ক্রিনেই খাটে। */
+  const fullInjectedJS = (injectedJS || '') + '\n' + React.useMemo(() => makeResultsTrackerJS(t), [t])
+    + '\n' + HIDE_LANG_SWITCH_JS
+    + (pagePrint ? '\n' + PAGE_PRINT_JS : '');
 
   // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
   // Vastu/Palmistry/...) এর মানে হলো ওয়েবসাইটের নিজস্ব header/nav/footer-সহ
@@ -428,6 +459,21 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         )}
       />
       <WebViewErrorOverlay webError={webError} onRetry={handleRetry} />
+      {/* PDF বানাতে কয়েক সেকেন্ড লাগে — ঢাকনা না দিলে অ্যাপটা জমে
+          গেছে মনে হয় (কুণ্ডলী ও পঞ্জিকার পর্দায় শেখা)। */}
+      {makingPdf && (
+        <View style={s.pdfVeil}>
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={s.msg}>PDF তৈরি হচ্ছে…</Text>
+        </View>
+      )}
+      {showBnOnly && (
+        <View style={s.langNote}>
+          <Text style={s.langNoteText} numberOfLines={2}>
+            {t('এই পাতাটি এখনো কেবল বাংলায় আছে।')}
+          </Text>
+        </View>
+      )}
       {fellBack && !!langUrl && (
         <View style={s.langNote}>
           <Text style={s.langNoteText} numberOfLines={2}>
@@ -447,6 +493,11 @@ const s = StyleSheet.create({
   },
   langNoteText: { color: '#fff', fontSize: 12, textAlign: 'center', lineHeight: 17 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  pdfVeil: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(254,250,242,0.92)',
+  },
   msg:    { marginTop: 10, color: colors.textSecondary, fontSize: 13 },
   err:    { color: '#DC2626', fontSize: 13, textAlign: 'center', paddingHorizontal: 20 },
 });

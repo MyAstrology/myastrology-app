@@ -29,7 +29,11 @@ function nfc(s) {
 
 const TABLE = Object.create(null);
 for (const src of [TERMS, STRINGS]) {
-  for (const k in src) TABLE[nfc(k)] = src[k];
+  for (const k in src) {
+    TABLE[nfc(k)] = src[k];
+    const f = nfc(k.replace(/\s+/g, ' ').trim());
+    if (!(f in TABLE)) TABLE[f] = src[k];
+  }
 }
 
 /* কোনো বাংলা অক্ষর আছে কি না — অনুবাদের চেষ্টা তখনই করা হয় */
@@ -44,7 +48,14 @@ export function translate(lang, text) {
   if (lang === 'bn' || text == null) return text;
   const s = String(text);
   if (!BN.test(s)) return s;
-  const hit = TABLE[nfc(s)];
+  /* ⛔ JSX-এ লেখা দুই লাইনে ভাগ করা থাকলে স্ট্রিংটায় newline ও ইন্ডেন্টের
+     ফাঁক থেকে যায় — পর্দায় সেগুলো একটাই ফাঁকা হয়ে দেখায়, কিন্তু চাবি আর
+     মেলে না। ফল: গোটা অনুচ্ছেদ নীরবে বাংলাই থাকত (AboutAstrologerScreen-এর
+     পরিচিতি ঠিক এভাবেই বাংলা ছিল)। তাই ফাঁক এক করে খোঁজা হয় — চাবিটাও
+     একই নিয়মে, যাতে দু-দিক মেলে। (NFC-র মতোই: কারণটাই বন্ধ করা, চাবি
+     একটা-একটা করে নয়।) */
+  const flat = (x) => nfc(String(x).replace(/\s+/g, ' ').trim());
+  const hit = TABLE[nfc(s)] || TABLE[flat(s)];
   if (hit && hit[lang]) return hit[lang];
   const t = s.trim();
   if (t !== s) {
@@ -80,7 +91,7 @@ export function numText(lang, n) {
 /** অনুবাদ আছে কি না — লেখা বসানোর আগে দেখে নেওয়ার জন্য */
 export function hasTranslation(lang, text) {
   if (lang === 'bn') return true;
-  const hit = TABLE[nfc(String(text))] || TABLE[nfc(String(text).trim())];
+  const hit = TABLE[nfc(String(text))] || TABLE[nfc(String(text).replace(/\s+/g, ' ').trim())];
   return !!(hit && hit[lang]);
 }
 

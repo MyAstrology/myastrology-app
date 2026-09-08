@@ -70,6 +70,13 @@ const files = [];
   }
 })(path.join(APP, 'src'));
 
+/*  ⛔ তৃতীয় অন্ধ দিক: `{city}` জাতীয় প্লেসহোল্ডার-ওয়ালা লেখা।
+    নিচের শর্তে `{` মানেই বাদ ছিল — অথচ CLAUDE.md-এর নিয়মই বলে,
+    যে বাক্যে রানটাইম মান বসে সেটা টুকরো না করে প্লেসহোল্ডার দিয়ে
+    একটাই চাবি রাখতে হবে। ফলে ঠিক নিয়ম মেনে লেখা বাক্যগুলোই
+    পরীক্ষার বাইরে পড়ত (সেটিংসের শহরের লাইনটা এভাবেই বাংলা ছিল)।
+    এখন `{নাম}` আকৃতির প্লেসহোল্ডার সরিয়ে তবে দেখা হয়। */
+const PH = /(?<!\$)\{[A-Za-z_$][\w$]*\}/g;   /* ${...} নয় — ওটা টেমপ্লেট-লিটারাল, চাবি হতে পারে না */
 const LIT = /(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g;
 const JSXTXT = /}?>([^<>{}\n]*)</g;
 const found = new Map();   // লেখা → কোন ফাইলে
@@ -89,7 +96,7 @@ for (const f of files) {
     let x;
     while ((x = LIT.exec(text))) {
       const v = x[2];
-      if (v.length > 140 || /[\n{<]/.test(v)) continue;
+      if (v.length > 140 || /[\n{<]/.test(v.replace(PH, 'X'))) continue;
       BN_G.lastIndex = 0;
       if (BN_G.test(v) && !found.has(v.trim())) found.set(v.trim(), f);
     }
@@ -107,11 +114,20 @@ for (const f of files) {
       উপরের JSXTXT-এ `\n` বাদ দেওয়া আছে, তাই এই আকৃতিটা সে **দেখতেই
       পেত না**। মেপে: চারটি এমন লেখা আছে, আর নতুন একটা যোগ করার পরেও
       পরীক্ষা সবুজ থাকছিল — অর্থাৎ নতুন লেখা নীরবে অনূদিত না-হয়ে যেত। */
-  const JSXML = />\s*\n\s*([^<>{}]+?)\s*\n\s*</g;
+  /* ⛔ তৃতীয় অন্ধ দিক: **দুই বা তার বেশি লাইনে** লেখা JSX টেক্সট।
+     নিচের প্যাটার্নটা ঠিক এক লাইনই ধরত, তাই
+       <Text>
+         প্রথম লাইন
+         দ্বিতীয় লাইন
+       </Text>
+     ধরা পড়ত না — আর ওটাই AboutAstrologerScreen-এর পরিচিতি অনুচ্ছেদ,
+     যা হিন্দি পাতাতেও বাংলাই থাকত। ফাঁক এক করে চাবি বানানো হয়
+     (src/i18n/index.js-ও একই নিয়মে খোঁজে)। */
+  const JSXML = />\s*\n((?:\s*[^<>{}\n]+\n)+)\s*</g;
   JSXML.lastIndex = 0;
   while ((m = JSXML.exec(src))) {
-    const v = m[1].trim();
-    if (!v || v.length > 140 || /[\n]/.test(v)) continue;
+    const v = m[1].replace(/\s+/g, ' ').trim();
+    if (!v || v.length > 300) continue;
     BN_G.lastIndex = 0;
     if (BN_G.test(v) && !found.has(v)) found.set(v, f);
   }
@@ -215,10 +231,31 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
      কোনো বান্ডলে MyaI18n/ENGINE_I18N ঢুকে পড়লে রুটিংয়ের যুক্তিটাই বদলে যায়। */
   const wh = path.join(APP, 'src/web-html');
   let withI18n = 0;
+  /* ⚠️ একটাই ব্যতিক্রম, আর সেটা উল্টো দিক থেকেও যাচাই করা হয়:
+     kundali-print.js কোনো ক্যালকুলেটর নয় — পাঠক ওটায় যানই না। ওটা
+     পর্দার বাইরে এঁকে expo-print দিয়ে PDF বানানো হয়, তাই ওখানে
+     MyaI18n **থাকতেই হবে**; না থাকলে ইংরেজি/হিন্দি ক্রেতা টাকা দিয়ে
+     বাংলা PDF পেতেন (২০২৬-০৯-০৭-এ ঠিক সেটাই হচ্ছিল)। */
+  const PRINT_NEEDS_I18N = 'kundali-print.js';
   for (const f of fs.readdirSync(wh)) {
     if (!f.endsWith('.js')) continue;
     const src = fs.readFileSync(path.join(wh, f), 'utf8');
-    if (/MyaI18n|ENGINE_I18N|MyaEngineI18n/.test(src)) { bad(`web-html/${f}-এ অনুবাদ-যন্ত্রপাতি ঢুকেছে — রুটিংয়ের যুক্তি আবার দেখুন`); withI18n++; }
+    /* ⚠️ ২০২৬-০৯-০৮: নিয়মটা এখন **লোডার** খোঁজে, নিছক নামটা নয়।
+       ওয়েবসাইটের পাতাগুলো নিজেরাই পাহারা-দেওয়া ডাক লেখে
+       (`window.MyaI18n && MyaI18n.t(...)`, `if(!window.MyaEngineI18n) return`),
+       তাই নাম ধরে খুঁজলে সৎ বান্ডলও লাল হতো। আসল প্রশ্ন হলো অনুবাদের
+       যন্ত্রটা — js/i18n.js বা js/engine-i18n.js — বান্ডলে ইনলাইন হয়েছে
+       কি না; হলে বান্ডল ভারী হয় আর file://-এ অভিধান খুঁজতে গিয়ে ব্যর্থ
+       হয়। bundle-web-assets.js-এর REMOVE_SRC ওই দুটো বাদ দেয়। */
+    const has = /\/\*js\/(?:engine-)?i18n\.js\*\//.test(src);
+    if (f === PRINT_NEEDS_I18N) {
+      /* এখানে প্রশ্নটা উল্টো — লোডার নয়, অনুবাদের **ক্ষমতা** আছে কি না */
+      const canT = /MyaI18n|MyaEngineI18n/.test(src);
+      canT ? ok('kundali-print.js-এ MyaI18n আছে — অনূদিত PDF সম্ভব')
+           : bad('kundali-print.js-এ MyaI18n নেই — en/hi ক্রেতা বাংলা PDF পাবেন');
+      continue;
+    }
+    if (has) { bad(`web-html/${f}-এ অনুবাদ-যন্ত্রপাতি ঢুকেছে — রুটিংয়ের যুক্তি আবার দেখুন`); withI18n++; }
   }
   if (!withI18n) ok('দশটি বান্ডলের একটিতেও অনুবাদ-যন্ত্রপাতি নেই (তাই লাইভ পাতায় রুট করা)');
 
@@ -358,6 +395,91 @@ console.log('⑤ পার্স (JSX সহ)');
       } else n++;
     }
     if (!bads) ok(`${n}টি ফাইলই পার্স হয় (TypeScript পার্সার, JSX সহ)`);
+  }
+}
+
+/* ─── ⑨ t() যেখানে ডাকা হচ্ছে, সেখানে t সত্যিই আছে তো ───
+   ⚠️ ২০২৬-০৯-০৭: HomeScreen-এর `RashiHeroRow` একটা **আলাদা** কম্পোনেন্ট,
+   অথচ তাতে `t('রাশি পরিবর্তন করুন')` বসানো হয়েছিল — `t` ওখানে ছিলই না।
+   ফল: পাঠক রাশি বাছার সঙ্গে সঙ্গে **অ্যাপ ভেঙে যেত** (ওই সারিটা কেবল
+   রাশি বাছা থাকলেই আঁকা হয়)। পার্স-পরীক্ষা এটা ধরে না — সিনট্যাক্স
+   নিখুঁত; ভুলটা কেবল চালানোর সময়ে। */
+{
+  console.log('\n⑨ t() ব্যবহারের জায়গায় t আছে কি না');
+  const START = /^(?:export\s+)?(?:function\s+\w+|const\s+\w+\s*=\s*(?:\([^)]*\)|\w+)\s*=>)/gm;
+  const bad2 = [];
+  for (const f of files) {
+    /* ⚠️ মন্তব্য বাদ — এই রিপোর মন্তব্য বাংলায় আর তাতে `t()` উদ্ধৃত থাকে
+       (LanguageContext-এর "কেবল t() লাগলে"), তাই মন্তব্য না ছাঁটলে
+       মিথ্যে লাল আসে। */
+    const src = fs.readFileSync(f, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+    /* মডিউল-স্তরে `tGlobal as t` আনা থাকলে গোটা ফাইলেই t আছে */
+    if (/import\s*\{[^}]*\btGlobal\s+as\s+t\b/.test(src)) continue;
+    const starts = [...src.matchAll(START)].map(m => ({ i: m.index, head: m[0] }));
+    if (!starts.length) continue;
+    for (const m of src.matchAll(/[^\w.]t\(/g)) {
+      const i = m.index;
+      const before = starts.filter(x => x.i < i);
+      if (!before.length) continue;
+      const fnStart = before[before.length - 1];
+      const nextI = (starts.find(x => x.i > i) || { i: src.length }).i;
+      const body = src.slice(fnStart.i, nextI);
+      /* t এসেছে হুক থেকে, নাকি প্যারামিটার হিসেবে? */
+      /* WebView-এ ইনজেক্ট করা স্ক্রিপ্ট নিজের `function t(){}` বানায় —
+         ওটাও বৈধ। */
+      if (/const\s*\{[^}]*\bt\b[^}]*\}\s*=\s*use|const\s+t\s*=\s*use|\bt\s*=>|function\s+t\s*\(/.test(body)) continue;
+      if (/\(\s*t\s*[,)]|,\s*t\s*[,)]/.test(fnStart.head)) continue;
+      bad2.push(path.relative(APP, f) + ':' + (src.slice(0, i).split('\n').length)
+                + '  (' + fnStart.head.trim().slice(0, 40) + ')');
+    }
+  }
+  if (!bad2.length) ok('প্রতিটি t() ডাকার জায়গাতেই t সংজ্ঞায়িত');
+  else bad('t নেই এমন জায়গায় t() ডাকা হচ্ছে — চালালেই অ্যাপ ভাঙবে:\n      ' + bad2.join('\n      '));
+}
+
+/* ─── ⑩ ভাষা-বদলের সারি অ্যাপে ঢাকা কি না ───
+   অ্যাপে ভাষা ঠিক হয় Settings থেকে। পাতার নিজের সারিটা **সেটাকে না
+   জানিয়েই** ঠিকানা বদলে দেয়, ফলে অ্যাপ ভাবে বাংলা আর পাতা দেখায়
+   ইংরেজি। ⚠️ ওয়েবসাইটে সারিটা থাকতেই হবে (আসল <a href>, আর verify-seo
+   গোনে) — তাই মোছা নয়, কেবল অ্যাপে CSS দিয়ে ঢাকা। */
+{
+  console.log('\n⑩ ভাষা-বদলের সারি অ্যাপে ঢাকা');
+  const hp = path.join(APP, 'src/utils/hideWebChrome.js');
+  if (!fs.existsSync(hp)) { bad('hideWebChrome.js নেই'); }
+  else {
+    const h = fs.readFileSync(hp, 'utf8');
+    if (/\[class\*="mya-lang"\]/.test(h) && /display:none/.test(h))
+      ok('সব রকম mya-lang সুইচার এক নিয়মে ঢাকা');
+    else bad('সুইচারের নিয়মটা নেই — সারিটা অ্যাপে দেখা যাবে');
+
+    /* ⚠️ অ্যাপের ভিতরে "অ্যাপ ডাউনলোড করুন" বিজ্ঞাপন অর্থহীন —
+       পাঠক তো অ্যাপেই আছেন। ওয়েবসাইটে ওটা থাকতেই হবে। */
+    if (/rf-app-card/.test(h) && /play\.google\.com/.test(h))
+      ok('Play-স্টোরের বিজ্ঞাপন অ্যাপে ঢাকা');
+    else bad('অ্যাপের ভিতরেই "অ্যাপ ডাউনলোড করুন" বিজ্ঞাপন দেখা যাবে');
+
+    /* ব্যাক চাপলে ফাঁকা পর্দা — তালিকা দুটো এক জায়গায় থাকা চাই,
+       আর দুই WebView-ই সেটাই পড়া চাই। */
+    if (/RESULTS_CONTAINER_IDS/.test(h) && /FORM_CONTAINER_IDS/.test(h))
+      ok('ব্যাক-এ ফর্ম ফেরানোর তালিকা এক উৎসে');
+    else bad('তালিকাদুটো শেয়ার্ড ফাইলে নেই — দুই কপি একদিন সরে যাবে');
+    for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
+      const src = fs.readFileSync(path.join(APP, f), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+      if ((src.match(/makeHideResultsJS/g) || []).length >= 2)
+        ok(path.basename(f) + ' — ব্যাক-এ ফর্ম ফিরিয়ে আনে');
+      else bad(path.basename(f) + ' — ব্যাক চাপলে পর্দা ফাঁকা হয়ে যাবে');
+    }
+
+    /* দুটো WebView, দুটোতেই বসাতে হয় — কুণ্ডলী নিজেরটা চালায়। */
+    for (const f of ['src/components/LocalWebView.js', 'src/screens/KundaliScreen.js']) {
+      const src = fs.readFileSync(path.join(APP, f), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+      const used = (src.match(/HIDE_LANG_SWITCH_JS/g) || []).length;
+      if (used >= 2) ok(path.basename(f) + ' — সারিটা ঢাকা হয়');
+      else bad(path.basename(f) + ' — সারিটা ঢাকা হয় না (import + ব্যবহার দুটোই লাগে)');
+    }
   }
 }
 

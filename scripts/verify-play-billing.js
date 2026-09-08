@@ -191,7 +191,10 @@ console.log('⑦ কেনার পরে ডেলিভারি');
      তাই বাংলা অ্যাপে ওই দুটো বোতাম কখনো ওঠেই না (টাকা নেওয়ার ঝুঁকি
      নেই — জিনিসটা কেবল পাওয়া যায় না)। বান্ডল পোর্ট হলে এখান থেকে
      নাম দুটো তুলে দিতে হবে। */
-  const OPEN_BUNDLE = { 'varshaphala.js': 1, 'result.js': 1 };
+  /* ২০২৬-০৯-০৮: দুটো ফাঁকই বন্ধ — varshaphala.js নতুন করে তৈরি হয়েছে
+     আর result.js-এ PDF-অনুদানের প্রবাহটা হাতে বসানো হয়েছে। তালিকা
+     খালি রাখা হলো, তাই নতুন কোনো ফাঁক এলে সেটা সরাসরি লাল হবে। */
+  const OPEN_BUNDLE = {};
   const BFN = {
     'kundali.js':      FN['kundali.html'],
     'match-making.js': FN['match-making.html'],
@@ -216,6 +219,37 @@ console.log('⑦ কেনার পরে ডেলিভারি');
   if (/style\.opacity\s*=\s*'1'/.test(unlock))
     ok('₹৫০১/₹১৫০১ ওভারলে display **ও** opacity — দুটোই তোলা হয়');
   else bad("ওভারলে কেবল display='flex' — opacity:0 থাকায় পর্দায় কিছুই দেখা যেত না");
+
+  /* ⛔ বর্ষফল ও সংখ্যা-জ্যোতিষের ₹৫১ বোতাম openRzp ছোঁয় না — নিজেরাই
+     new Razorpay(...) বানায়। ধরা না হলে অ্যাপের ভিতরেই Razorpay-র পর্দা
+     খুলে যেত (Play-র নিয়মে চলে না), আর সহকর্মীর স্ক্রিনশটে ঠিক সেটাই ছিল। */
+  for (const [fn, prod] of [['vpPayAndPrint', 'varshaphalaPdf'], ['nuPayAndPrint', 'numerologyPdf']]) {
+    const re = new RegExp("replace\\('" + fn + "'\\s*,\\s*'" + prod + "'\\)");
+    if (re.test(bridge)) ok(fn + ' → ' + prod + ' — অ্যাপে Razorpay খোলে না');
+    else bad(fn + ' ধরা হয়নি — অ্যাপের ভিতরেই Razorpay-র পর্দা খুলবে');
+  }
+}
+
+console.log('⑦খ পাতা নিজেই ছাপলে PDF সত্যিই তৈরি হয় কি না');
+{
+  /* ⛔ WebView-এ window.print() **কিছুই করে না**, ত্রুটিও দেয় না। তাই
+     প্রোমো কোড ঠিক দিলেও (এবং টাকা দিলেও) পাঠক কিছুই পেতেন না। */
+  let wp = '', lwv = '';
+  try { wp  = fs.readFileSync(path.join(APP, 'src/utils/webPrint.js'), 'utf8'); } catch (e) {}
+  try { lwv = fs.readFileSync(path.join(APP, 'src/components/LocalWebView.js'), 'utf8'); } catch (e) {}
+  if (/window\.print\s*=\s*function/.test(wp)) ok('window.print() ধরা হয়েছে — expo-print দিয়ে আসল PDF');
+  else bad('window.print() ধরা হয়নি — WebView-এ ওটা নিঃশব্দে কিছুই করে না');
+  if (/CHUNK\s*=\s*\d{4,}/.test(wp)) ok('HTML টুকরো করে পাঠানো হয় — কম-RAM ফোনে সেতু ভাঙে না');
+  else bad('HTML একসঙ্গে পাঠানো হচ্ছে — কম-RAM ফোনে WebView-এর সেতু ভেঙে ক্র্যাশ হয়');
+  if (/pagePrint\s*\?/.test(lwv) && /collectPdfChunk/.test(lwv))
+    ok('LocalWebView টুকরোগুলো জোড়া লাগিয়ে PDF বানায়');
+  else bad('LocalWebView টুকরো জোড়া লাগায় না — বার্তা এসে হারিয়ে যাবে');
+  for (const f of ['VarshaphalaScreen.js', 'NumerologyResultScreen.js']) {
+    let src = '';
+    try { src = fs.readFileSync(path.join(APP, 'src/screens', f), 'utf8'); } catch (e) {}
+    if (/(^|\s)pagePrint=\{\{/m.test(src)) ok(f + ' — pagePrint বসানো');
+    else bad(f + ' — pagePrint নেই, প্রোমো কোড দিলেও PDF আসবে না');
+  }
 }
 
 console.log('⑧ টাকা কাটার পরে ডেলিভারি আটকালে');

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions, Image, Modal, ImageBackground, AppState, InteractionManager } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
@@ -8,9 +8,22 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
-import { getPanchangForDate } from '../engine/panchang_full';
-import { getTodayRashifal } from '../engine/rashifal';
-import { getFestivalsForMonth } from '../engine/bengali_festivals';
+/* ⛔ পঞ্জিকা/রাশিফলের ইঞ্জিন **static import নয়**। মেপে দেখা: অ্যাপ
+   চালুর মুহূর্তে যত JS পার্স হয় তার সবচেয়ে বড় টুকরো এই তিনটে —
+   panjika-ephemeris ৭৮৫ KB + vsop87 ১২৪ KB + panjika-data ৮৫ KB ≈ ১ MB,
+   আর প্রথম ফ্রেম আঁকার আগেই ওটা পার্স হতে হতো। এখন প্রথম রেন্ডারের পরে
+   লোড হয় (require সিঙ্ক্রোনাস ও ক্যাশড, তাই দ্বিতীয়বার খরচ নেই)।
+   ⚠️ import() নয় — Metro-তে ওটা Promise দেয়, আর তাতে স্ক্রিন দুবার
+   বসত। BottomTabs-এর lazy ম্যাপে একই কারণে require(). */
+let _eng = null;
+function engines() {
+  if (!_eng) _eng = {
+    getPanchangForDate: require('../engine/panchang_full').getPanchangForDate,
+    getTodayRashifal:   require('../engine/rashifal').getTodayRashifal,
+    getFestivalsForMonth: require('../engine/bengali_festivals').getFestivalsForMonth,
+  };
+  return _eng;
+}
 import PANJIKA_IMAGES from '../engine/panjika-images';
 import { useUser, RashiLucky, RASHI_NAMES } from '../context/UserContext';
 import { QUICK_ACCESS_ITEMS, MenuIcon } from '../navigation/menuItems';
@@ -22,7 +35,7 @@ import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
 import { loadPanjikaCity, DEFAULT_CITY } from '../utils/panjikaCity';
 import { numText, getCurrentLang, tGlobal } from '../i18n';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage, useT } from '../context/LanguageContext';
 
 /* অঙ্ক পাঠকের লিপিতে — বাংলা ০১২ · হিন্দি ०१२ · ইংরেজি 012।
    ⚠️ ভাষাটা **ডাকার সময়** পড়া হয় (মডিউল লোডের সময় নয়) — নইলে অ্যাপ
@@ -158,6 +171,10 @@ function StarRow({ score }) {
 // ডানের স্ট্যাটস-কলাম সাদা, আইকনগুলো রঙিন (গোলাপি/সবুজ/বাদামি/সোনালি) — সব গোল্ড
 // না। luckBox এক-লাইনে কমপ্যাক্ট রাখা হয়েছে যাতে কার্ডের হাইট না বাড়ে।
 function RashiHeroRow({ rashiIdx, score, luckScore, advice, onChangePress, onRashifalPress }) {
+  /* ⚠️ এটি আলাদা একটি কম্পোনেন্ট — HomeScreen-এর `t` এখানে পৌঁছয় না।
+     না থাকলে রেন্ডারেই `t is not a function`, আর রাশি বাছার সঙ্গে সঙ্গে
+     অ্যাপ ভেঙে যেত (এই সারিটা কেবল রাশি বাছা থাকলেই আঁকা হয়)। */
+  const t = useT();
   const lucky = RashiLucky[rashiIdx];
   return (
     <Pressable onPress={onRashifalPress} style={s.rashiHeroWrap}>
@@ -433,16 +450,37 @@ export function HomeScreen() {
 
   function selectRashi(idx) { haptics.tap(); saveUser({ rashi: idx }); setRashiModal(false); }
 
-  const today = useMemo(() => new Date(), []);
+  /* ⛔ আগে এটা ছিল useMemo(() => new Date(), []) — অর্থাৎ পর্দাটা একবার
+     বসার পরে তারিখ ও সময় **আর কখনো বদলাত না**। অ্যাপ রাতভর মেমরিতে
+     থাকলে সকালে হোম কার্ড আগের রাতের করণ/যোগ দেখাত, আর পঞ্জিকার পাতার
+     সঙ্গে মিলত না (করণ দিনে ~৪ বার বদলায়, তাই ওটাই আগে ধরা পড়ে)।
+     এখন অ্যাপ সামনে এলে আর প্রতি মিনিটে ঘড়িটা নতুন করে পড়া হয়। */
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const bump = () => setNowTick(Date.now());
+    const sub = AppState.addEventListener('change', st => { if (st === 'active') bump(); });
+    /* ৫ মিনিট — করণ দিনে ~৪ বার বদলায়, তাই এর চেয়ে ঘন ঘন হিসাব
+       করার দরকার নেই আর ব্যাটারিও বাঁচে। */
+    const id  = setInterval(bump, 300000);
+    return () => { sub.remove(); clearInterval(id); };
+  }, []);
+  const today = useMemo(() => new Date(nowTick), [nowTick]);
+  /* প্রথম ফ্রেম আঁকা হয়ে গেলে তবেই ইঞ্জিন — তাই চালুর সময় ~১ MB JS
+     পার্স হওয়ার জন্য পাঠককে অপেক্ষা করতে হয় না। */
+  const [engReady, setEngReady] = useState(false);
+  useEffect(() => {
+    const id = InteractionManager.runAfterInteractions(() => setEngReady(true));
+    return () => id.cancel && id.cancel();
+  }, []);
   const iso   = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
   // "আমার রাশি" কার্ডে প্রতিদিন বদলানো তথ্য দেখানোর জন্য — স্থির শুভ রং/সংখ্যা/
   // দিকের বদলে আজকের প্রেম/কর্ম/স্বাস্থ্য/আর্থিক রেটিং, যাতে প্রতিদিন নতুন কিছু দেখা যায়।
   const todayRashiEntry = useMemo(() => {
-    if (userRashi === null) return null;
-    try { return getTodayRashifal().rashifal[userRashi] || null; }
+    if (userRashi === null || !engReady) return null;
+    try { return engines().getTodayRashifal().rashifal[userRashi] || null; }
     catch (_) { return null; }
-  }, [userRashi, iso]);
+  }, [userRashi, iso, engReady]);
   const todayRashiScore = todayRashiEntry?.score || null;
   // ভাগ্য স্কোর (/১০) — প্রেম/স্বাস্থ্য/চাকরি/অর্থ ৪টা ৫-স্টার রেটিং-এর গড়, ×২ করে
   // ১০-এর স্কেলে আনা হচ্ছে (নতুন কোনো ডেটা ছাড়াই, বিদ্যমান স্কোর থেকেই বের করা)।
@@ -452,15 +490,17 @@ export function HomeScreen() {
     return (((love + health + work + finance) / 4) * 2).toFixed(1);
   }, [todayRashiScore]);
 
+  const EMPTY_PANCHANG = { tithi:'—', nakshatra:'—', yoga:'—', karana:'—', sunrise:'—',
+    sunset:'—', weekday:'—', weekdayNum:0, paksha:'—', bengaliDay:null,
+    bengaliMonth:'—', bengaliYear:null, ritu:'—' };
   const data = useMemo(() => {
+    if (!engReady) return EMPTY_PANCHANG;      // প্রথম ফ্রেম — ইঞ্জিন এখনো লোড হয়নি
     try {
-      return getPanchangForDate(iso, city.lat, city.lon, city.tz);
+      return engines().getPanchangForDate(iso, city.lat, city.lon, city.tz);
     } catch (_) {
-      return { tithi:'—', nakshatra:'—', yoga:'—', karana:'—', sunrise:'—', sunset:'—',
-               weekday:'—', weekdayNum:0, paksha:'—', bengaliDay:null,
-               bengaliMonth:'—', bengaliYear:null, ritu:'—' };
+      return EMPTY_PANCHANG;
     }
-  }, [iso, city.lat, city.lon, city.tz]);
+  }, [iso, nowTick, engReady, city.lat, city.lon, city.tz]);
 
   // "রানাঘাট, ভারত (IST)" — পাঠক যেন জানেন সময়গুলো কোন জায়গা ও কোন ঘড়ির
   const placeLine = `${city.label}${city.country ? ', ' + city.country : ''} (${tzLabel(city.tz)})`;
@@ -478,13 +518,14 @@ export function HomeScreen() {
   const todaysFestival = useMemo(() => {
     try {
       const days = [{ dateStr: iso, tithiIdx: data.tithiIdx, bengaliDay: data.bengaliDay }];
-      const found = getFestivalsForMonth(today.getFullYear(), today.getMonth(), days)
+      if (!engReady) return null;
+      const found = engines().getFestivalsForMonth(today.getFullYear(), today.getMonth(), days)
         .find(f => f.dateStr === iso);
       return found ? { ...found, image: found.imageKey ? PANJIKA_IMAGES[found.imageKey] : null } : null;
     } catch (_) {
       return null;
     }
-  }, [iso, data.tithiIdx, data.bengaliDay]);
+  }, [iso, engReady, data.tithiIdx, data.bengaliDay]);
 
   const fmt = (slot) => `${slot.start} – ${slot.end}`;
   const muhurtaRows = [
