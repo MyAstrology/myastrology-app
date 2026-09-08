@@ -240,10 +240,19 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
   for (const f of fs.readdirSync(wh)) {
     if (!f.endsWith('.js')) continue;
     const src = fs.readFileSync(path.join(wh, f), 'utf8');
-    const has = /MyaI18n|ENGINE_I18N|MyaEngineI18n/.test(src);
+    /* ⚠️ ২০২৬-০৯-০৮: নিয়মটা এখন **লোডার** খোঁজে, নিছক নামটা নয়।
+       ওয়েবসাইটের পাতাগুলো নিজেরাই পাহারা-দেওয়া ডাক লেখে
+       (`window.MyaI18n && MyaI18n.t(...)`, `if(!window.MyaEngineI18n) return`),
+       তাই নাম ধরে খুঁজলে সৎ বান্ডলও লাল হতো। আসল প্রশ্ন হলো অনুবাদের
+       যন্ত্রটা — js/i18n.js বা js/engine-i18n.js — বান্ডলে ইনলাইন হয়েছে
+       কি না; হলে বান্ডল ভারী হয় আর file://-এ অভিধান খুঁজতে গিয়ে ব্যর্থ
+       হয়। bundle-web-assets.js-এর REMOVE_SRC ওই দুটো বাদ দেয়। */
+    const has = /\/\*js\/(?:engine-)?i18n\.js\*\//.test(src);
     if (f === PRINT_NEEDS_I18N) {
-      has ? ok('kundali-print.js-এ MyaI18n আছে — অনূদিত PDF সম্ভব')
-          : bad('kundali-print.js-এ MyaI18n নেই — en/hi ক্রেতা বাংলা PDF পাবেন');
+      /* এখানে প্রশ্নটা উল্টো — লোডার নয়, অনুবাদের **ক্ষমতা** আছে কি না */
+      const canT = /MyaI18n|MyaEngineI18n/.test(src);
+      canT ? ok('kundali-print.js-এ MyaI18n আছে — অনূদিত PDF সম্ভব')
+           : bad('kundali-print.js-এ MyaI18n নেই — en/hi ক্রেতা বাংলা PDF পাবেন');
       continue;
     }
     if (has) { bad(`web-html/${f}-এ অনুবাদ-যন্ত্রপাতি ঢুকেছে — রুটিংয়ের যুক্তি আবার দেখুন`); withI18n++; }

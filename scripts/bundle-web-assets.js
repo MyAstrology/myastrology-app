@@ -92,7 +92,13 @@ svg.tab-icon{width:18px!important;height:18px!important;min-width:18px!important
 })();
 </script>`;
 
-const REMOVE_SRC = ['googletagmanager','razorpay','push-init','social-data','cloudflare-static','cdn-cgi','checkout.razorpay'];
+/* ⚠️ js/i18n.js ও js/engine-i18n.js ইচ্ছে করেই বাদ — অ্যাপে বান্ডল কেবল
+   বাংলার জন্য (en/hi-তে LocalWebView লাইভ পাতা খোলে)। ওগুলো রাখলে
+   file://-এ অভিধান খুঁজতে গিয়ে ব্যর্থ হতো, বান্ডলও ভারী হতো, আর
+   verify-app-i18n-এর "বান্ডলে অনুবাদ-যন্ত্রপাতি নেই" নিয়মটা ভাঙত।
+   পাতার প্রতিটি ডাক পাহারা-দেওয়া (window.MyaI18n && ...), তাই না
+   থাকলে বাংলাটাই দেখা যায় — যা অ্যাপে ঠিক আচরণ। */
+const REMOVE_SRC = ['googletagmanager','razorpay','push-init','social-data','cloudflare-static','cdn-cgi','checkout.razorpay','js/i18n.js','js/engine-i18n.js'];
 const shouldRemove = src => REMOVE_SRC.some(p => src.includes(p));
 
 function readLocal(srcPath) {
