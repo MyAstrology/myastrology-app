@@ -95,6 +95,7 @@ const LIT = /(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g;
    (<Text>অ্যাকাউন্ট</Text>) কোনো কোট ছাড়াই বসে, তাই প্রথম মাপে ৪৬টা
    লাইন চোখের বাইরে ছিল। দুটো আকৃতিই পড়া হয়। */
 const JSXTXT = /}?>([^<>{}\n]*)</g;
+const JSXBRACE = /\}\s*([^<>{}\n]+?)\s*</g;
 const seen = new Set();
 for (const f of files) {
   const src = strip(fs.readFileSync(f, 'utf8'));
@@ -121,6 +122,20 @@ for (const f of files) {
     if (!s || s.length > 140) continue;
     BN_G.lastIndex = 0;
     if (BN_G.test(s)) seen.add(s);
+  }
+
+  /* ⛔ ২০২৬-০৯-০৮ — `<Text>ক{'\n'}খ</Text>`-এর দ্বিতীয় টুকরোটা কোনো
+     প্যাটার্নেই ধরা পড়ত না (আগে `>` নেই, `}` আছে)। ফলে PDF-এর
+     অপেক্ষা-বার্তার দ্বিতীয় লাইনটা অনূদিত না হয়েও পরীক্ষা সবুজ থাকত —
+     সহকর্মীর ফোনে "Creating PDF… একটু অপেক্ষা করুন" মেশানো দেখাত।
+     এটি extractor-এর তৃতীয় অন্ধ দিক (আগের দুটি: একটামাত্র অ্যাপোস্ট্রফি,
+     আর বহু-লাইনের JSX লেখা)। */
+  JSXBRACE.lastIndex = 0;
+  while ((m = JSXBRACE.exec(src))) {
+    const t = (m[1] || '').trim();
+    if (!t || t.length > 140) continue;
+    BN_G.lastIndex = 0;
+    if (BN_G.test(t)) seen.add(t);
   }
 
   /*  ⛔ বহু-লাইনে লেখা JSX টেক্সট — `<Text …>` আর লেখাটা আলাদা লাইনে।

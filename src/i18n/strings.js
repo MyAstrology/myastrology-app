@@ -44,6 +44,10 @@ export const STRINGS = {
     "en": "PDF data not found. Please calculate the match first.",
     "hi": "PDF डेटा नहीं मिला। पहले कुंडली मिलान की गणना करें।"
   },
+  "একটু অপেক্ষা করুন": {
+    "en": "Please wait a moment",
+    "hi": "थोड़ा प्रतीक्षा करें"
+  },
   "PDF তৈরি হচ্ছে…": {
     "en": "Creating PDF…",
     "hi": "PDF बन रहा है…"

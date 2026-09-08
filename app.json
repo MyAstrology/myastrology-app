@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "in.myastrology.app",
-      "versionCode": 17,
+      "versionCode": 18,
       "edgeToEdgeEnabled": true,
       "permissions": [
         "ACCESS_COARSE_LOCATION",

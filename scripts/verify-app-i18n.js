@@ -79,6 +79,7 @@ const files = [];
 const PH = /(?<!\$)\{[A-Za-z_$][\w$]*\}/g;   /* ${...} নয় — ওটা টেমপ্লেট-লিটারাল, চাবি হতে পারে না */
 const LIT = /(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g;
 const JSXTXT = /}?>([^<>{}\n]*)</g;
+const JSXBRACE = /\}\s*([^<>{}\n]+?)\s*</g;
 const found = new Map();   // লেখা → কোন ফাইলে
 for (const f of files) {
   const src = strip(fs.readFileSync(f, 'utf8'));
@@ -108,6 +109,20 @@ for (const f of files) {
     if (!s || s.length > 140) continue;
     BN_G.lastIndex = 0;
     if (BN_G.test(s) && !found.has(s)) found.set(s, f);
+  }
+
+  /* ⛔ ২০২৬-০৯-০৮ — `<Text>ক{'\n'}খ</Text>`-এর দ্বিতীয় টুকরোটা কোনো
+     প্যাটার্নেই ধরা পড়ত না (আগে `>` নেই, `}` আছে)। ফলে PDF-এর
+     অপেক্ষা-বার্তার দ্বিতীয় লাইনটা অনূদিত না হয়েও পরীক্ষা সবুজ থাকত —
+     সহকর্মীর ফোনে "Creating PDF… একটু অপেক্ষা করুন" মেশানো দেখাত।
+     এটি extractor-এর তৃতীয় অন্ধ দিক (আগের দুটি: একটামাত্র অ্যাপোস্ট্রফি,
+     আর বহু-লাইনের JSX লেখা)। */
+  JSXBRACE.lastIndex = 0;
+  while ((m = JSXBRACE.exec(src))) {
+    const t = (m[1] || '').trim();
+    if (!t || t.length > 140) continue;
+    BN_G.lastIndex = 0;
+    if (BN_G.test(t) && !found.has(t)) found.set(t, f);
   }
 
   /*  ⛔ বহু-লাইনে লেখা JSX টেক্সট — `<Text …>` আর লেখাটা আলাদা লাইনে।

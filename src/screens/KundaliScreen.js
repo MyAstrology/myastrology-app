@@ -729,9 +729,34 @@ export function KundaliScreen() {
             // kundali-print.js waits for document.fonts.ready then setTimeout(go, 600).
             // Poll until #printRoot has children, then capture.
             pdfWebViewRef.current?.injectJavaScript(`
+              /* ⛔ ২০২৬-০৯-০৮ — আগে #printRoot ভরলেই DOM ধরে নেওয়া হতো।
+                 কিন্তু js/i18n.js অভিধান দুটো **নেটওয়ার্ক থেকে** আনে, আর
+                 অনুবাদ বসে তার পরে। ফলে ইংরেজি/হিন্দি ক্রেতার PDF ধরা পড়ত
+                 অনুবাদের **মাঝপথে** — মলাট বাংলা, ভিতরের কিছু পাতা ইংরেজি।
+                 সহকর্মী তিনবার একই অভিযোগ করেছেন, আর প্রতিবার ওয়েবসাইটের
+                 পরীক্ষা সবুজ ছিল, কারণ সেখানে এই দৌড়টাই নেই।
+                 এখন MyaI18n.ready-র জন্য অপেক্ষা করা হয় (সর্বোচ্চ ১২ সেকেন্ড,
+                 তারপর যা আছে তাই — PDF না পাওয়ার চেয়ে ভালো)। */
+              (function(){
+                var LANG = ${JSON.stringify((lang === 'en' || lang === 'hi') ? lang : 'bn')};
+                var t0 = Date.now();
+                window.__i18nOk = (LANG === 'bn');
+                (function w(){
+                  if (window.__i18nOk) return;
+                  if (window.MyaI18n && window.MyaI18n.ready) {
+                    window.MyaI18n.ready.then(function(){
+                      /* অভিধান এল ≠ অনুবাদ বসল — MutationObserver-কে একটু সময় */
+                      setTimeout(function(){ window.__i18nOk = true; }, 600);
+                    }).catch(function(){ window.__i18nOk = true; });
+                    return;
+                  }
+                  if (Date.now() - t0 > 12000) { window.__i18nOk = true; return; }
+                  setTimeout(w, 200);
+                })();
+              })();
               (function poll() {
                 var root = document.getElementById('printRoot');
-                if (root && root.children.length > 0) {
+                if (root && root.children.length > 0 && window.__i18nOk) {
                   // Strip all <script> elements — content already in DOM
                   [].slice.call(document.querySelectorAll('script')).forEach(function(s) {
                     s.parentNode && s.parentNode.removeChild(s);

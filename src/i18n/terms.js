@@ -1395,6 +1395,10 @@ export const TERMS = {
     "en": "Nagasaki Day",
     "hi": "नागासाकी दिवस"
   },
+  "নাম নেই": {
+    "en": "No name",
+    "hi": "नाम नहीं"
+  },
   "নামকরণ": {
     "en": "Naming",
     "hi": "नामकरण"
@@ -1746,6 +1750,10 @@ export const TERMS = {
   "বাগদান": {
     "en": "Betrothal",
     "hi": "सगाई"
+  },
+  "বাতিল": {
+    "en": "Cancel",
+    "hi": "रद्द करें"
   },
   "বাপুজির জন্মদিনে অহিংসার পথ বেছে নিন। সত্য ও সরলতা অনুসরণ করুন।": {
     "en": "On Bapuji's birthday, choose the path of non-violence. Follow truth and simplicity.",
@@ -2434,6 +2442,10 @@ export const TERMS = {
   "মে দিবস / শ্রমিক দিবস": {
     "en": "May Day / Labour Day",
     "hi": "मई दिवस / श्रमिक दिवस"
+  },
+  "মেনু খুলুন": {
+    "en": "Open menu",
+    "hi": "मेनू खोलें"
   },
   "মেষ": {
     "en": "Aries",
