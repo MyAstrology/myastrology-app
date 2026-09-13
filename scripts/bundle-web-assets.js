@@ -190,6 +190,21 @@ function bundle(htmlFile, outName) {
   // এই HTML একটা লোকাল file:// (কোনো images/ ফোল্ডার ছাড়া) থেকে লোড হয়, তাই
   // ভাঙা ইমেজ দেখায় (যেমন ফুটারের লোগো) — লাইভ সাইটের absolute URL-এ বদলানো হলো।
   html = html.replace(/src="images\//g, 'src="https://myastrology.in/images/');
+
+  /* ⚠️ মূল-থেকে-লেখা ছবির পথ (src="/gallery/…", src="/images/…") অ্যাপে
+     কিছুতেই খোলে না — অ্যাপের পাতা অফলাইনে চলে, কোনো সার্ভার নেই। তাই
+     ছোট ছবিগুলো (≤ ২০০ KB) সরাসরি base64-এ বসিয়ে দেওয়া হয়। মেপে ধরা
+     পড়েছে: মলাটের লোগো ও গণেশ দুটোই naturalWidth ০ দেখাচ্ছিল। */
+  html = html.replace(/src="(\/(?:gallery|images)\/[^"]+)"/g, function (m, p1) {
+    try {
+      const f = path.join(WEBSITE_DIR, p1.replace(/^\//, ''));
+      const st = fs.statSync(f);
+      if (st.size > 200 * 1024) return m;
+      const ext = path.extname(f).slice(1).toLowerCase();
+      const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : 'image/' + ext;
+      return 'src="data:' + mime + ';base64,' + fs.readFileSync(f).toString('base64') + '"';
+    } catch (e) { return m; }
+  });
   html = html.replace('<head>', '<head>\n' + APP_CSS + '\n');
   html = inlineCityDb(html);
 
