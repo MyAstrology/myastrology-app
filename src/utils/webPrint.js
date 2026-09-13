@@ -41,10 +41,31 @@ export const PAGE_PRINT_JS = `(function(){try{
   };
 }catch(e){}})();true;`;
 
+/*  লুকোনো WebView-এ ছাপার পাতাটা আঁকা শেষ হলে তার স্ট্যাটিক HTML ধরা।
+ *  ⚠️ টুকরো করে পাঠানো **ঐচ্ছিক নয়** — কোষ্ঠী-মিলনের ছাপার পাতা মেপে
+ *  ২,২০,৯৫৩ অক্ষর, আর এই ফাইলের উপরের নোটেই লেখা যে একসঙ্গে পাঠালে
+ *  কম-RAM ফোনে সেতু ওভারলোড হয়। কুণ্ডলীর পর্দায় ঠিক এই সংশোধনটা
+ *  আগেই বসানো হয়েছিল, মিলনের পর্দায় বসেনি — তাই এখানে এক জায়গায়।
+ *  minLen: printRoot-এ অন্তত এত অক্ষর না এলে ধরা হবে না — নইলে
+ *  অর্ধেক-আঁকা (কেবল মলাট) পাতাও "তৈরি" বলে ধরা পড়ত।
+ */
+export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
+  var root=document.getElementById('printRoot');
+  if(root && root.innerHTML.length > ${minLen}){
+    [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
+    var h=document.documentElement.outerHTML, C=200000, n=Math.ceil(h.length/C)||1;
+    for(var i=0;i<n;i++){
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        __rn:${JSON.stringify(type)}, i:i, total:n, chunk:h.substring(i*C,(i+1)*C)
+      }));
+    }
+  } else { setTimeout(poll,400); }
+})();true;`;
+
 /** টুকরোগুলো জোড়া লাগায়। সব টুকরো এলে পুরো HTML ফেরায়, নইলে null।
  *  store একটা সাধারণ অবজেক্ট (useRef().current) — {parts, total}. */
-export function collectPdfChunk(msg, store) {
-  if (!msg || msg.__rn !== PDF_CHUNK) return null;
+export function collectPdfChunk(msg, store, type = PDF_CHUNK) {
+  if (!msg || msg.__rn !== type) return null;
   if (store.total !== msg.total) { store.total = msg.total; store.parts = []; }
   store.parts[msg.i] = msg.chunk;
   for (let i = 0; i < store.total; i++) if (store.parts[i] == null) return null;

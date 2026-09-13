@@ -81,7 +81,15 @@ svg.tab-icon{width:18px!important;height:18px!important;min-width:18px!important
   window.open=function(url,target,f){
     if(url&&typeof url==='string'&&/\.html/.test(url)){
       var raw='';
+      /* ⚠️ localStorage-ই একমাত্র উৎস ছিল। WebView-এ ওটা কোনো কোনো
+         ফোনে/অবস্থায় নিঃশব্দে ব্যর্থ হয় (setItem-ও try/catch-এ মোড়া),
+         আর তখন raw ফাঁকা যেত — ফলে হয় "ডেটা পাওয়া যায়নি", নয়তো
+         মলাট+সূচিপত্র+বিজ্ঞাপনের চার পাতার ফাঁকা PDF। পাতাটা একই
+         payload `window._matchPrintData` / `window._kundaliPrintData`-তেও
+         রাখে, তাই সেটাই ফলব্যাক। */
       try{raw=localStorage.getItem('match_print_data')||'';}catch(e){}
+      try{ if(!raw&&window._matchPrintData) raw=JSON.stringify(window._matchPrintData); }catch(e){}
+      try{ if(!raw&&window._kundaliPrintData) raw=JSON.stringify(window._kundaliPrintData); }catch(e){}
       if(window.ReactNativeWebView){
         window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'open',url:url,raw:raw}));
       }

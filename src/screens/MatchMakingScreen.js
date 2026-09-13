@@ -16,6 +16,7 @@ import PRINT_HTML from '../web-html/match-making-print';
 import { colors } from '../theme/colors';
 import { haptics } from '../utils/haptics';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
+import { makeCaptureJS, collectPdfChunk } from '../utils/webPrint';
 
 // Injects the print data directly into the HTML so it doesn't need localStorage.
 function buildPrintHtml(rawJson) {
@@ -348,22 +349,15 @@ function buildInjectedJS(css) {
 
 const INJECTED_JS = buildInjectedJS(MM_CSS) + buildBuyOnWebJS('match-making');
 
-// Polls the hidden pre-render WebView until match-making-print.js has finished
-// building #printRoot (it waits on document.fonts.ready + a setTimeout before
-// calling window.print()), then strips <script> tags and hands back static
-// HTML. expo-print's internal renderer doesn't reliably run page JS before
-// snapshotting, so printing the *unrendered* template (with only data
-// injected) produces a blank/loading PDF — this mirrors the working
-// KundaliScreen approach of pre-rendering in a real WebView first.
-const CAPTURE_JS = `(function poll(){
-  var root=document.getElementById('printRoot');
-  if(root&&root.children.length>0){
-    [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
-    window.ReactNativeWebView.postMessage(JSON.stringify({type:'mmPdfStaticHtml',html:document.documentElement.outerHTML}));
-  } else {
-    setTimeout(poll,400);
-  }
-})();true;`;
+/*  লুকোনো WebView-এ ছাপার পাতাটা আঁকা শেষ হলে স্ট্যাটিক HTML ধরা হয়।
+ *  expo-print নিজে পাতার JS নির্ভরযোগ্যভাবে চালায় না, তাই আগে আসল
+ *  WebView-এ আঁকিয়ে নেওয়া হয় (কুণ্ডলীর পর্দার প্রমাণিত ধাঁচ)।
+ *
+ *  ⛔ আগে পুরো HTML **একটাই** postMessage-এ যেত। মেপে দেখা: ২,২০,৯৫৩
+ *  অক্ষর — webPrint.js-এ লেখা ২,০০,০০০-এর সীমার উপরে, আর কুণ্ডলীর
+ *  পর্দায় ঠিক এই কারণেই টুকরো করা হয়েছিল। মিলনের পর্দায় বসেনি বলেই
+ *  ফোনে PDF নামত না। এখন দুটোই এক উৎস থেকে। */
+const CAPTURE_JS = makeCaptureJS('mmPdfChunk');
 
 export function MatchMakingScreen() {
   /* Alert-এর শিরোনাম, বার্তা ও বোতামের লেখা পাঠকের ভাষায় */
@@ -372,6 +366,7 @@ export function MatchMakingScreen() {
   const [pdfRenderHtml, setPdfRenderHtml] = useState(null);
   const pdfWebViewRef = useRef(null);
   const pdfBusyRef = useRef(false);
+  const pdfChunksRef = useRef({ parts: [], total: 0 });
 
   const handlePrint = useCallback((rawJson) => {
     if (pdfBusyRef.current) return;
@@ -387,11 +382,14 @@ export function MatchMakingScreen() {
   const handlePdfRendered = useCallback(async (e) => {
     let m;
     try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
-    if (m.type !== 'mmPdfStaticHtml') return;
+    /* টুকরোগুলো সব না এলে কিছু করা হয় না — জোড়া লাগানোর কাজটা
+       webPrint.js-এর, যাতে কুণ্ডলী ও মিলন আলাদা না হয়ে যায়। */
+    const fullHtml = collectPdfChunk(m, pdfChunksRef.current, 'mmPdfChunk');
+    if (!fullHtml) return;
     setPdfRenderHtml(null);
     try {
       const { uri } = await Print.printToFileAsync({
-        html: m.html,
+        html: fullHtml,
         base64: false,
         width: 595,
         height: 842,
