@@ -1200,6 +1200,14 @@ export const STRINGS = {
     "en": "VIP consultation and remedy",
     "hi": "VIP परामर्श और समाधान"
   },
+  "প্রিমিয়াম যোটক মিলন": {
+    "en": "Premium match report",
+    "hi": "प्रीमियम कुंडली मिलान रिपोर्ट"
+  },
+  "স্পেশাল যোটক মিলন": {
+    "en": "Special match consultation",
+    "hi": "विशेष कुंडली मिलान परामर्श"
+  },
   "আমার রিপোর্ট": {
     "en": "My reports",
     "hi": "मेरी रिपोर्ट"

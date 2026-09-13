@@ -73,6 +73,22 @@ export const UNLOCK_JS = {
     var e=document.getElementById('_cspPid'); if(e)e.value=_pid;
     ${OPEN_OV('_cspOv')}
   })();true;`,
+
+  /* যোটক মিলনের ₹৫০১ ও ₹১৫০১ — match-making.html-এর `_mmStartPayment(kind)`
+     সফল হলে `_mm<kind>Pid` ঘরে পেমেন্ট-আইডি বসিয়ে `_mmOpenOrder(kind)` ডাকে।
+     ⚠️ ওখানে ফাংশনটা না ডেকে ওভারলেটা সরাসরি খোলা হয়, কুণ্ডলীর দুটোর মতোই —
+     পুরনো কোনো বান্ডিলে নামটা না থাকলেও ক্রেতা টাকা দিয়ে ফাঁকা পর্দা দেখবেন না। */
+  premiumMatch: `(function(){
+    ${PID}
+    var e=document.getElementById('_mmPremPid'); if(e)e.value=_pid;
+    ${OPEN_OV('_mmPremOv')}
+  })();true;`,
+
+  specialMatch: `(function(){
+    ${PID}
+    var e=document.getElementById('_mmSpecPid'); if(e)e.value=_pid;
+    ${OPEN_OV('_mmSpecOv')}
+  })();true;`,
 };
 
 /* কোন পাতার প্রধান PDF কোন প্রোডাক্ট — openRzp/proceedToRazorpay

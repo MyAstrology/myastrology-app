@@ -118,6 +118,22 @@ export function buildBuyOnWebJS(page) {
        জিনিস থাকায় সেটাই উপরের ভুলটার উৎস ছিল। */
     tag('downloadPDF','kundaliPdf');
     tag('downloadMatchPDF','mmPdf');
+
+    /* যোটক মিলনের ₹৫০১ ও ₹১৫০১ — একটাই ফাংশন, পার্থক্যটা আর্গুমেন্টে
+       ('Prem' / 'Spec')। তাই tag() ব্যবহার করা যায় না, ওটা স্থির নাম ধরে।
+       ⚠️ আর্গুমেন্ট না দেখে যেকোনো একটা ধরে নিলে ₹৫০১-এর বোতামে ₹১৫০১
+       কাটা যেত — ঠিক সেই ভুলটাই __myaProduct না মোছার কারণে একবার হয়েছিল। */
+    (function(){
+      var orig=window._mmStartPayment;
+      if(typeof orig==='function' && !orig.__myaTagged){
+        var w=function(kind){
+          window.__myaProduct = (kind==='Spec') ? 'specialMatch' : 'premiumMatch';
+          return orig.apply(this, arguments);
+        };
+        w.__myaTagged=1;
+        window._mmStartPayment=w;
+      }
+    })();
     /* পঞ্জিকার বার্ষিক PDF (₹২১) বোতামটা openRzp ব্যবহারই করে না — সে নিজে
        new Razorpay(...) বানায়। আর তার আগে একটা পাহারা আছে:
          if(typeof Razorpay==='undefined'){closePdfPromo();_doPrint();return;}

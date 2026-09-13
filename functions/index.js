@@ -115,13 +115,15 @@ const ANDROID_PACKAGE = 'in.myastrology.app';
 /* আমাদের চাবি ↔ Play-র প্রোডাক্ট আইডি — অ্যাপের src/config/products.js-এর
    হুবহু এক। দুটো সরে গেলে verify-play-billing লাল হয়। */
 const PLAY_PRODUCTS = {
-  mya_kundali_pdf:      'kundaliPdf',
-  mya_match_pdf:        'mmPdf',
-  mya_numerology_pdf:   'numerologyPdf',
-  mya_varshaphala_pdf:  'varshaphalaPdf',
-  mya_panjika_pdf:      'panjikaPdf',
-  mya_premium_kundali:  'premiumKundali',
-  mya_solution_kundali: 'solutionKundali',
+  basic_kundli:                'kundaliPdf',
+  basic_matching_report:       'mmPdf',
+  basic_numerology_report:     'numerologyPdf',
+  basic_varsh_kundli:          'varshaphalaPdf',
+  panchang_donate:             'panjikaPdf',
+  premium_kundli:              'premiumKundali',
+  ultimate_astro_combo:        'solutionKundali',
+  premium_matching_gemini:     'premiumMatch',
+  premium_matching_consultant: 'specialMatch',
 };
 
 exports.verifyPlayPurchase = onCall(

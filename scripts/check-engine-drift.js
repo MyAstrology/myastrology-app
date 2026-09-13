@@ -35,8 +35,8 @@ const SYNCED = [
   ['varshaphala.js', 'src/ayanamsa.js'],
   ['varshaphala.js', 'src/vsop87-planets.js'],
 ];
-const BASELINE = 41;   /* ২০২৬-০৯-১৩-এ মাপা — result.js-এর তিনটে
-                          সামঞ্জস্য-ফাইল ওয়েবসাইটের সঙ্গে মিলিয়ে দেওয়ায় ৪৩ → ৪১ */
+const BASELINE = 36;   /* ২০২৬-০৯-১৩ — match-making.js পুরো নতুন করে তৈরি
+                          করায় ৬টি ফাইলই মিলে গেল (৪১ → ৩৬) */
 
 let bad = 0, drift = [];
 const fail = m => { bad++; console.log('❌ ' + m); };

@@ -71,7 +71,19 @@ console.log('② চাবি ↔ ওয়েবসাইটের pricing/conf
         }
       }
     };
+    /* ⚠️ `MyaPricing.get(row[1], …)` — চলক দিয়ে ডাকা হলে উপরের regex
+       কিছুই দেখে না (match-making.html-এর ₹৫০১ ও ₹১৫০১ ঠিক তাই করে)।
+       তাই দ্বিতীয় উৎস: /pricing-admin-এর ITEMS, যেটা সহকর্মী নিজে
+       সম্পাদনা করেন আর যেটাই Firestore-এ দাম বসায় — অর্থাৎ ওটাই
+       চাবির আসল তালিকা। */
+    const adminKeys = d => {
+      const f = path.join(d, 'pricing-admin.html');
+      if (!fs.existsSync(f)) return;
+      const s = fs.readFileSync(f, 'utf8');
+      for (const m of s.matchAll(/\{\s*key:\s*'(\w+)'/g)) keys.add(m[1]);
+    };
     walk(SERVICES);
+    adminKeys(SERVICES);
     const ours = [...client.matchAll(/(\w+):\s*\{\s*id:/g)].map(m => m[1]);
     const missing = ours.filter(k => !keys.has(k));
     if (!keys.size) bad('ওয়েবসাইটে কোনো pricing চাবি পাওয়া গেল না — নিয়মটা বদলেছে?');
@@ -170,7 +182,8 @@ console.log('⑦ কেনার পরে ডেলিভারি');
      নীরবে কিছুই করত — টাকা কাটা হতো, পাতা চুপ থাকত। */
   const FN = {
     'kundali.html':      ['_showPdfBtn', 'myastro_kundali_paid', '_prmPid', '_prmOv', '_cspPid', '_cspOv'],
-    'match-making.html': ['_doMatchPrint', 'myastro_match_paid'],
+    'match-making.html': ['_doMatchPrint', 'myastro_match_paid',
+                          '_mmPremPid', '_mmPremOv', '_mmSpecPid', '_mmSpecOv'],
     'varshaphala.html':  ['vpClosePdfPay', '_vpPrint'],
     'result.html':       ['nuClosePdfPay', '_nuPrint'],
     'panjika.html':      ['closePdfPromo', '_doPrint'],
@@ -213,6 +226,38 @@ console.log('⑦ কেনার পরে ডেলিভারি');
   if (bmiss.length) bad('বান্ডলে নেই: ' + bmiss.join(' · ') + ' — বাংলা অ্যাপে টাকা নিয়ে কিছুই খুলত না');
   else ok('বান্ডলে যেগুলোর আনলক দরকার, তার প্রতিটি নামই আছে');
   for (const b of bopen) console.log('  \x1b[33m…\x1b[0m খোলা (জানা): ' + b + ' — বাংলা অ্যাপে ওই PDF কেনার পথ নেই');
+
+  /* ⚠️ উপরের FN/BFN তালিকাটা **হাতে লেখা** — কেউ আনলক-স্ক্রিপ্টে একটা id
+     ভুল লিখলে তালিকাটা তা জানেই না, আর পরীক্ষা সবুজ থেকে যায় (এই দুই
+     রিপোর সবচেয়ে বেশিবার নথিভুক্ত রোগ)। তাই নামগুলো এখানে UNLOCK_JS
+     থেকেই **বের করে** নেওয়া হয়, হাতে লেখা হয় না। */
+  const UNLOCK_PAGE = {
+    kundaliPdf: 'kundali', mmPdf: 'match-making', varshaphalaPdf: 'varshaphala',
+    numerologyPdf: 'result', panjikaPdf: 'panjika',
+    premiumKundali: 'kundali', solutionKundali: 'kundali',
+    premiumMatch: 'match-making', specialMatch: 'match-making',
+  };
+  let idBad = 0, idN = 0;
+  for (const prod of unl) {
+    const i = unlock.indexOf('\n  ' + prod + ':');
+    if (i < 0) continue;
+    const body = unlock.slice(i, unlock.indexOf('`,', i));
+    const ids = [...body.matchAll(/getElementById\((?:'|")([\w-]+)(?:'|")\)/g)].map(m => m[1])
+      .concat([...body.matchAll(/OPEN_OV\('([\w-]+)'\)/g)].map(m => m[1]));
+    const page = UNLOCK_PAGE[prod];
+    if (!page || !ids.length) continue;
+    let site = '', bund = '';
+    try { site = fs.readFileSync(path.join(SITE, page + '.html'), 'utf8'); } catch (e) {}
+    try { bund = fs.readFileSync(path.join(APP, 'src/web-html', page + '.js'), 'utf8'); } catch (e) {}
+    for (const id of ids) {
+      idN++;
+      if (site && site.indexOf('"' + id + '"') < 0 && site.indexOf("'" + id + "'") < 0)
+        { bad(`${prod} → id "${id}" ${page}.html-এ নেই`); idBad++; }
+      else if (bund && bund.indexOf(id) < 0)
+        { bad(`${prod} → id "${id}" বান্ডল ${page}.js-এ নেই`); idBad++; }
+    }
+  }
+  if (!idBad) ok(`আনলক-স্ক্রিপ্টের ${idN}টি id-ই পাতায় ও বান্ডলে সত্যিই আছে`);
 
   /* ওভারলে দুটোর CSS-এ opacity:0 — কেবল display বদলালে ক্রেতা ফাঁকা
      পর্দা দেখতেন। ওয়েবসাইটের handler দুটো ধাপই করে। */
