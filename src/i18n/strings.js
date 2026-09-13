@@ -40,6 +40,10 @@ export const STRINGS = {
     "en": "Sign in with Google",
     "hi": "Google से साइन-इन करें"
   },
+  "PDF ডেটা পাওয়া যায়নি। আগে বিশ্লেষণ করুন।": {
+    "en": "PDF data not found. Please run the analysis first.",
+    "hi": "PDF डेटा नहीं मिला। पहले विश्लेषण करें।"
+  },
   "PDF ডেটা পাওয়া যায়নি। আগে কোষ্ঠী মিলন গণনা করুন।": {
     "en": "PDF data not found. Please calculate the match first.",
     "hi": "PDF डेटा नहीं मिला। पहले कुंडली मिलान की गणना करें।"

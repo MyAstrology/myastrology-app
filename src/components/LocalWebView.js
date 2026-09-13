@@ -334,7 +334,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     if (!page) return;
 
     // PDF print request — delegate to parent screen
-    if (page === 'match-making-print' || page === 'kundali-print') {
+    if (page === 'match-making-print' || page === 'kundali-print' || page === 'numerology-print') {
       onPrint && onPrint(msg.raw || '');
       return;
     }

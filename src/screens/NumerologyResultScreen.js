@@ -1,12 +1,16 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useRoute } from '@react-navigation/native';
 import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/result';
+import PRINT_HTML from '../web-html/numerology-print';
 import { colors } from '../theme/colors';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 import { WEB_SHARE_JS } from '../utils/webShareBridge';
+import { makeCaptureJS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
+import { useAlert, Text } from '../i18n/Text';
 
 // numerology.html's "বিশ্লেষণ করুন" button navigates to result.html?q=... — this
 // screen renders that bundled page. The website itself ships a @media print
@@ -61,8 +65,47 @@ function buildInjectedJS(css) {
 
 const INJECTED_JS = buildInjectedJS(APP_CSS) + WEB_SHARE_JS + buildBuyOnWebJS('result');
 
+/*  সাজানো PDF-এর ছাপার পাতা — /numerology-print.html-এর বান্ডল।
+ *  ⚠️ localStorage অ্যাপের WebView-এ সবসময় ভরসাযোগ্য নয়, তাই payload
+ *  সরাসরি HTML-এর ভিতরেই বসিয়ে দেওয়া হয় (যোটক-মিলনের প্রমাণিত ধাঁচ)। */
+function buildPrintHtml(rawJson) {
+  const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
+  return PRINT_HTML
+    .replace('<head>', () => `<head><script>window.__nuRaw=${safe};<\/script>`)
+    .replace("try{raw=localStorage.getItem('numerology_print_data');}catch(e){}",
+             () => 'try{raw=window.__nuRaw||null;}catch(e){}');
+}
+
+const CAPTURE_JS = makeCaptureJS('nuPdfChunk', 8000);
+
 export function NumerologyResultScreen() {
   const route = useRoute();
+  const alertT = useAlert();
+  const [pdfHtml, setPdfHtml] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const chunksRef = useRef({ parts: [], total: 0 });
+  const busyRef = useRef(false);
+
+  const handlePrint = useCallback((rawJson) => {
+    if (busyRef.current) return;
+    if (!rawJson) { alertT('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে বিশ্লেষণ করুন।'); return; }
+    busyRef.current = true; setBusy(true);
+    setPdfHtml(buildPrintHtml(rawJson));
+  }, [alertT]);
+
+  const onPdfMessage = useCallback(async (e) => {
+    let m; try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
+    const full = collectPdfChunk(m, chunksRef.current, 'nuPdfChunk');
+    if (!full) return;
+    setPdfHtml(null);
+    try {
+      await deliverPdf(full, { alertT, fileName: 'MyAstrology_numerology.pdf',
+                               dialogTitle: 'সংখ্যা জ্যোতিষ রিপোর্ট শেয়ার করুন' });
+    } catch (_) {
+      alertT('ত্রুটি', 'PDF তৈরি করা যায়নি।');
+    } finally { busyRef.current = false; setBusy(false); }
+  }, [alertT]);
+
   return (
     <View style={s.root}>
       <AppHeader />
@@ -78,7 +121,26 @@ export function NumerologyResultScreen() {
         /* ⚠️ এই পাতাও নিজেই window.print() ডাকে — WebView-এ যা নিষ্ক্রিয়।
            তাই ₹৫১ দিয়েও বা প্রোমো কোড দিয়েও PDF আসত না। */
         pagePrint={{ fileName: 'MyAstrology_numerology.pdf', dialogTitle: 'সংখ্যা জ্যোতিষ রিপোর্ট শেয়ার করুন' }}
+        onPrint={handlePrint}
       />
+      {busy ? (
+        <View style={s.ov} pointerEvents="auto">
+          <ActivityIndicator size="large" color={colors.gold || '#c9922a'} />
+          <Text style={s.ovTx}>PDF তৈরি হচ্ছে…</Text>
+        </View>
+      ) : null}
+      {pdfHtml ? (
+        <WebView
+          source={{ html: pdfHtml }}
+          style={s.hidden}
+          javaScriptEnabled
+          domStorageEnabled
+          originWhitelist={['*']}
+          onLoadEnd={() => { /* পাতা আঁকা শেষ হলে ধরা শুরু */ }}
+          injectedJavaScript={CAPTURE_JS}
+          onMessage={onPdfMessage}
+        />
+      ) : null}
     </View>
   );
 }
@@ -86,4 +148,8 @@ export function NumerologyResultScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   wv:   { flex: 1 },
+  hidden: { position: 'absolute', width: 1, height: 1, opacity: 0 },
+  ov: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,.45)',
+        alignItems: 'center', justifyContent: 'center' },
+  ovTx: { color: '#fff', marginTop: 12, fontWeight: '700' },
 });
