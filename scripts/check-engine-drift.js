@@ -35,7 +35,8 @@ const SYNCED = [
   ['varshaphala.js', 'src/ayanamsa.js'],
   ['varshaphala.js', 'src/vsop87-planets.js'],
 ];
-const BASELINE = 43;   /* ২০২৬-০৯-০৮-এ মাপা */
+const BASELINE = 41;   /* ২০২৬-০৯-১৩-এ মাপা — result.js-এর তিনটে
+                          সামঞ্জস্য-ফাইল ওয়েবসাইটের সঙ্গে মিলিয়ে দেওয়ায় ৪৩ → ৪১ */
 
 let bad = 0, drift = [];
 const fail = m => { bad++; console.log('❌ ' + m); };
