@@ -355,8 +355,8 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
 
   /* ⚠️ ওয়েবসাইটের দিকটাও দেখা: প্রোমো-যাচাইয়ের আগে _inApp() ফিরে গেলে
      অ্যাপে কোড লেখার ঘরটাই খোলে না। */
-  for (const [f, promoMark] of [['kundali.html', '===_PROMO){_preparePayload()'],
-                                ['match-making.html', '===_MM_PROMO){_doMatchPrint()']]) {
+  for (const [f, promoMark] of [['kundali.html', 'promoOk(code,_PROMO)){_preparePayload()'],
+                                ['match-making.html', 'promoOk(code,_MM_PROMO)){_doMatchPrint()']]) {
     const src = fs.readFileSync(path.join(SITE, f), 'utf8');
     const pAt = src.indexOf(promoMark);
     const gAt = src.indexOf('_inApp()){showToast(') >= 0
