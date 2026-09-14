@@ -6,6 +6,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { colors } from '../theme/colors';
 import { MenuIcon } from './menuItems';
 import { useLanguage } from '../context/LanguageContext';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 /* ── স্ক্রিনগুলো getComponent দিয়ে দেরিতে লোড করা হয় (আগে static import ছিল) ──
    কেন: ক্যালকুলেটর স্ক্রিনগুলো নিজেদের web-html/*.js বান্ডল static import
@@ -60,6 +61,33 @@ const lazy = {
   AboutAstrologer: () => require('../screens/AboutAstrologerScreen').AboutAstrologerScreen,
   MyReports:       () => require('../screens/MyReportsScreen').MyReportsScreen,
 };
+
+/*  ⛔ ২০২৬-০৯-১৪ — ErrorBoundary বসানো ছিল **গোটা navigator-এর বাইরে**,
+    তাই একটা পর্দা রেন্ডারে ভাঙলে পুরো অ্যাপটাই "দুঃখিত" পর্দায় চলে যেত
+    আর ট্যাব-বারও থাকত না — অর্থাৎ একটা ক্যালকুলেটরের দোষে বাকি সবকিছু
+    অচল। এখন প্রতিটি পর্দার নিজের বেড়া, আর বেড়াটা পর্দার নামও জানে।
+    বাইরের বেড়াটা রইল (Provider বা navigator নিজে ভাঙলে সেটাই ধরে)।
+
+    ⚠️ getComponent প্রতিবার ডাকা হতে পারে, তাই মোড়কটা একবার তৈরি করে
+    ধরে রাখা হয় — নইলে প্রতি রেন্ডারে নতুন কম্পোনেন্ট-পরিচয় তৈরি হয়ে
+    পর্দাটা remount হতো (ফর্মের লেখা মুছে যেত)।                          */
+const _guarded = {};
+function guard(key, factory) {
+  return () => {
+    if (!_guarded[key]) {
+      const Screen = factory();
+      _guarded[key] = function Guarded(props) {
+        return (
+          <ErrorBoundary screen={key}>
+            <Screen {...props} />
+          </ErrorBoundary>
+        );
+      };
+    }
+    return _guarded[key];
+  };
+}
+Object.keys(lazy).forEach(k => { lazy[k] = guard(k, lazy[k]); });
 
 const Tab = createBottomTabNavigator();
 const ico = name => ({ color, size }) => <MaterialCommunityIcons name={name} size={size} color={color} />;

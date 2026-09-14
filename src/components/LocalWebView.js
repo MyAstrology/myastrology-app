@@ -363,8 +363,17 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
        (`.html` ছাড়া), আর en/hi-তে ঠিকানা https://myastrology.in/en/panjika।
        দুটোর একটাও মিলত না, তাই ওই ট্যাবগুলো নীরবে মরে যেত।
        webNav.js দুটো রূপই বোঝে, আর ভাষা-উপসর্গ ছেঁটে নেয়। */
+    /* ⛔ ২০২৬-০৯-১৪ — পাহারাটা ছিল `nav2.page !== name`, আর `name` হলো
+       **বান্ডল-ফাইলের** নাম, পাতার পথ নয়। রাশিফলের পর্দায় সেটা
+       "rashifal-daily-tula", অথচ ঠিকানার পথ "rashifal" — তাই পাতা লোড
+       শুরু হওয়ার মুহূর্তেই অ্যাপ পাঠককে রাশিফলের তালিকায় ফেরত পাঠাত।
+       ফল কখনো দেখাই যেত না, তিন ভাষাতেই। (`.html` ঠিকানা ৩০১ করে বলে
+       রিডাইরেক্টেও আবার একই ফাঁদ।)
+       এখন তুলনা হয় **WebView এখন যে পাতাটা দেখাচ্ছে** তার সঙ্গে — সেটাই
+       একমাত্র সৎ প্রশ্ন: "এই লিংক কি অন্য পাতায় নিয়ে যাচ্ছে?" */
+    const selfPage = (resolveWebNav(uri || remoteUrl || langUrl || '') || {}).page;
     const nav2 = resolveWebNav(url);
-    if (nav2 && nav2.page !== name) {
+    if (nav2 && nav2.page !== name && nav2.page !== selfPage) {
       navigation.navigate(nav2.screen, nav2.query ? { prefillQuery: nav2.query } : undefined);
       return false;
     }
@@ -384,7 +393,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
       return false;
     }
     return true;
-  }, [navigation, name]);
+  }, [navigation, name, uri, remoteUrl, langUrl]);
 
   if (error) {
     return (

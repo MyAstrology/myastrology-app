@@ -42,6 +42,7 @@ export class ErrorBoundary extends React.Component {
         message: String((err && err.message) || err || '').slice(0, 100),
         /* componentStack-এর প্রথম সারিটাই সবচেয়ে ভিতরের কম্পোনেন্ট —
            অর্থাৎ ঠিক কোথায় ভাঙল। পুরোটা পাঠালে ইভেন্টের সীমা ছাড়াত। */
+        screen: String(this.props.screen || ''),
         component: String((info && info.componentStack) || '').trim().split('\n')[0].trim().slice(0, 60),
       });
     } catch (e) {}
@@ -64,12 +65,24 @@ export class ErrorBoundary extends React.Component {
           <Text style={s.btnText}>আবার চেষ্টা করুন</Text>
         </Pressable>
         <Text style={s.note}>বারবার হলে অ্যাপটি বন্ধ করে আবার খুলুন।</Text>
+        {/* ⛔ ২০২৬-০৯-১৪ — আগে আসল ত্রুটিটা কেবল Analytics-এ যেত, পর্দায়
+            নয়। ফলে সহকর্মী "দুঃখিত নোটিশ দেখা যাচ্ছে" বলতে পারতেন, কিন্তু
+            **কেন** সেটা কেউ জানত না — আর স্যান্ডবক্সে অ্যাপ চালানোও যায়
+            না (node_modules নেই, ডিভাইস নেই)। এখন এক লাইনে কারণটা থাকে,
+            ছোট ও নিরুচ্চার, যাতে একটা স্ক্রিনশটেই ধরা পড়ে।
+            ⚠️ কারণটা ইংরেজি — ওটা অনুবাদের জিনিস নয়, তাই noTranslate। */}
+        <Text noTranslate selectable style={s.diag}>
+          {(this.props.screen ? this.props.screen + ' · ' : '')
+            + String((this.state.err && this.state.err.message) || this.state.err || '').slice(0, 160)}
+        </Text>
       </View>
     );
   }
 }
 
 const s = StyleSheet.create({
+  diag:  { marginTop: 14, fontSize: 10.5, lineHeight: 15, color: '#9a8f80',
+           textAlign: 'center', paddingHorizontal: 6 },
   wrap:  { flex: 1, backgroundColor: colors.background, alignItems: 'center',
            justifyContent: 'center', padding: 28 },
   emoji: { fontSize: 44, marginBottom: 10 },

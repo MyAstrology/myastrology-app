@@ -567,5 +567,43 @@ console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্য
   else bad('bnOnly তালিকা আছে কিন্তু কেউ পড়ে না — নীরব no-op');
 }
 
+/* ⑫ WebView নিজের পাতাতেই ফিরে যাওয়া চলবে না
+   ⛔ ২০২৬-০৯-১৪ — রাশিফলের ফল কখনো দেখা যেত না। LocalWebView-এর পাহারা
+   ছিল `nav2.page !== name`, আর ওই `name` বান্ডল-ফাইলের নাম
+   ("rashifal-daily-tula"), পথের নাম নয় ("rashifal")। তাই পাতা লোড শুরু
+   হওয়ামাত্র অ্যাপ পাঠককে রাশিফলের তালিকায় ফেরত পাঠাত — নীরবে, কোনো
+   ত্রুটি ছাড়াই। এখানে নিয়মটাই assert করা হয়, নামের তালিকা নয়। */
+{
+  console.log('\n⑫ WebView নিজের পাতায় ফিরে যায় না');
+  const vm = require('vm');
+  const src = fs.readFileSync(path.join(APP, 'src/utils/webNav.js'), 'utf8')
+                .replace(/^export\s+/gm, '');
+  const ctx = { module: {}, exports: {} };
+  vm.createContext(ctx);
+  vm.runInContext(src + '\n;this.__r = resolveWebNav;', ctx);
+  const R = ctx.__r;
+  const cases = [
+    ['https://myastrology.in/rashifal/tula',              'rashifal'],
+    ['https://myastrology.in/en/rashifal/tula',           'rashifal'],
+    ['https://myastrology.in/hi/rashifal/saptahik/libra', 'rashifal'],
+    ['https://myastrology.in/en/namakaran',               'namakaran'],
+    ['file:///data/user/0/x/files/myastro/match-making.html', 'match-making'],
+  ];
+  let cbad = 0;
+  for (const [u, p] of cases) {
+    const got = (R(u) || {}).page;
+    if (got !== p) { bad('পথ ভুল পড়ছে: ' + u + ' → ' + got); cbad++; }
+  }
+  if (!cbad) ok(cases.length + 'টি ঠিকানার পথ ঠিক পড়া হচ্ছে');
+
+  const lw = fs.readFileSync(path.join(APP, 'src/components/LocalWebView.js'), 'utf8');
+  if (/const selfPage = \(resolveWebNav\(uri \|\| remoteUrl/.test(lw))
+    ok('LocalWebView — এখন-দেখানো পাতাটাই তুলনার ভিত্তি');
+  else bad('⛔ পাহারা আবার `name` ধরে হচ্ছে — রাশিফল আবার তালিকায় ফেরত পাঠাবে');
+  if (/nav2\.page !== name && nav2\.page !== selfPage/.test(lw))
+    ok('LocalWebView — নিজের পাতায় নেভিগেট করে না');
+  else bad('LocalWebView — selfPage পাহারা শর্তে বসানো হয়নি');
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);

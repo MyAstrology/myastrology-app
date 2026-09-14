@@ -1423,5 +1423,9 @@ export const STRINGS = {
   "১৫+ বছরের অভিজ্ঞতা · PhD স্বর্ণপদক": {
     "en": "15+ years of experience · PhD gold medallist",
     "hi": "15+ वर्षों का अनुभव · PhD स्वर्ण पदक"
+  },
+  "MyAstrology অ্যাপ ব্যবহার করুন — জ্যোতিষ, পঞ্জিকা, কুণ্ডলী সব এক জায়গায়!": {
+    "en": "Try the MyAstrology app — jyotish, panjika and kundali, all in one place!",
+    "hi": "MyAstrology ऐप आज़माएँ — ज्योतिष, पंजिका और कुण्डली, सब एक ही जगह!"
   }
 };

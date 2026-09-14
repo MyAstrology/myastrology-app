@@ -147,11 +147,15 @@ export function SettingsScreen({ navigation }) {
   const shareApp = useCallback(async () => {
     haptics.tap();
     try {
+      /* ⚠️ শেয়ারের লেখা পাঠকের ভাষায় — এটা অ্যাপ থেকে **বেরিয়ে** যায়,
+         তাই <Text> মোড়কের পরীক্ষা এটাকে কখনো দেখে না (ওয়েবসাইটেও একই
+         শিক্ষা: শেয়ার-লিংকের লেখা আলাদা করে assert করতে হয়)। */
       await Share.share({
-        message: `MyAstrology অ্যাপ ব্যবহার করুন — জ্যোতিষ, পঞ্জিকা, কুণ্ডলী সব এক জায়গায়!\n${PLAY_STORE_URL}`,
+        message: t('MyAstrology অ্যাপ ব্যবহার করুন — জ্যোতিষ, পঞ্জিকা, কুণ্ডলী সব এক জায়গায়!')
+                 + `\n${PLAY_STORE_URL}`,
       });
     } catch (_) {}
-  }, []);
+  }, [t]);
 
   const clearCache = useCallback(() => {
     alertT(
