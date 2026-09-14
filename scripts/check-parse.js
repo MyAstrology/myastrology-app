@@ -89,6 +89,40 @@ for (const file of files) {
   }
 }
 
+/* ── বান্ডলের ভিতরের প্রতিটি <script> ব্লক ব্রাউজারের নিয়মে পড়া ─────
+   ২০২৬-০৯-১৪: kundali.js-এ lazy-load-এর একটা <script> কোনোদিন বন্ধই
+   হয়নি, তাই তার পরের প্রথম ইঞ্জিন-ব্লকটা (src/panjika-data.js) ওই
+   স্ক্রিপ্টের *ভিতরে* পড়ে যেত — ব্রাউজারে SyntaxError, আর ফাইলটা কখনো
+   চলত না। আগে এই পরীক্ষা কেবল দেখত বান্ডলের JSON স্ট্রিংটা ভাঙা কি না,
+   ভিতরের JS কখনো পড়তই না — তাই দোষটা নীরবে টিকে ছিল।
+   ⚠️ ব্লক কাটতে হয় ব্রাউজারের মতোই: <script ... > থেকে **পরের**
+   </script> পর্যন্ত। regex দিয়ে জোড়া মেলাতে গেলে মন্তব্যের ভিতরের
+   <script> শব্দেও মিথ্যে-লাল আসে।                                   */
+for (const f of fs.existsSync(HEAVY_DIR) ? fs.readdirSync(HEAVY_DIR) : []) {
+  if (!f.endsWith('.js')) continue;
+  const raw = fs.readFileSync(path.join(HEAVY_DIR, f), 'utf8');
+  const i0 = raw.indexOf('export default'); if (i0 < 0) continue;
+  const j0 = raw.indexOf('"', i0);
+  let html; try { html = JSON.parse(raw.slice(j0, raw.lastIndexOf('"') + 1)); } catch (e) { continue; }
+  let pos = 0, nblk = 0;
+  for (;;) {
+    const open = html.indexOf('<script', pos); if (open < 0) break;
+    const gt = html.indexOf('>', open); if (gt < 0) break;
+    const attrs = html.slice(open + 7, gt);
+    const end = html.indexOf('</script', gt);
+    if (end < 0) { problems.push(`${f}: একটি <script> কখনো বন্ধ হয়নি (অবস্থান ${open})`); break; }
+    const body = html.slice(gt + 1, end);
+    pos = end + 9;
+    if (/\bsrc\s*=/.test(attrs) || /type\s*=\s*["']?application\/ld\+json/.test(attrs)) continue;
+    nblk++;
+    try { new Function(body); }
+    catch (e) {
+      const head = body.replace(/\s+/g, ' ').trim().slice(0, 70);
+      problems.push(`${f}: <script> ব্লক পার্স হয় না — ${String(e.message).slice(0, 60)} | ${head}`);
+    }
+  }
+}
+
 if (problems.length) {
   console.error('❌ পার্স করা যায়নি — বিল্ড ব্যর্থ হবে:\n');
   problems.forEach(p => console.error('  · ' + p));
