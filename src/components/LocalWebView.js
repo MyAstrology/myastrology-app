@@ -395,6 +395,22 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     return true;
   }, [navigation, name, uri, remoteUrl, langUrl]);
 
+  /*  ⛔⛔ ২০২৬-০৯-১৪ — এই useMemo-টা নিচে, দুটো early-return-এর **পরে**
+      বসানো ছিল। React-এর নিয়ম: প্রতিটি রেন্ডারে হুকের সংখ্যা এক থাকতে
+      হবে। বান্ডল-করা পাতাগুলোতে (নামকরণ · যোটক · প্রশ্ন · বর্ষফল ·
+      সংখ্যা) প্রথম রেন্ডারে `uri` থাকে না — ফাইলটা আগে ডিস্কে লিখতে হয় —
+      তাই `if (!uri) return …` চলে যেত আর হুকটা ডাকাই হত না; পরের রেন্ডারে
+      uri এসে গেলে হুকটা ডাকা হত। React তখন "Rendered more hooks than
+      during the previous render" ছুঁড়ত, ErrorBoundary ধরত, আর পাঠক
+      দেখতেন "দুঃখিত, কিছু একটা ভুল হয়েছে"।
+
+      ⚠️ ঠিক এই কারণেই পঞ্জিকা ও কুণ্ডলী ভাঙত না (ওরা নিজের WebView
+      চালায়), আর ব্লগ/রত্ন/হস্তরেখাও নয় (ওদের remoteUrl থাকে, তাই uri
+      প্রথম রেন্ডার থেকেই আছে)। সহকর্মীর তালিকাটা হুবহু এই শ্রেণীটাই।
+
+      হুক সবসময় শর্তের **উপরে** — কোনো ব্যতিক্রম নেই।                    */
+  const resultsTrackerJS = React.useMemo(() => makeResultsTrackerJS(t), [t]);
+
   if (error) {
     return (
       <View style={[s.center, style]}>
@@ -419,7 +435,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   /* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — অ্যাপে ভাষা ঠিক হয়
      Settings থেকে, আর পাতার নিজের সারি সেটাকে না জানিয়েই বদলে দিত।
      এক জায়গায় বসানো, তাই প্রতিটি স্ক্রিনেই খাটে। */
-  const fullInjectedJS = (injectedJS || '') + '\n' + React.useMemo(() => makeResultsTrackerJS(t), [t])
+  const fullInjectedJS = (injectedJS || '') + '\n' + resultsTrackerJS
     + '\n' + HIDE_LANG_SWITCH_JS
     + (pagePrint ? '\n' + PAGE_PRINT_JS : '');
 
