@@ -35,7 +35,12 @@ const SYNCED = [
   ['varshaphala.js', 'src/ayanamsa.js'],
   ['varshaphala.js', 'src/vsop87-planets.js'],
 ];
-const BASELINE = 31;   /* ২০২৬-০৯-১৩ — match-making.js পুরো নতুন করে তৈরি
+const BASELINE = 32;   /* ২০২৬-০৯-১৪ — +১: js/renderers/compatibility-renderer.js।
+                          ওয়েবসাইটে ওটা গতকাল অনূদিত হয়েছে, আর অ্যাপের কপিতে
+                          একটা **ইচ্ছাকৃত** প্যাচ আছে: শেয়ার-বোতামের বদলে
+                          "কপি করুন" (WebView-এ navigator.share চলে না)।
+                          ব্লক-অদলবদল করলে ওই প্যাচটাই মুছে যেত, তাই রেখাচিহ্ন
+                          বাড়ানো হলো — "ঠিক আছে" নয়, "আর পিছিয়ে যাওয়া চলবে না"। */   /* ২০২৬-০৯-১৩ — match-making.js পুরো নতুন করে তৈরি
                           করায় ৬টি ফাইলই মিলে গেল (৪১ → ৩৬) */
 
 let bad = 0, drift = [];
