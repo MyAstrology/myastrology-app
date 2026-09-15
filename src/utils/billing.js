@@ -4,17 +4,28 @@
  *  ডিজিটাল পণ্য (PDF রিপোর্ট) বেচতে হলে Play Billing বাধ্যতামূলক;
  *  Razorpay ব্যবহার করলে অ্যাপ সাসপেন্ড হতে পারে।
  *
- *  ⚠️ লাইব্রেরিটা **অলসভাবে** লোড করা হয় (require ভিতরে, try/catch-এ)।
+ *  ⚠️ লাইব্রেরিটা **অলসভাবে** লোড করা হয় (require ভিতরে, try/catch-এ)।
  *  কারণ: react-native-iap একটা native মডিউল — যতক্ষণ না নতুন dev-client
  *  বিল্ড হচ্ছে ততক্ষণ ওটা বান্ডলে নেই। উপরে static import দিলে অ্যাপটাই
  *  চালু হতো না। নেই মানে isAvailable() false — আর তখন অ্যাপ **আগের মতোই**
- *  ওয়েবসাইটে পাঠায় (buyOnWebBridge)। অর্থাৎ এই ফাইল যোগ করায় আজকের
- *  আচরণের কিছুই বদলায়নি।
+ *  ওয়েবসাইটে পাঠায় (buyOnWebBridge)।
  *
- *  ⚠️ পেমেন্ট সফল হলেই "কেনা হয়েছে" ধরা হয় না — purchaseToken সার্ভারে
- *  (verifyPlayPurchase) পাঠিয়ে Google-এর কাছে যাচাই করানো হয়, আর অধিকার
- *  লেখে সার্ভারই। ফোনের কথায় বিশ্বাস করলে রুট-করা ফোনে নকল ক্রয় বানানো
- *  যেত। যাচাই ব্যর্থ হলে রিপোর্ট খোলা হয় না।
+ *  ⚠️ পেমেন্ট সফল হলেই "কেনা হয়েছে" ধরা হয় না — purchaseToken সার্ভারে
+ *  (verifyPlayPurchase) পাঠিয়ে Google-এর কাছে যাচাই করানো হয়, আর অধিকার
+ *  লেখে সার্ভারই। ফোনের কথায় বিশ্বাস করলে রুট-করা ফোনে নকল ক্রয় বানানো
+ *  যেত। যাচাই ব্যর্থ হলে রিপোর্ট খোলা হয় না।
+ *
+ *  ⛔ ২০২৬-০৯-১৫: এই ফাইলটা লেখা ছিল react-native-iap ১২/১৩-এর API ধরে,
+ *  অথচ বিল্ডে আছে **১৬.৫.১**, যেটা পুরো নতুন (Nitro) ভিত্তির উপর। তিনটে
+ *  জায়গায় অমিল ছিল, আর তিনটেই নীরবে "কেনা সম্পূর্ণ হলো না" দেখাত:
+ *    ১. getProducts() আর নেই — এখন fetchProducts({skus, type})
+ *    ২. requestPurchase() এখন {request:{google:{skus}}, type:'in-app'}
+ *    ৩. ⛔ requestPurchase() **ফলটা ফেরত দেয় না** — ফল আসে
+ *       purchaseUpdatedListener / purchaseErrorListener দিয়ে। আগের কোড
+ *       ফেরত-মান থেকে purchaseToken খুঁজত, তাই টাকা কাটা হলেও ব্যর্থ বলত।
+ *  আর লাইব্রেরিটার peer dependency `react-native-nitro-modules` package.json-এ
+ *  ছিলই না — সেটা ছাড়া native অংশটাই বিল্ডে ঢোকে না, তাই initConnection()
+ *  ব্যর্থ হতো। (সেটাও যোগ করা হয়েছে — নতুন বিল্ড লাগবে।)
  */
 import { Platform } from 'react-native';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -23,8 +34,11 @@ import { PRODUCTS, PRODUCT_IDS, KEY_BY_ID } from '../config/products';
 import { addPending } from './billingPending';
 
 let _iap = null;        // লাইব্রেরি (থাকলে)
-let _tried = false;     // একবারই খোঁজা হয়
+let _tried = false;     // একবারই খোঁজা হয়
 let _connected = false;
+let _subUpd = null;     // ক্রয় সফল হলে যে শোনে
+let _subErr = null;     // ক্রয় ব্যর্থ হলে যে শোনে
+let _waiter = null;     // এই মুহূর্তে কোন ক্রয়ের ফলের জন্য অপেক্ষা
 
 function iap() {
   if (_tried) return _iap;
@@ -33,33 +47,62 @@ function iap() {
   return _iap;
 }
 
-/** লাইব্রেরিটা এই বিল্ডে আছে কি — না থাকলে ডাকা জায়গা ওয়েবসাইটে পাঠাবে */
+/** লাইব্রেরিটা এই বিল্ডে আছে কি — না থাকলে ডাকা জায়গা ওয়েবসাইটে পাঠাবে */
 export function isAvailable() {
-  return Platform.OS === 'android' && !!iap();
+  const m = iap();
+  return Platform.OS === 'android' && !!m && typeof m.requestPurchase === 'function';
+}
+
+/* ক্রয়ের ফল আসে event হিসেবে, তাই শ্রোতা দুটো একবারই বসানো হয় আর
+   _waiter দিয়ে চলতি ক্রয়ের সঙ্গে মিলিয়ে নেওয়া হয়। ⚠️ প্রতি কেনায়
+   নতুন শ্রোতা বসালে একই ক্রয় বহুবার গোনা হতো। */
+function listen(m) {
+  if (_subUpd) return;
+  try {
+    _subUpd = m.purchaseUpdatedListener((p) => {
+      const w = _waiter;
+      if (!w) return;                       // আটকে থাকা পুরনো ক্রয় — flushPending দেখবে
+      if (p && p.productId && p.productId !== w.productId) return;
+      _waiter = null; w.done(null, p);
+    });
+    _subErr = m.purchaseErrorListener((e) => {
+      const w = _waiter;
+      if (!w) return;
+      _waiter = null;
+      const err = new Error(String((e && (e.code || e.message)) || 'purchase-error'));
+      err.code = (e && e.code) || '';
+      w.done(err, null);
+    });
+  } catch (e) { /* শ্রোতা বসাতে না পারলে নিচের timeout-ই শেষ ভরসা */ }
 }
 
 async function connect() {
   const m = iap();
   if (!m) throw new Error('billing-unavailable');
   if (!_connected) {
-    await m.initConnection();
+    const ok = await m.initConnection();
+    /* ⚠️ initConnection() এখন true/false ফেরত দেয়। false মানে Play-র
+       সঙ্গে কথা বলাই গেল না — প্রায় সবসময় অ্যাপটা Play থেকে ইনস্টল
+       করা হয়নি (সাইডলোড), বা রিলিজটা এখনো প্রকাশিত নয়। */
+    if (ok === false) throw new Error('not-prepared');
     _connected = true;
-    /* ⚠️ আগের কোনো ক্রয় যদি যাচাইয়ের আগেই অ্যাপ বন্ধ হয়ে গিয়ে আটকে
-       থাকে, সেটা এখানে শেষ করা হয় — নইলে পাঠক টাকা দিয়েছেন অথচ কিছুই
+    listen(m);
+    /* ⚠️ আগের কোনো ক্রয় যদি যাচাইয়ের আগেই অ্যাপ বন্ধ হয়ে গিয়ে আটকে
+       থাকে, সেটা এখানে শেষ করা হয় — নইলে পাঠক টাকা দিয়েছেন অথচ কিছুই
        পাননি, আর Google ৩ দিনে টাকা ফেরত দিয়ে দিত। */
     try { await flushPending(); } catch (e) {}
   }
   return m;
 }
 
-/** Play-র সঙ্গে যোগাযোগ চালু করা ও আটকে থাকা ক্রয় তুলে আনা।
+/** Play-র সঙ্গে যোগাযোগ চালু করা ও আটকে থাকা ক্রয় তুলে আনা।
  *
- *  ⛔ কেনার **আগে** এটা ডাকতেই হয়। কারণ flushPending() চলে connect()-এর
- *  ভিতরে, আর connect() চলে buy()-এর ভিতরে — অর্থাৎ আগের অসম্পূর্ণ ক্রয়টা
+ *  ⛔ কেনার **আগে** এটা ডাকতেই হয়। কারণ flushPending() চলে connect()-এর
+ *  ভিতরে, আর connect() চলে buy()-এর ভিতরে — অর্থাৎ আগের অসম্পূর্ণ ক্রয়টা
  *  requestPurchase()-এর *পরে* উদ্ধার হতো। অ্যাপ নতুন করে চালু হওয়ার পর
- *  প্রথম ক্রয়ে তাই পাঠকের **দু'বার** টাকা কাটত: পুরনোটা উদ্ধার হয়ে পাওনা
- *  হিসেবে জমা পড়ত, আর নতুন ক্রয়ও হয়ে যেত। ব্যর্থ হলে চুপ — তখন
- *  স্বাভাবিক কেনার পথেই যাওয়া হয়। */
+ *  প্রথম ক্রয়ে তাই পাঠকের **দু'বার** টাকা কাটত: পুরনোটা উদ্ধার হয়ে পাওনা
+ *  হিসেবে জমা পড়ত, আর নতুন ক্রয়ও হয়ে যেত। ব্যর্থ হলে চুপ — তখন
+ *  স্বাভাবিক কেনার পথেই যাওয়া হয়। */
 export async function ensureReady() {
   try { await connect(); } catch (e) {}
 }
@@ -67,15 +110,15 @@ export async function ensureReady() {
 const fns = getFunctions(app, 'asia-south1');
 const verify = httpsCallable(fns, 'verifyPlayPurchase');
 
-/** Play-র নিজের দাম ও মুদ্রা — অ্যাপ কখনো নিজের ₹ সংখ্যা দেখায় না,
- *  কারণ পাঠক অন্য দেশে অন্য মুদ্রায় দেখবেন। */
+/** Play-র নিজের দাম ও মুদ্রা — অ্যাপ কখনো নিজের ₹ সংখ্যা দেখায় না,
+ *  কারণ পাঠক অন্য দেশে অন্য মুদ্রায় দেখবেন। */
 export async function loadPrices() {
   const m = await connect();
-  const list = await m.getProducts({ skus: PRODUCT_IDS });
+  const list = await m.fetchProducts({ skus: PRODUCT_IDS, type: 'in-app' });
   const out = {};
   for (const p of list || []) {
-    const key = KEY_BY_ID[p.productId];
-    if (key) out[key] = { price: p.localizedPrice, currency: p.currency, title: p.title };
+    const key = KEY_BY_ID[p.id || p.productId];
+    if (key) out[key] = { price: p.displayPrice, currency: p.currency, title: p.title };
   }
   return out;
 }
@@ -90,29 +133,55 @@ export async function buy(key) {
   const item = PRODUCTS[key];
   if (!item) throw new Error('unknown-product:' + key);
   const m = await connect();
+  listen(m);
 
-  const purchase = await m.requestPurchase({ sku: item.id, skus: [item.id] });
-  const p = Array.isArray(purchase) ? purchase[0] : purchase;
+  /* ⚠️ ফল আসে শ্রোতার হাত ধরে, তাই এখানে একটা প্রতিশ্রুতি বসিয়ে অপেক্ষা
+     করা হয়। timeout না থাকলে পাঠক Play-র পর্দা বন্ধ করে দিলে বোতামটা
+     চিরকাল ঘুরত। ৫ মিনিট — ধীর নেটে UPI-র জন্যও যথেষ্ট। */
+  const p = await new Promise((resolve, reject) => {
+    let over = false;
+    const timer = setTimeout(() => {
+      if (over) return;
+      over = true; _waiter = null;
+      reject(new Error('purchase-timeout'));
+    }, 5 * 60 * 1000);
+    _waiter = {
+      productId: item.id,
+      done: (err, purchase) => {
+        if (over) return;
+        over = true; clearTimeout(timer);
+        if (err) reject(err); else resolve(purchase);
+      },
+    };
+    Promise.resolve()
+      .then(() => m.requestPurchase({ request: { google: { skus: [item.id] } }, type: 'in-app' }))
+      .catch((e) => {
+        /* dispatch-ই হলো না (অচেনা প্রোডাক্ট, লাইসেন্স নেই, Play বন্ধ) */
+        if (over) return;
+        over = true; clearTimeout(timer); _waiter = null;
+        reject(e);
+      });
+  });
+
   if (!p || !p.purchaseToken) throw new Error('no-token');
 
   const res = await verify({ productId: item.id, purchaseToken: p.purchaseToken });
   if (!res || !res.data || !res.data.ok) throw new Error('verify-failed');
 
   /* সার্ভার Google-এর কাছে consume করেছে; ফোনের দিকের লেনদেনটাও শেষ
-     করতে হয়, নইলে একই ক্রয় বারবার ফিরে আসত। */
+     করতে হয়, নইলে একই ক্রয় বারবার ফিরে আসত। */
   try { await m.finishTransaction({ purchase: p, isConsumable: true }); } catch (e) {}
 
   return res.data;
 }
 
-/** অ্যাপ বন্ধ হয়ে যাওয়া বা নেট কেটে যাওয়ায় আটকে থাকা ক্রয় শেষ করা।
+/** অ্যাপ বন্ধ হয়ে যাওয়া বা নেট কেটে যাওয়ায় আটকে থাকা ক্রয় শেষ করা।
  *
- *  ⚠️ যাচাই হয়ে গেলেই কাজ শেষ নয় — টাকাটা কাটা হয়েছিল কোনো একটা
+ *  ⚠️ যাচাই হয়ে গেলেই কাজ শেষ নয় — টাকাটা কাটা হয়েছিল কোনো একটা
  *  রিপোর্টের জন্য, আর সেই রিপোর্টটা পাঠক এখনো পাননি। consume করা
- *  বাধ্যতামূলক (নইলে Google ৩ দিনে টাকা ফেরত দেয়), অর্থাৎ Play-র দিকে
- *  ক্রয়টা আর পড়ে থাকে না। তাই এখানেই "ডেলিভারি বাকি" চিহ্ন বসিয়ে
- *  রাখা হয় — পাঠক পরের বার ওই বোতামে চাপলে নতুন করে টাকা লাগে না।
- *  এটা না করলে টাকা কাটা যেত আর জিনিসটা চিরতরে হারিয়ে যেত। */
+ *  বাধ্যতামূলক (নইলে Google ৩ দিনে টাকা ফেরত দেয়), অর্থাৎ Play-র দিকে
+ *  ক্রয়টা আর পড়ে থাকে না। তাই এখানেই "ডেলিভারি বাকি" চিহ্ন বসিয়ে
+ *  রাখা হয় — পাঠক পরের বার ওই বোতামে চাপলে নতুন করে টাকা লাগে না। */
 export async function flushPending() {
   const m = iap();
   if (!m) return [];
@@ -135,5 +204,11 @@ export async function flushPending() {
 
 export async function disconnect() {
   const m = iap();
-  if (m && _connected) { try { await m.endConnection(); } catch (e) {} _connected = false; }
+  if (m && _connected) {
+    try { if (_subUpd) _subUpd.remove(); } catch (e) {}
+    try { if (_subErr) _subErr.remove(); } catch (e) {}
+    _subUpd = _subErr = _waiter = null;
+    try { await m.endConnection(); } catch (e) {}
+    _connected = false;
+  }
 }

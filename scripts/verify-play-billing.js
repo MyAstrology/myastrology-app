@@ -366,5 +366,44 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
   }
 }
 
+/* ⑩ react-native-iap-এর API আর আমাদের কোড এক সংস্করণের কিনা ─────────────
+   ⛔ ২০২৬-০৯-১৫-এর আসল ত্রুটি এখানেই ছিল: বিল্ডে ১৬.x, কোড লেখা ছিল
+   ১২/১৩-এর API ধরে। কোনো পার্স-পরীক্ষা এটা ধরতে পারে না — সিনট্যাক্স
+   নিখুঁত, ভুলটা কেবল চালানোর সময়। তাই package.json-এর সংখ্যাটা দেখে
+   কোডের আকৃতি মেলানো হয়। */
+{
+  console.log('\n⑩ react-native-iap-এর API ও কোডের সংস্করণ মেলে');
+  const pkg = JSON.parse(fs.readFileSync(path.join(APP, 'package.json'), 'utf8'));
+  const raw = (pkg.dependencies || {})['react-native-iap'] || '';
+  const major = parseInt(String(raw).replace(/^[^0-9]*/, ''), 10);
+  if (!major) bad('react-native-iap নির্ভরতাই নেই');
+  else if (major >= 14) {
+    /* নতুন (Nitro/OpenIAP) API */
+    const need = [
+      [/fetchProducts\(/,                         'fetchProducts() — getProducts() আর নেই'],
+      [/request:\s*\{\s*google:\s*\{\s*skus/,      "requestPurchase({request:{google:{skus}}})"],
+      [/type:\s*'in-app'/,                         "requestPurchase-এ type:'in-app'"],
+      [/purchaseUpdatedListener\(/,               'purchaseUpdatedListener — ফল ফেরত-মানে আসে না'],
+      [/purchaseErrorListener\(/,                 'purchaseErrorListener'],
+    ];
+    let n = 0;
+    for (const [re, what] of need) { if (re.test(bill)) n++; else bad('billing.js-এ নেই — ' + what); }
+    if (n === need.length) ok(`v${major}-এর ${n}টি API-ই ঠিকভাবে ব্যবহার করা হয়েছে`);
+    if (/\.getProducts\(/.test(bill)) bad('billing.js এখনো getProducts() ডাকছে — v14+ এ ওটা নেই');
+    else ok('পুরনো getProducts() আর ডাকা হয় না');
+    /* ⚠️ ফেরত-মান থেকে টোকেন নিলে টাকা কাটা হলেও "ব্যর্থ" দেখাত */
+    if (/await m\.requestPurchase\([^)]*\);\s*\n\s*const p =/.test(bill))
+      bad('requestPurchase()-এর ফেরত-মান থেকে ক্রয় পড়া হচ্ছে — v14+ এ ওটা ফল দেয় না');
+    else ok('ক্রয়ের ফল শ্রোতার হাত ধরে নেওয়া হয়');
+    if ((pkg.dependencies || {})['react-native-nitro-modules'])
+      ok('react-native-nitro-modules স্পষ্ট করে ঘোষিত (v14+ এর ভিত্তি)');
+    else bad('react-native-nitro-modules package.json-এ নেই — native অংশটা বিল্ডে না-ও ঢুকতে পারে');
+  } else {
+    if (/getProducts\(/.test(bill) && /requestPurchase\(\s*\{\s*sku/.test(bill))
+      ok(`v${major}-এর পুরনো API — কোডের সঙ্গে মেলে`);
+    else bad(`v${major} বসানো, কিন্তু কোড নতুন API ধরে লেখা`);
+  }
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);
