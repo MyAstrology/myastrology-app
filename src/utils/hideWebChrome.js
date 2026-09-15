@@ -50,7 +50,11 @@ export const makeHideResultsJS = () => `(function(){
     var el=document.getElementById(ids[i]);
     if(el&&getComputedStyle(el).display!=='none'){el.style.setProperty('display','none','important');hid=true;break;}
   }
-  if(!hid) return;
+  /* ⚠️ ফর্মটা সবসময় দেখানো হয়, ফলাফল লুকানো গেছে কিনা তা নির্বিশেষে।
+     আগে hid মিথ্যে হলে এখানেই ফিরে যেত — তাই ছাপার পাতা থেকে ফিরে এসে
+     ফলাফল আগে থেকেই লুকানো অবস্থায় থাকলে দুটোই লুকানো রয়ে যেত আর
+     পর্দা সম্পূর্ণ ফাঁকা হয়ে যেত (সহকর্মী, ১৫/৯/২০২৬)। ফর্ম দেখানো
+     পুনরাবৃত্তিতে কোনো ক্ষতি করে না, তাই শর্তটা তুলে দেওয়াই নিরাপদ। */
   var fids=${JSON.stringify(FORM_CONTAINER_IDS)};
   for(var j=0;j<fids.length;j++){
     var f=document.getElementById(fids[j]);

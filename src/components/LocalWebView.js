@@ -181,7 +181,12 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
      থেকে জিনিসগুলো তুলে দিলে হিন্দি/ইংরেজি পাঠক কম পেতেন; তাই রাখা
      হয়েছে, কিন্তু নীরবে বাংলা দেখানো হয় না — একবার বলা হয়, তারপর
      লাইনটা নিজে থেকেই সরে যায়। */
-  const bnOnly = !!remoteUrl && lang !== 'bn';
+  /* ⚠️ ১৫/৯/২০২৬ — শর্তটা কেবল `remoteUrl আছে ও ভাষা বাংলা নয়` দেখত, তাই
+     রাশিফলের মতো যেসব পাতার সত্যিকারের en/hi সংস্করণ **আছে** তাদের ওপরেও
+     মিথ্যে করে "কেবল বাংলায়" লেখা ভেসে উঠত — ইংরেজি পাতার উপরে
+     ইংরেজিতে লেখা "This page is still available in Bengali only"।
+     ঠিকানায় আগে থেকেই /en/ বা /hi/ থাকলে লেখাটা আর দেখানো হয় না। */
+  const bnOnly = !!remoteUrl && lang !== 'bn' && !/\/(en|hi)\//.test(remoteUrl);
   const [showBnOnly, setShowBnOnly] = useState(false);
   useEffect(() => {
     if (!bnOnly) { setShowBnOnly(false); return; }
