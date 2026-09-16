@@ -405,5 +405,30 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
   }
 }
 
+/* ①১ প্রতিটি handleBuyOnWeb() ডাক ইনজেক্ট-ফাংশনসহ
+   ⚠️ দ্বিতীয় আর্গুমেন্ট না দিলে ফাংশনটা কোনো ত্রুটি দেয় না — সে
+   নীরবে ব্রাউজারে পাঠায়, আর Play Billing ওই পর্দায় কখনো চলে না।
+   পঞ্জিকার ₹২১ PDF-এ ঠিক তাই হয়েছিল (সহকর্মীর স্ক্রিনশট,
+   ২০২৬-০৯-১৬) — আর কোনো পরীক্ষা সেটা দেখত না।                */
+{
+  const fs2 = require('fs'), path2 = require('path');
+  const dirs = ['src/screens', 'src/components'];
+  let calls = 0, bare = 0;
+  for (const d of dirs) {
+    const full = path2.join(__dirname, '..', d);
+    if (!fs2.existsSync(full)) continue;
+    for (const f of fs2.readdirSync(full).filter(x => x.endsWith('.js'))) {
+      const src2 = fs2.readFileSync(path2.join(full, f), 'utf8');
+      const re2 = /handleBuyOnWeb\(([^)]*)\)/g; let m2;
+      while ((m2 = re2.exec(src2))) {
+        calls++;
+        if (m2[1].indexOf(',') < 0) { bare++; bad(d + '/' + f + ' — handleBuyOnWeb() এ ইনজেক্ট-ফাংশন নেই'); }
+      }
+    }
+  }
+  if (calls && !bare) ok(`handleBuyOnWeb()-এর ${calls}টি ডাকেই ইনজেক্ট-ফাংশন আছে`);
+  if (!calls) bad('handleBuyOnWeb()-এর কোনো ডাকই পাওয়া গেল না');
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);

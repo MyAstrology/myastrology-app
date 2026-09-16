@@ -609,7 +609,14 @@ export function PanchangScreen() {
     let msg;
     try { msg = JSON.parse(event.nativeEvent.data); } catch { return; }
     if (msg?.__rn === 'pjCity')    { savePanjikaCity(msg); return; }
-    if (msg?.__rn === 'buyOnWeb')  { handleBuyOnWeb(msg); return; }
+    /* ⚠️ দ্বিতীয় আর্গুমেন্টটা বাদ পড়লে handleBuyOnWeb প্রতিবার
+       ব্রাউজারে পাঠায় — Play Billing কখনো চলেই না। পঠানোর পথটা
+       জানা আছে কি না, সেটাই ওখানে শর্ত। (সহকর্মীর স্ক্রিনশট,
+       ২০২৬-০৯-১৬: পঞ্জিকার ₹২১ PDF-এ Play-র পর্দা ওঠেইনি।) */
+    if (msg?.__rn === 'buyOnWeb')  {
+      handleBuyOnWeb(msg, js => webViewRef.current?.injectJavaScript(js));
+      return;
+    }
     handleOldTabMessage(event);
   };
 
