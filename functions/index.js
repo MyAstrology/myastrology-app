@@ -155,8 +155,27 @@ exports.verifyPlayPurchase = onCall(
       });
       p = res.data;
     } catch (e) {
-      /* Google-ই বলছে টোকেনটা অচেনা — নকল বা অন্য অ্যাপের */
-      throw new HttpsError('permission-denied', 'ক্রয় যাচাই করা যায়নি।');
+      /* ⚠️ ১৬/৯/২০২৬ — আগে Google-এর সব ধরনের ত্রুটিকেই একই নামে
+         (permission-denied) ফেরত দেওয়া হতো। ফলে "অনুমতি নেই", "টোকেন
+         অচেনা" আর "প্যাকেজের নাম মেলে না" — তিনটে একরকম দেখাত, আর
+         পাঠকের পর্দায় কেবল [functions/permission-denied] আসত।
+         এখন (ক) আসল ত্রুটিটা লগে লেখা হয়, আর (খ) HTTP সংখ্যা দেখে
+         আলাদা কোড ফেরত যায় — অ্যাপের বার্তায় কোডটাই দেখানো হয়, তাই
+         একটা স্ক্রিনশট থেকেই কারণটা বোঝা যাবে। নতুন বিল্ড লাগে না। */
+      const status = (e && (e.status || e.code)) || 0;
+      const detail = (e && e.errors && e.errors[0] && e.errors[0].reason) ||
+                     (e && e.message) || 'unknown';
+      console.error('verifyPlayPurchase: Google API failed',
+                    { status, detail, productId, uid });
+      if (status === 404) {
+        /* Google টোকেনটাই চিনল না — নকল, অন্য অ্যাপের, বা প্যাকেজের নাম ভুল */
+        throw new HttpsError('not-found', 'ক্রয়টি Google-এর কাছে পাওয়া যায়নি। (' + detail + ')');
+      }
+      if (status === 401 || status === 403) {
+        /* সার্ভিস অ্যাকাউন্টকে Play Console-এ অনুমতি দেওয়া নেই, বা এখনো ছড়ায়নি */
+        throw new HttpsError('permission-denied', 'Play Console-এ অনুমতি নেই। (' + detail + ')');
+      }
+      throw new HttpsError('internal', 'Google-এর উত্তর বোঝা গেল না। (' + status + ' ' + detail + ')');
     }
 
     /* purchaseState: 0 = কেনা হয়েছে · 1 = বাতিল · 2 = অপেক্ষমাণ */
