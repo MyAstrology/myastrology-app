@@ -170,7 +170,7 @@ function inlineCityDb(html) {
   return html.replace('</head>', `<script>/*src/cities.js*/\n${content}\n</script>\n</head>`);
 }
 
-function bundle(htmlFile, outName) {
+function bundle(htmlFile, outName, post) {
   console.log(`\nBundling: ${htmlFile}`);
   let html = fs.readFileSync(path.join(WEBSITE_DIR, htmlFile), 'utf8');
   // একটাই <noscript> উপাদানের ভিতরে সীমাবদ্ধ — নইলে পাতার মাথার ফাঁকা
@@ -226,12 +226,75 @@ function bundle(htmlFile, outName) {
   });
   html = html.replace('<head>', '<head>\n' + APP_CSS + '\n');
   html = inlineCityDb(html);
+  if (post) html = post(html);
 
   // Output as JS module exporting string
   const jsContent = '// AUTO-GENERATED — do not edit manually\n// Run: node scripts/bundle-web-assets.js\nexport default ' + JSON.stringify(html) + ';\n';
   const outPath = path.join(OUTPUT_DIR, outName + '.js');
   fs.writeFileSync(outPath, jsContent, 'utf8');
   console.log(`  => ${outPath} (${Math.round(Buffer.byteLength(jsContent)/1024)} KB)`);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   kundali-print.html — অ্যাপের নিজস্ব নয়টি সংশোধন, ঘোষিত ও গণনা-সহ।
+
+   ⚠️ ২০২৬-০৯-১৫: এই বান্ডলটা "হাতে-প্যাচ করা, নতুন করে বানাবেন না"
+   শ্রেণিতে ছিল, তাই সেটা ওয়েবসাইটের ৬৪% আকারে এক সপ্তাহ পিছিয়ে
+   পড়ে ছিল — কবচ-কার্ডের অনুবাদ, PDF-এর ফাইল-নাম, কিছুই আসেনি।
+   প্যাচগুলো এখানে কোডে লেখা, তাই পাতাটা আবার নিরাপদে তৈরি করা যায়।
+   প্রতিটি প্রতিস্থাপনের গণনা মিলিয়ে দেখা হয় — ওয়েবসাইটের লেখা
+   সরে গেলে নীরবে বাদ না পড়ে সরাসরি থেমে যায়।                       */
+function kundaliPrintPatches(html) {
+  const rep = (name, from, to, expect) => {
+    const c = html.split(from).length - 1;
+    if (c !== expect) throw new Error('kundali-print patch "' + name + '": expected ' + expect + ', found ' + c);
+    html = html.split(from).join(to);
+  };
+
+  /* ১. বান্ডলারের <head>-সংযোজন (APP_CSS + Razorpay-সেতু) এই পাতায়
+        অপ্রাসঙ্গিক — ছাপার পাতা নিজেই তার chrome আড়াল করে আর এখানে
+        কোনো পেমেন্ট-বোতামই নেই। */
+  const hi = html.indexOf('<head>'), mc = html.indexOf('<meta charset="UTF-8">');
+  if (hi < 0 || mc < 0 || mc < hi) throw new Error('kundali-print: <head> anchors not found');
+  html = html.slice(0, hi) + '<head>\n' + html.slice(mc);
+
+  /* ২. অ্যাপে পাতাটা অফলাইন স্ট্রিং থেকে চলে, তাই রুট-নিরঙ্কুশ fetch
+        লাইভ সাইটে পাঠানো হয় — নইলে অভিধান কখনো আসে না। */
+  rep('fetch-shim', '<head>\n',
+    '<head>\n<script>/* app: root-absolute fetch -> live site */\n'
+    + "(function(){var f=window.fetch;if(!f)return;window.fetch=function(u,o){try{if(typeof u==='string'&&u.charAt(0)==='/')u='https://myastrology.in'+u;}catch(e){}return f.call(this,u,o);};})();</script>\n", 1);
+
+  /* ৩. js/i18n.js পাতার নাম URL থেকে নেয় — অ্যাপে পথ নেই, তাই নাম ধরে। */
+  rep('html-attr', '<html lang="bn-IN">', '<html lang="bn-IN" data-i18n-page="kundali-print">', 1);
+
+  /* ৪. ফন্ট-স্টাইলশিট preload আকারে ছিল বলে বান্ডলার ওটা ফেলে দেয়। */
+  rep('noto-font', '<title>\u099c\u09a8\u09cd\u09ae\u0995\u09cb\u09b7\u09cd\u09a0\u09c0 \u2014 MyAstrology</title>\n',
+    '<title>\u099c\u09a8\u09cd\u09ae\u0995\u09cb\u09b7\u09cd\u09a0\u09c0 \u2014 MyAstrology</title>\n'
+    + '<link rel="stylesheet" href="https://myastrology.in/css/noto-sans-font.css">\n', 1);
+
+  /* ৫. WebView সরাসরি ছাপায় — পর্দায় লুকানো থাকলে কিছুই দেখা যেত না। */
+  rep('printRoot', '@media screen{#printRoot{display:none}}', '#printRoot{display:block!important}', 1);
+
+  /* ৬-৭. আপেক্ষিক পথ অ্যাপে খোলে না। */
+  rep('loadMsg-href', 'href="kundali" style="color:#7a2e2e"', 'href="https://myastrology.in/kundali" style="color:#7a2e2e"', 1);
+  rep('ganesh-img', 'src="gallery/ganesh.png"', 'src="https://myastrology.in/gallery/ganesh.png"', 1);
+
+  /* ৮. GTM-এর খালি noscript মন্তব্য অ্যাপে অর্থহীন। */
+  rep('gtm-noscript', '<!-- Google Tag Manager (noscript) -->\n<!-- End Google Tag Manager (noscript) -->\n', '', 1);
+
+  /* ৯. REMOVE_SRC দুটো স্ক্রিপ্ট ফেলে দেয় — লাইভ সাইট থেকে ফিরিয়ে আনা।
+        js/i18n.js ছাড়া কবচ-কার্ড ও শিরোনাম অনূদিত হতে পারে না। */
+  const SD = (fs.readFileSync(path.join(WEBSITE_DIR, 'kundali-print.html'), 'utf8')
+    .match(/js\/social-data\.js\?v=(\d+)/) || [, '3'])[1];
+  const I18 = (fs.readFileSync(path.join(WEBSITE_DIR, 'kundali-print.html'), 'utf8')
+    .match(/js\/i18n\.js\?v=(\d+)/) || [, '29'])[1];
+  rep('social-data', '</script>\n\n<!-- \u09ad\u09be\u09b7\u09be \u09b8\u09cd\u09a4\u09b0',
+    '</script>\n<script src="https://myastrology.in/js/social-data.js?v=' + SD + '" defer></script>\n<!-- \u09ad\u09be\u09b7\u09be \u09b8\u09cd\u09a4\u09b0', 1);
+  rep('i18n-js', '-->\n\n</body>',
+    '-->\n<script src="https://myastrology.in/js/i18n.js?v=' + I18 + '" defer></script>\n</body>', 1);
+
+  return html;
 }
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -248,6 +311,8 @@ bundle('numerology-print.html', 'numerology-print');
    নামকরণে ডাউনলোডের বোতামটাই খুঁজে পাওয়া যেত না (২০২৬-০৯-১৬)। */
 bundle('varshaphala-print.html', 'varshaphala-print');
 bundle('namakaran-print.html', 'namakaran-print');
+/* kundali-print.html — প্যাচগুলো উপরে কোডে লেখা, তাই এটিও নিরাপদ। */
+bundle('kundali-print.html', 'kundali-print', kundaliPrintPatches);
 
 // bundle('kundali.html',             'kundali');
 // bundle('match-making.html',        'match-making');
