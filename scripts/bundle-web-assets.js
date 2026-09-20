@@ -191,6 +191,23 @@ function bundle(htmlFile, outName) {
   // ভাঙা ইমেজ দেখায় (যেমন ফুটারের লোগো) — লাইভ সাইটের absolute URL-এ বদলানো হলো।
   html = html.replace(/src="images\//g, 'src="https://myastrology.in/images/');
 
+  /* ⚠️ স্টাইলশিটও ইনলাইন করতে হয়। পাতায় `<link href="/css/print-a4.css?v=3">`
+     রয়ে যেত, আর অ্যাপে কোনো সার্ভার নেই — তাই A4 নকশার CSS-টা
+     কখনো লোডই হত না আর PDF এলোমেলো দেখাত (সহকর্মীর অভিযোগ,
+     ২০২৬-০৯-১৬)। ২০০ KB-এর বড় হলে ছোঁয়া হয় না — বান্ডল ফুলে যেত। */
+  html = html.replace(/<link[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*>/gi,
+    function (m, href) {
+      if (/^https?:|^\/\//.test(href)) return m;                 /* বাইরের হলে থাকুক */
+      try {
+        const rel = href.split('?')[0].replace(/^\//, '');
+        const f = path.join(WEBSITE_DIR, rel);
+        const st = fs.statSync(f);
+        if (st.size > 200 * 1024) return m;
+        console.log('    [inline-css] ' + rel + ' (' + Math.round(st.size / 1024) + ' KB)');
+        return '<style>/*' + rel + '*/\n' + fs.readFileSync(f, 'utf8') + '\n</style>';
+      } catch (e) { return m; }
+    });
+
   /* ⚠️ মূল-থেকে-লেখা ছবির পথ (src="/gallery/…", src="/images/…") অ্যাপে
      কিছুতেই খোলে না — অ্যাপের পাতা অফলাইনে চলে, কোনো সার্ভার নেই। তাই
      ছোট ছবিগুলো (≤ ২০০ KB) সরাসরি base64-এ বসিয়ে দেওয়া হয়। মেপে ধরা
@@ -224,6 +241,11 @@ bundle('panjika.html', 'panjika');
 /* numerology-print.html সম্পূর্ণ নতুন পাতা, কোনো হাতে-বসানো প্যাচ নেই —
    তাই এটি নিরাপদে প্রতিবার নতুন করে বানানো যায়। */
 bundle('numerology-print.html', 'numerology-print');
+/* বর্ষফল ও নামকরণের ছাপার পাতাও নতুন — কোনো হাতে-বসানো প্যাচ নেই।
+   ⚠️ এগুলো অ্যাপে ছিলই না — তাই বর্ষফলের PDF সাজানো হত না আর
+   নামকরণে ডাউনলোডের বোতামটাই খুঁজে পাওয়া যেত না (২০২৬-০৯-১৬)। */
+bundle('varshaphala-print.html', 'varshaphala-print');
+bundle('namakaran-print.html', 'namakaran-print');
 
 // bundle('kundali.html',             'kundali');
 // bundle('match-making.html',        'match-making');
