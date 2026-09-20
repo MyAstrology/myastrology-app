@@ -16,7 +16,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl, Linking, Modal, TextInput } from 'react-native';
 import { Text } from '../i18n/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { collection, getDocs, query, where, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, limit, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { AppHeader } from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
@@ -66,14 +66,28 @@ export function MyReportsScreen({ navigation }) {
     try {
       /* ⚠️ where('uid','==',…) বাধ্যতামূলক — firestore.rules অন্য কোনো
          কোয়েরি ফিরিয়ে দেবে (অন্যের অর্ডার পড়া আটকাতে)। */
+      /* ⚠️ where + orderBy একসঙ্গে দিলে Firestore একটা composite index
+         চায়। সেটা ডিপ্লয় না থাকলে কোয়েরিটাই ফেল করে, আর টাকা
+         দেওয়া ক্রেতা "তালিকা আনা গেল না" দেখেন — রিপোর্ট তৈরি
+         থাকলেও। index-হীন কোয়েরি + এখানেই সাজানোই তাই নিরাপদ। */
       const q = query(
         collection(db, 'orders'),
         where('uid', '==', user.uid),
-        orderBy('createdAt', 'desc'),
-        limit(50)
+        limit(100)
       );
       const snap = await getDocs(q);
-      setRows(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const ms = (v) => {
+        try {
+          if (!v) return 0;
+          if (typeof v.toMillis === 'function') return v.toMillis();
+          if (v.seconds) return v.seconds * 1000;
+          const t = new Date(v).getTime();
+          return isNaN(t) ? 0 : t;
+        } catch (e) { return 0; }
+      };
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      all.sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
+      setRows(all);
     } catch (e) {
       setErr(String((e && e.message) || e));
       setRows([]);
