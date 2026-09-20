@@ -92,6 +92,8 @@ svg.tab-icon{width:18px!important;height:18px!important;min-width:18px!important
       try{ if(!raw&&window._kundaliPrintData) raw=JSON.stringify(window._kundaliPrintData); }catch(e){}
       try{ if(!raw) raw=localStorage.getItem('numerology_print_data')||''; }catch(e){}
       try{ if(!raw&&window._nuPrintData) raw=JSON.stringify(window._nuPrintData); }catch(e){}
+      try{ if(!raw) raw=localStorage.getItem('varshaphala_print_data')||''; }catch(e){}
+      try{ if(!raw) raw=localStorage.getItem('namakaran_print_data')||''; }catch(e){}
       if(window.ReactNativeWebView){
         window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'open',url:url,raw:raw}));
       }

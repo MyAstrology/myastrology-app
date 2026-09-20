@@ -1,10 +1,14 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
 import html from '../web-html/varshaphala';
 import { colors } from '../theme/colors';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
+import PRINT_HTML from '../web-html/varshaphala-print';
+import { makeCaptureJS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
+import { useAlert, Text } from '../i18n/Text';
 
 const APP_CSS = `
 /* ── Hide website chrome ── */
@@ -234,15 +238,70 @@ function buildInjectedJS(css) {
 
 const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('varshaphala');
 
+
+/*  A4 ছাপার পাতা — /varshaphala-print.html-এর বান্ডল।
+ *  ⚠️ localStorage অ্যাপের WebView-এ সবসময় ভরসাযোগ্য নয়, তাই payload
+ *  সরাসরি HTML-এর ভিতরেই বসানো হয় (নিউমেরোলজির প্রমাণিত ধাঁচ)। */
+function buildPrintHtml(rawJson) {
+  const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
+  return PRINT_HTML
+    .replace('<head>', () => `<head><script>window.__vpRaw=${safe};<\/script>`)
+    .replace("try{ raw=localStorage.getItem('varshaphala_print_data'); }catch(e){}",
+             () => 'try{raw=window.__vpRaw||null;}catch(e){}');
+}
+
+const CAPTURE_JS = makeCaptureJS('vpPdfChunk', 8000);
+
 export function VarshaphalaScreen() {
+  const alertT = useAlert();
+  const [pdfHtml, setPdfHtml] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const chunksRef = useRef({ parts: [], total: 0 });
+  const busyRef = useRef(false);
+
+  const handlePrint = useCallback((rawJson) => {
+    if (busyRef.current) return;
+    if (!rawJson) { alertT('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে বিশ্লেষণ করুন।'); return; }
+    busyRef.current = true; setBusy(true);
+    setPdfHtml(buildPrintHtml(rawJson));
+  }, [alertT]);
+
+  const onPdfMessage = useCallback(async (e) => {
+    let m; try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
+    const full = collectPdfChunk(m, chunksRef.current, 'vpPdfChunk');
+    if (!full) return;
+    setPdfHtml(null);
+    try {
+      await deliverPdf(full, { alertT, fileName: 'MyAstrology_varshaphala.pdf', dialogTitle: 'বর্ষফল রিপোর্ট শেয়ার করুন' });
+    } catch (_) {
+      alertT('ত্রুটি', 'PDF তৈরি করা যায়নি।');
+    } finally { busyRef.current = false; setBusy(false); }
+  }, [alertT]);
+
   return (
     <View style={s.root}>
       <AppHeader />
-      {/* ⚠️ pagePrint — এই পাতা নিজেই window.print() ডাকে, আর WebView-এ
-          ওটা কিছুই করত না। ফলে প্রোমো কোড ঠিক দিলেও PDF আসত না। */}
       <LocalWebView name="varshaphala" webPath="varshaphala" html={html} style={s.wv}
         injectedJS={INJECTED_JS}
-        pagePrint={{ fileName: 'MyAstrology_varshaphala.pdf', dialogTitle: 'বর্ষফল রিপোর্ট শেয়ার করুন' }} />
+        pagePrint={{ fileName: 'MyAstrology_varshaphala.pdf', dialogTitle: 'বর্ষফল রিপোর্ট শেয়ার করুন' }}
+        onPrint={handlePrint} />
+      {busy ? (
+        <View style={s.ov} pointerEvents="auto">
+          <ActivityIndicator size="large" color={colors.gold || '#c9922a'} />
+          <Text style={s.ovTx}>PDF তৈরি হচ্ছে…</Text>
+        </View>
+      ) : null}
+      {pdfHtml ? (
+        <WebView
+          source={{ html: pdfHtml }}
+          style={s.hidden}
+          javaScriptEnabled
+          domStorageEnabled
+          originWhitelist={['*']}
+          injectedJavaScript={CAPTURE_JS}
+          onMessage={onPdfMessage}
+        />
+      ) : null}
     </View>
   );
 }
@@ -250,4 +309,8 @@ export function VarshaphalaScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   wv:   { flex: 1 },
+  hidden: { position: 'absolute', width: 1, height: 1, opacity: 0 },
+  ov: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,.45)',
+        alignItems: 'center', justifyContent: 'center' },
+  ovTx: { color: '#fff', marginTop: 12, fontWeight: '700' },
 });

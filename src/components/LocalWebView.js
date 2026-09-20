@@ -128,6 +128,14 @@ const makeResultsTrackerJS = (tr) => {
 })();true;`;
 };
 
+/* যে পাতাগুলো নিজেরা একটা আলাদা ছাপার পাতা খোলে — সেটা onPrint-এ যায়।
+   ⚠️ তালিকায় না থাকলে বার্তাটা নীরবে পড়ে যায় — পাঠক বোতাম চাপেন,
+   কিছুই হয় না, কোনো ত্রুটিও দেখায় না। */
+const PRINT_PAGES = new Set([
+  'match-making-print', 'kundali-print', 'numerology-print',
+  'varshaphala-print', 'namakaran-print',
+]);
+
 // LocalWebView renders a bundled HTML page from a local file:// URI.
 // It bridges cross-page navigation and print requests back to React Native:
 //   - window.location.href = 'page.html' → navigates to the RN screen
@@ -339,7 +347,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     if (!page) return;
 
     // PDF print request — delegate to parent screen
-    if (page === 'match-making-print' || page === 'kundali-print' || page === 'numerology-print') {
+    if (PRINT_PAGES.has(page)) {
       onPrint && onPrint(msg.raw || '');
       return;
     }
