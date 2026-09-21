@@ -1,16 +1,20 @@
 // R8 চালু করার আসল কাজটা এখানে — একটা বিশুদ্ধ স্ট্রিং-রূপান্তর, কোনো
 // নির্ভরতা ছাড়াই। কেন আলাদা ফাইলে: `withR8.js` `@expo/config-plugins`
 // require করে, আর এই স্যান্ডবক্সে `node_modules` নেই। আলাদা রাখায়
-// `npm run verify-r8` টেমপ্লেটের তিনটে চেনা আকৃতিই পরীক্ষা করতে পারে,
-// কোনো কিছু ইনস্টল না করেই।
+// `npm run verify-r8` আসল টেমপ্লেট-ফাইলের উপরেই রূপান্তরটা চালিয়ে দেখতে
+// পারে, কোনো কিছু ইনস্টল না করেই।
 
-// Expo/RN টেমপ্লেটে লাইনটা সংস্করণভেদে তিন রকম দেখা গেছে —
-//   SDK 50-ধাঁচ : minifyEnabled enableProguardInReleaseBuilds
-//   পুরনো       : minifyEnabled false
-//   SDK 53/54   : minifyEnabled (findProperty('android.enableMinifyInReleaseBuilds')?.toBoolean() ?: true)
-// প্রথম সংস্করণে কেবল প্রথম দুটো ধরা হয়েছিল, তাই SDK 54-এ প্লাগিনটা
-// নীরবে কিছুই করত না — আর Play Console "Obfuscation 1%" বলত।
-const MINIFY_LINE = /minifyEnabled\s+(?:false|true|enableProguardInReleaseBuilds|\((?:[^()]|\([^()]*\))*\))/g;
+// ⛔ আগে এখানে আকৃতির তালিকা ছিল — `false|true|enableProguardInReleaseBuilds|
+// (…)` — আর সেই তালিকাটা **আন্দাজে লেখা**, টেমপ্লেট দেখে নয়। SDK 54 আসলে
+// লেখে `minifyEnabled enableMinifyInReleaseBuilds` (উপরে def করা একটা চলক),
+// যা তালিকার কোনোটাই নয় — ফলে ০ মিল, আর prebuild থেমে গিয়ে বিল্ড ব্যর্থ।
+//
+// তাই এখন আর আকৃতি গোনা হয় না: লাইনটা যা-ই বলুক, গোটা লাইনটাই বদলে দেওয়া
+// হয়। মিল হতে হবে ঠিক একবার — শূন্য বা একাধিক হলে থেমে যায়।
+// ⚠️ নোঙরটা লাইনের শুরুতে, তাই `// minifyEnabled …` মন্তব্য ধরা পড়ে না,
+// আর পাশের `shrinkResources` লাইনটা ছোঁয়াই হয় না (ওটাই ২০২৬-০৮-০৯-এ
+// বিল্ড ভেঙেছিল)।
+const MINIFY_LINE = /^([ \t]*)minifyEnabled[ \t]+\S.*$/gm;
 
 function applyR8(src) {
   const hits = src.match(MINIFY_LINE);
@@ -24,10 +28,10 @@ function applyR8(src) {
     e.r8 = true;
     throw e;
   }
-  const out = src.replace(MINIFY_LINE, 'minifyEnabled true');
+  const out = src.replace(MINIFY_LINE, '$1minifyEnabled true');
   // নিজের কাজটা নিজেই মিলিয়ে দেখা — "নিয়ম লেখা আছে" আর "নিয়ম খাটল"
   // এক কথা নয়।
-  if (!/minifyEnabled true/.test(out)) {
+  if (!/^[ \t]*minifyEnabled[ \t]+true[ \t]*$/m.test(out)) {
     const e = new Error('[withR8] প্রতিস্থাপনের পরেও minifyEnabled true নেই।');
     e.r8 = true;
     throw e;
