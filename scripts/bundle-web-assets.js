@@ -245,6 +245,21 @@ function bundle(htmlFile, outName, post) {
    প্যাচগুলো এখানে কোডে লেখা, তাই পাতাটা আবার নিরাপদে তৈরি করা যায়।
    প্রতিটি প্রতিস্থাপনের গণনা মিলিয়ে দেখা হয় — ওয়েবসাইটের লেখা
    সরে গেলে নীরবে বাদ না পড়ে সরাসরি থেমে যায়।                       */
+function numerologyPatches(html) {
+  /* হিরোর ছবিটা ফাইলের ভিতরেই বসানো হয় — অ্যাপে পাতাটা একটা
+     স্ট্রিং থেকে চলে, তাই `gallery/...` আপেক্ষিক পথ কোথাও পৌঁছায় না আর
+     হিরো ফাঁকা দেখায়। এটাই বান্ডলের একমাত্র হাতে-বসানো প্যাচ ছিল
+     (মেপে দেখা, ২০২৬-০৯-২১) — হাতে নয়, এখন কোডে লেখা, তাই পরের বার
+     নতুন করে বানালেও হারাবে না। */
+  const rel = 'gallery/numerology-hero.webp';
+  const from = 'url("' + rel + '")';
+  const c = html.split(from).length - 1;
+  if (c !== 1) throw new Error('numerology patch "hero": expected 1, found ' + c);
+  const buf = fs.readFileSync(path.join(WEBSITE_DIR, rel));
+  console.log('    [inline-img] ' + rel + ' (' + Math.round(buf.length / 1024) + ' KB)');
+  return html.split(from).join('url("data:image/webp;base64,' + buf.toString('base64') + '")');
+}
+
 function kundaliPrintPatches(html) {
   const rep = (name, from, to, expect) => {
     const c = html.split(from).length - 1;
@@ -317,7 +332,8 @@ bundle('kundali-print.html', 'kundali-print', kundaliPrintPatches);
 // bundle('kundali.html',             'kundali');
 // bundle('match-making.html',        'match-making');
 // bundle('namakaran.html',           'namakaran');
-// bundle('numerology.html',          'numerology');
+/* হাতে-বসানো একমাত্র প্যাচটা (হিরো-ছবি) এখন কোডে, তাই এটি নিরাপদ। */
+bundle('numerology.html',          'numerology', numerologyPatches);
 // bundle('varshaphala.html',         'varshaphala');
 // bundle('prashna.html',             'prashna');
 // bundle('match-making-print.html',  'match-making-print');
