@@ -327,7 +327,12 @@ bundle('numerology-print.html', 'numerology-print');
 bundle('varshaphala-print.html', 'varshaphala-print');
 bundle('namakaran-print.html', 'namakaran-print');
 /* kundali-print.html — প্যাচগুলো উপরে কোডে লেখা, তাই এটিও নিরাপদ। */
-bundle('kundali-print.html', 'kundali-print', kundaliPrintPatches);
+/* ⛔ এই লাইনটা বন্ধ (২০২৬-০৯-২১)। kundali-print.js-এর আসল জেনারেটর
+   `scripts/build-kundali-print.js` — সে আটটা প্যাচ বসায় (GTM বাদ দেওয়া সহ)।
+   এখানের কপিটা ওগুলোর কয়েকটা করত না, তাই `node scripts/bundle-web-assets.js`
+   চালালেই বান্ডলটা নীরবে পিছিয়ে যেত — `verify-print-bundle` ধরেছে
+   ("GTM বাদ — রয়ে গেছে")। একটা ফাইলের দুটো জেনারেটর রাখা যায় না।
+// bundle('kundali-print.html', 'kundali-print', kundaliPrintPatches); */
 
 // bundle('kundali.html',             'kundali');
 // bundle('match-making.html',        'match-making');
