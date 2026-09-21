@@ -295,6 +295,37 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
     else missing.forEach(m => bad(`ওয়েবসাইটে /${m} নেই — ওই ভাষায় ৪০৪ হবে`));
   }
 
+  /* একই প্রশ্ন REMOTE_LANG_PATHS-এর জন্যেও — ওই লাইভ পাতাগুলোর
+     en/hi সংস্করণ সাইটে না থাকলে পাঠক ৪০৪ পাবেন। */
+  const lwv = fs.readFileSync(path.join(APP, 'src/components/LocalWebView.js'), 'utf8');
+  const rlp = /REMOTE_LANG_PATHS\s*=\s*\[([^\]]*)\]/.exec(lwv);
+  if (!rlp) bad('LocalWebView-এ REMOTE_LANG_PATHS নেই');
+  else {
+    const list = rlp[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+    if (!fs.existsSync(SERVICES)) ok(`${list.length}টি REMOTE_LANG_PATHS — রিপো নেই, ফাইল-যাচাই বাদ`);
+    else {
+      const miss = [];
+      for (const p0 of list) for (const l of ['en', 'hi'])
+        if (!fs.existsSync(path.join(SERVICES, l, p0 + '.html'))) miss.push(`${l}/${p0}`);
+      if (!miss.length) ok(`${list.length}টি লাইভ পাতার en/hi সংস্করণ ওয়েবসাইটে আছে`);
+      else miss.forEach(m => bad(`REMOTE_LANG_PATHS বলছে /${m}, কিন্তু ফাইলটা নেই`));
+    }
+    if (fs.existsSync(SERVICES)) {
+      const late = [];
+      for (const f of fs.readdirSync(path.join(APP, 'src/screens'))) {
+        const src = fs.readFileSync(path.join(APP, 'src/screens', f), 'utf8');
+        for (const m of src.matchAll(/remoteUrl="https:\/\/myastrology\.in\/([a-z0-9-]+?)(?:\.html)?"/g)) {
+          const b = m[1];
+          if (list.includes(b)) continue;
+          if (fs.existsSync(path.join(SERVICES, 'en', b + '.html')) &&
+              fs.existsSync(path.join(SERVICES, 'hi', b + '.html'))) late.push(b);
+        }
+      }
+      if (!late.length) ok('en/hi আছে এমন লাইভ পাতা তালিকার বাইরে নেই');
+      else late.forEach(b => bad(`/${b}-এর en/hi আছে, অথচ REMOTE_LANG_PATHS-এ নেই`));
+    }
+  }
+
   /* কুণ্ডলী স্ক্রিন নিজের WebView চালায়, তাই আলাদা করে দেখা */
   const ks = fs.readFileSync(path.join(APP, 'src/screens/KundaliScreen.js'), 'utf8');
   if (/myastrology\.in\/' \+ lang \+ '\/kundali/.test(ks)) ok('কুণ্ডলী স্ক্রিনেও ভাষা-রুটিং বসানো');

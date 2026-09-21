@@ -168,7 +168,22 @@ const PRINT_PAGES = new Set([
  */
 const SITE = 'https://myastrology.in/';
 
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl, webPath, hideResultsOnBack = true, pagePrint }) {
+/* যে লাইভ পাতাগুলোর সত্যিকারের /en/ ও /hi/ সংস্করণ সাইটে আছে।
+   ⚠️ এই তালিকাটা না থাকায় হস্তরেখা · রত্ন · জ্যোতিষ-শাস্ত্র তিনটেই
+   ঠিকানা হাতে লেখা ছিল (`…/palmistry.html`), তাই ভাষা যা-ই হোক বাংলা
+   পাতাই খুলত আর নিচে মিথ্যে করে "কেবল বাংলায়" লেখা ভেসে উঠত।
+   নতুন পথ যোগ করার আগে সাইটে en/ ও hi/ ফাইল দুটো আছে কিনা দেখে নিন —
+   `verify-app-i18n` সেটা মিলিয়ে দেখে। */
+export const REMOTE_LANG_PATHS = ['palmistry', 'gemstone', 'astrology'];
+
+function langRemote(url, lang) {
+  if (!url || lang === 'bn') return url;
+  const m = /^https:\/\/myastrology\.in\/([a-z0-9-]+?)(?:\.html)?$/.exec(url);
+  if (!m || !REMOTE_LANG_PATHS.includes(m[1])) return url;
+  return SITE + lang + '/' + m[1];
+}
+
+export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl: remoteUrlRaw, webPath, hideResultsOnBack = true, pagePrint }) {
   /* pagePrint = {fileName, dialogTitle} — যে পাতাগুলো নিজেরাই ছাপে
      (বর্ষফল, সংখ্যা-জ্যোতিষ)। WebView-এ window.print() কিছুই করে না,
      তাই ওটা ধরে expo-print দিয়ে আসল PDF বানানো হয়। */
@@ -176,6 +191,9 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const pdfStore = useRef({ parts: [], total: 0 });
   const [makingPdf, setMakingPdf] = useState(false);
   const { lang, t } = useLanguage();
+  /* পাতার en/hi সংস্করণ থাকলে ঠিকানাটাই ভাষা অনুযায়ী বদলে যায় —
+     নিচের সব যুক্তি ("কেবল বাংলায়" নোটিশ সহ) তখন নিজে থেকেই ঠিক হয়। */
+  const remoteUrl = langRemote(remoteUrlRaw, lang);
   /* ভাষা **রেন্ডারের সময়** পড়া হয়, মডিউল লোডে নয় — নইলে চালুর সময়ের
      ভাষা জমে যেত আর সেটিংসে বদলালেও পাতা বাংলাই থাকত। */
   const langUrl = (!remoteUrl && webPath && (lang === 'en' || lang === 'hi'))
