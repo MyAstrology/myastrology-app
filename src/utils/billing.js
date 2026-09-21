@@ -69,8 +69,17 @@ function listen(m) {
       const w = _waiter;
       if (!w) return;
       _waiter = null;
-      const err = new Error(String((e && (e.code || e.message)) || 'purchase-error'));
-      err.code = (e && e.code) || '';
+      /* ⚠️ আগে কেবল e.code রাখা হতো, তাই পাঠক ও আমরা দু'জনেই কেবল
+         "[developer-error]" দেখতাম — Play আসলে **কেন** না বলল সেটা
+         debugMessage-এ থাকে, আর responseCode-এ Play-র নিজের সংখ্যা।
+         দুটো হারিয়ে ফেলা মানে প্রতিটি ব্যর্থ ক্রয়ের তদন্ত শূন্য থেকে শুরু। */
+      const code = String((e && e.code) || '');
+      const dbg  = String((e && (e.debugMessage || e.message)) || '');
+      const rc   = (e && e.responseCode != null) ? ('#' + e.responseCode) : '';
+      const err = new Error([code, rc, dbg].filter(Boolean).join(' · ') || 'purchase-error');
+      err.code = code;
+      err.debugMessage = dbg;
+      err.responseCode = (e && e.responseCode != null) ? e.responseCode : null;
       w.done(err, null);
     });
   } catch (e) { /* শ্রোতা বসাতে না পারলে নিচের timeout-ই শেষ ভরসা */ }
@@ -134,6 +143,30 @@ export async function buy(key) {
   if (!item) throw new Error('unknown-product:' + key);
   const m = await connect();
   listen(m);
+
+  /* ⛔ Play-র launchBillingFlow() একটা ProductDetails ছাড়া চলে না,
+     আর সেটা তৈরি হয় কেবল fetchProducts()-এ। লাইব্রেরির নিজের
+     উদাহরণেও ক্রমটা connect → fetchProducts → requestPurchase।
+     আগে এই ধাপটা বাদ ছিল — আর type:'in-app' পাঠানোর কারণে
+     লাইব্রেরির নিজের উদ্ধার-পথটিও চলত না (HybridRnIap.kt-এ fetch
+     হয় কেবল type না পাঠালে)।
+
+     নীরবে এড়ানো হয় না — Play যে জিনিসটা ক্রয় করার আগে বর্ণনাই
+     দিতে পারল না, সেটা বিক্রিও করতে পারত না। এখানে থামা নিরাপদ,
+     কারণ এখনও কোনো টাকা লেনদেন শুরু হয়নি। */
+  let found;
+  try {
+    found = await m.fetchProducts({ skus: [item.id], type: 'in-app' });
+  } catch (e) {
+    const err = new Error('product-fetch-failed · ' + item.id + ' · ' + String((e && e.message) || e));
+    err.code = 'product-fetch-failed';
+    throw err;
+  }
+  if (!found || !found.length) {
+    const err = new Error('product-unavailable · ' + item.id);
+    err.code = 'product-unavailable';
+    throw err;
+  }
 
   /* ⚠️ ফল আসে শ্রোতার হাত ধরে, তাই এখানে একটা প্রতিশ্রুতি বসিয়ে অপেক্ষা
      করা হয়। timeout না থাকলে পাঠক Play-র পর্দা বন্ধ করে দিলে বোতামটা

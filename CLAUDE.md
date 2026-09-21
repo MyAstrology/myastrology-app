@@ -200,6 +200,10 @@ TypeScript-এর পার্সার (`/opt/node22/lib/node_modules/typescrip
   {skus}},type:'in-app'})`, আর **ফল আসে `purchaseUpdatedListener`-এ,
   ফেরত-মানে নয়**। `verify-play-billing`-এর ⑩ অংশ package.json-এর সংখ্যা
   পড়ে কোডের আকৃতি মেলায়।
+- ⛔ **`requestPurchase()`-এর আগে `fetchProducts()` ডাকতেই হয়** — Play-র
+  `launchBillingFlow()` ProductDetails ছাড়া চলে না, আর `type:'in-app'` পাঠালে
+  লাইব্রেরির নিজের উদ্ধার-পথটিও চলে না (`HybridRnIap.kt`)। বাদ পড়লে Play
+  `[developer-error]` দেয় — বিল্ড সফল, পার্স সফল, কেবল কেনা হয় না।
 - ⛔ **ক্রম: `ensureReady()` → পাওনা মেটানো → তবেই নতুন ক্রয়।** নইলে
   অ্যাপ নতুন চালু হওয়ার পর প্রথম কেনায় **দু'বার টাকা কাটত**।
 - ⛔ **`ask()` পড়ার সঙ্গে সঙ্গে `__myaProduct` মুছে দেয়** — নইলে ₹৫০১-এর

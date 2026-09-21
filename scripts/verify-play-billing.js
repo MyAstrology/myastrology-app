@@ -395,6 +395,26 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
     if (/await m\.requestPurchase\([^)]*\);\s*\n\s*const p =/.test(bill))
       bad('requestPurchase()-এর ফেরত-মান থেকে ক্রয় পড়া হচ্ছে — v14+ এ ওটা ফল দেয় না');
     else ok('ক্রয়ের ফল শ্রোতার হাত ধরে নেওয়া হয়');
+    /* ⛔ launchBillingFlow() একটা ProductDetails ছাড়া চলে না, আর সেটা
+       আসে কেবল fetchProducts() থেকে। ক্রম উল্টালে বা বাদ পড়লে Play
+       [developer-error] ফেরত দেয় — আর সেটা পার্স বা বিল্ডে ধরা পড়ে না। */
+    {
+      const b0 = bill.indexOf('export async function buy(');
+      const b1 = bill.indexOf('\nexport ', b0 + 1);
+      const raw = b0 < 0 ? '' : bill.slice(b0, b1 < 0 ? bill.length : b1);
+      /* ⚠️ মন্তব্য বাদ দিয়ে খোঁজা হয় — নয়তো ঠিক এই পরীক্ষাটাই
+         নিজের ব্যাখ্যা-মন্তব্যে fetchProducts শব্দটা দেখে সবুজ হয়ে যেত —
+         কোডটা মুছে দিলেও (মেপে দেখা, ২০২৬-০৯-২১)। */
+      const body = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      const iF = body.indexOf('fetchProducts(');
+      const iR = body.indexOf('requestPurchase(');
+      if (!body) bad('billing.js-এ buy() খুঁজে পাওয়া গেল না');
+      else if (iF < 0) bad('buy()-এ fetchProducts() নেই — ProductDetails ছাড়া Play কিছু বেচতে দেয় না');
+      else if (iR < 0) bad('buy()-এ requestPurchase() নেই');
+      else if (iF > iR) bad('buy()-এ fetchProducts() requestPurchase()-এর **পরে** ডাকা হচ্ছে');
+      else ok('buy() আগে fetchProducts(), তবে requestPurchase()');
+    }
+
     if ((pkg.dependencies || {})['react-native-nitro-modules'])
       ok('react-native-nitro-modules স্পষ্ট করে ঘোষিত (v14+ এর ভিত্তি)');
     else bad('react-native-nitro-modules package.json-এ নেই — native অংশটা বিল্ডে না-ও ঢুকতে পারে');

@@ -221,6 +221,21 @@ console.log('③ terms.js ওয়েবসাইটের অভিধান �
     }
     if (!drift) ok(`terms.js-এর ${Object.keys(TERMS).length}টি নামই ওয়েবসাইটের অভিধানের সঙ্গে হুবহু`);
     else bad(`${drift}টি নাম সাইটের অভিধান থেকে সরে গেছে — build-app-terms.js আবার চালান`);
+
+    /* ⛔ একই নাম দুই ইউনিকোড-রূপে (য় বনাম য + নুক্তা) দুবার বসলে
+       পর্দায় কিছু ভাঙে না, কিন্তু দ্বিতীয় কপিটা একদিন সরে যাবেই —
+       তিনটে এমন জোড়া মেপে পাওয়া গিয়েছিল (২০২৬-০৯-২১)। */
+    {
+      const byNfc = Object.create(null);
+      const dups = [];
+      for (const k in TERMS) {
+        const n = nfc(k);
+        if (byNfc[n] !== undefined && byNfc[n] !== k) dups.push([byNfc[n], k]);
+        else byNfc[n] = k;
+      }
+      if (!dups.length) ok('terms.js-এ একই নাম দুই ইউনিকোড-রূপে দুবার নেই');
+      else dups.slice(0, 4).forEach(function (d) { bad('terms.js-এ একই নাম দুবার — ' + JSON.stringify(d[0]) + ' ও ' + JSON.stringify(d[1])); });
+    }
   }
 }
 
