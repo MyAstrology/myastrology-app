@@ -191,7 +191,6 @@ function bundle(htmlFile, outName, post) {
   // "images/..." রিলেটিভ পাথ ওয়েবসাইটে ঠিক কাজ করে (একই origin), কিন্তু অ্যাপে
   // এই HTML একটা লোকাল file:// (কোনো images/ ফোল্ডার ছাড়া) থেকে লোড হয়, তাই
   // ভাঙা ইমেজ দেখায় (যেমন ফুটারের লোগো) — লাইভ সাইটের absolute URL-এ বদলানো হলো।
-  html = html.replace(/src="images\//g, 'src="https://myastrology.in/images/');
 
   /* ⚠️ স্টাইলশিটও ইনলাইন করতে হয়। পাতায় `<link href="/css/print-a4.css?v=3">`
      রয়ে যেত, আর অ্যাপে কোনো সার্ভার নেই — তাই A4 নকশার CSS-টা
@@ -214,15 +213,23 @@ function bundle(htmlFile, outName, post) {
      কিছুতেই খোলে না — অ্যাপের পাতা অফলাইনে চলে, কোনো সার্ভার নেই। তাই
      ছোট ছবিগুলো (≤ ২০০ KB) সরাসরি base64-এ বসিয়ে দেওয়া হয়। মেপে ধরা
      পড়েছে: মলাটের লোগো ও গণেশ দুটোই naturalWidth ০ দেখাচ্ছিল। */
-  html = html.replace(/src="(\/(?:gallery|images)\/[^"]+)"/g, function (m, p1) {
+  html = html.replace(/src=(["'])(\/?(?:gallery|images)\/[^"']+)\1/g, function (m, q, p1) {
     try {
       const f = path.join(WEBSITE_DIR, p1.replace(/^\//, ''));
       const st = fs.statSync(f);
       if (st.size > 200 * 1024) return m;
       const ext = path.extname(f).slice(1).toLowerCase();
       const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : 'image/' + ext;
-      return 'src="data:' + mime + ';base64,' + fs.readFileSync(f).toString('base64') + '"';
+      return 'src=' + q + 'data:' + mime + ';base64,' + fs.readFileSync(f).toString('base64') + q;
     } catch (e) { return m; }
+  });
+
+  /* ⚠️ যেগুলো base64 হলো না (২০০ KB-এর বড়, বা অন্য ফোল্ডারের) সেগুলোর
+     রিলেটিভ পথ অ্যাপে ভাঙা ছবি দেখাত — অন্তত লাইভ সাইট থেকে নামুক।
+     ⛔ ক্রমটা গুরুত্বপূর্ণ: base64 **আগে**, নইলে `src="images/…"` আগেই
+     remote URL হয়ে যেত আর কোনো ছবিই আর এম্বেড হতো না। */
+  html = html.replace(/src="(?:images|gallery)\//g, function (m) {
+    return 'src="https://myastrology.in/' + m.slice(5);
   });
   html = html.replace('<head>', '<head>\n' + APP_CSS + '\n');
   html = inlineCityDb(html);
@@ -341,6 +348,11 @@ bundle('namakaran-print.html', 'namakaran-print');
 bundle('numerology.html',          'numerology', numerologyPatches);
 // bundle('varshaphala.html',         'varshaphala');
 // bundle('prashna.html',             'prashna');
-// bundle('match-making-print.html',  'match-making-print');
+/* ⚠️ ২০২৬-০৯-২১ — বান্ডলটা ১৩ সেপ্টেম্বরের ছিল, আর সাইটে তারপর
+   localStorage ব্যর্থ হলে window._matchPrintData থেকে পড়ার ফলব্যাকটা
+   বসেছিল। সেটা না থাকায় অ্যাপে মলাট+সূচিপত্র+বিজ্ঞাপনের **চার পাতার
+   ফাঁকা PDF** তৈরি হতো (মালিকের অভিযোগ খ৭)। হাতে-প্যাচ বলতে ছিল কেবল
+   দুটো ছবি base64 — সেটা এখন bundle() নিজেই করে, তাই চালু করা হলো। */
+bundle('match-making-print.html',  'match-making-print');
 
 console.log('\nDone.');

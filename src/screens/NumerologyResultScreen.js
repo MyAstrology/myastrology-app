@@ -9,7 +9,7 @@ import PRINT_HTML from '../web-html/numerology-print';
 import { colors } from '../theme/colors';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 import { WEB_SHARE_JS } from '../utils/webShareBridge';
-import { makeCaptureJS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
+import { makeCaptureJS, collectPdfChunk, deliverPdf, withPrintData } from '../utils/webPrint';
 import { useAlert, Text } from '../i18n/Text';
 
 // numerology.html's "বিশ্লেষণ করুন" button navigates to result.html?q=... — this
@@ -69,11 +69,7 @@ const INJECTED_JS = buildInjectedJS(APP_CSS) + WEB_SHARE_JS + buildBuyOnWebJS('r
  *  ⚠️ localStorage অ্যাপের WebView-এ সবসময় ভরসাযোগ্য নয়, তাই payload
  *  সরাসরি HTML-এর ভিতরেই বসিয়ে দেওয়া হয় (যোটক-মিলনের প্রমাণিত ধাঁচ)। */
 function buildPrintHtml(rawJson) {
-  const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
-  return PRINT_HTML
-    .replace('<head>', () => `<head><script>window.__nuRaw=${safe};<\/script>`)
-    .replace("try{raw=localStorage.getItem('numerology_print_data');}catch(e){}",
-             () => 'try{raw=window.__nuRaw||null;}catch(e){}');
+  return withPrintData(PRINT_HTML, rawJson);
 }
 
 const CAPTURE_JS = makeCaptureJS('nuPdfChunk', 8000);

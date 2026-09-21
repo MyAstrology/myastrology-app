@@ -7,7 +7,7 @@ import html from '../web-html/namakaran';
 import { colors } from '../theme/colors';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 import PRINT_HTML from '../web-html/namakaran-print';
-import { makeCaptureJS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
+import { makeCaptureJS, collectPdfChunk, deliverPdf, withPrintData } from '../utils/webPrint';
 import { useAlert, Text } from '../i18n/Text';
 
 const APP_CSS = `
@@ -333,11 +333,7 @@ const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('namakaran');
  *  ⚠️ localStorage অ্যাপের WebView-এ সবসময় ভরসাযোগ্য নয়, তাই payload
  *  সরাসরি HTML-এর ভিতরেই বসানো হয় (নিউমেরোলজির প্রমাণিত ধাঁচ)। */
 function buildPrintHtml(rawJson) {
-  const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
-  return PRINT_HTML
-    .replace('<head>', () => `<head><script>window.__nkRaw=${safe};<\/script>`)
-    .replace("try{ raw=localStorage.getItem('namakaran_print_data'); }catch(e){}",
-             () => 'try{raw=window.__nkRaw||null;}catch(e){}');
+  return withPrintData(PRINT_HTML, rawJson);
 }
 
 const CAPTURE_JS = makeCaptureJS('nkPdfChunk', 8000);

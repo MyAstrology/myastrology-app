@@ -18,6 +18,26 @@ import * as Sharing from 'expo-sharing';
 
 export const PDF_CHUNK = 'pagePdfChunk';
 
+/*  ছাপার তথ্য (আর দরকার হলে ভাষা) ছাপার পাতায় বসানো — এক জায়গায়।
+ *
+ *  ⛔ আগে পাঁচটা পর্দার প্রত্যেকটা **নিজের মতো করে** ছাপার পাতার
+ *  localStorage-লাইনটা হুবহু খুঁজে বদলাত (`__kData`, `__mmRaw`, `__nkRaw`,
+ *  `__nuRaw`, `__vpRaw` — পাঁচটা আলাদা নাম, পাঁচটা আলাদা needle)। সাইটে
+ *  ওই লাইনের একটা অক্ষর বদলালেই `replace()` **নীরবে** কিছুই করত না —
+ *  কোনো ত্রুটি নয়, লগে কিছু নয় — আর ছাপার পাতা ফাঁকা তথ্য নিয়ে কেবল
+ *  মলাট, সূচিপত্র ও বিজ্ঞাপনের PDF বানাত (মালিকের অভিযোগ খ৭, ২০২৬-০৯-২১)।
+ *
+ *  এখন services-এর পাঁচটা ছাপার পাতাই `window.__myaPrintData` দেখে
+ *  (localStorage ফাঁকা হলে), তাই কোনো স্ট্রিং মেলানোর দরকারই নেই।
+ *  ⚠️ lang কেবল কুণ্ডলীর ছাপার পাতা পড়ে (js/i18n.js ইনলাইন আছে) — বাকিগুলোয়
+ *  i18n.js বান্ডল থেকে বাদ পড়ে, তাই ওখানে পাঠানো হয় না। */
+export function withPrintData(html, rawJson, lang) {
+  const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
+  const L = (lang === 'en' || lang === 'hi') ? lang : (lang === 'bn' ? 'bn' : null);
+  const langJs = L ? `try{document.documentElement.setAttribute('data-mya-lang',${JSON.stringify(L)});}catch(e){}` : '';
+  return html.replace('<head>', () => `<head><script>window.__myaPrintData=${safe};${langJs}<\/script>`);
+}
+
 /* পাতার নিজের `window.print()`-কে বদলে দেয়: DOM-এর একটা কপি নিয়ে
    <script> ফেলে দিয়ে স্ট্যাটিক HTML পাঠায়। স্ক্রিপ্ট রাখলে expo-print
    ওগুলো আবার চালাতে গিয়ে অর্ধেক-আঁকা পাতা ছাপত। */

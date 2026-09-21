@@ -16,18 +16,10 @@ import PRINT_HTML from '../web-html/match-making-print';
 import { colors } from '../theme/colors';
 import { haptics } from '../utils/haptics';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
-import { makeCaptureJS, collectPdfChunk } from '../utils/webPrint';
+import { makeCaptureJS, collectPdfChunk, withPrintData } from '../utils/webPrint';
 
-// Injects the print data directly into the HTML so it doesn't need localStorage.
 function buildPrintHtml(rawJson) {
-  let out = PRINT_HTML;
-  const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
-  out = out.replace('<head>', () => `<head><script>window.__mmRaw=${safe};<\/script>`);
-  out = out.replace(
-    "try{raw=localStorage.getItem('match_print_data');}catch(e){}",
-    () => `try{raw=window.__mmRaw||null;}catch(e){}`
-  );
-  return out;
+  return withPrintData(PRINT_HTML, rawJson);
 }
 
 const MM_CSS = `
