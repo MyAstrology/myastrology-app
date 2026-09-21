@@ -1,4 +1,5 @@
 import PANJIKA_DATA from './panjika-data';
+import FEST_DATES from './festival-dates';
 
 // Festival database for Bengali/Hindu calendar
 // Types: 'tithi' | 'bn_date' | 'gregorian' | 'জন্মবার্ষিকী'
@@ -162,7 +163,7 @@ export function getFestivalsForMonth(year, month, calendarDays) {
     const key = `${dateStr}|${name}`;
     if (!seen.has(key)) {
       seen.add(key);
-      results.push({ dateStr, name, type, imageKey: NAME_IMAGE[name] || null });
+      results.push({ dateStr, name, type, imageKey: NAME_IMAGE[name] || FEST_DATES.images[name] || null });
     }
   }
 
@@ -190,10 +191,18 @@ export function getFestivalsForMonth(year, month, calendarDays) {
   for (const day of calendarDays) {
     const bnMonthIdx = getBnMonthIdx(day.dateStr);
 
+    /* ⛔ মাস-নির্ভর নিয়মগুলো (bnMonthIdx !== -1) আর এখান থেকে চলে না।
+       getBnMonthIdx() দেয় **সৌর** বাংলা মাস, অথচ দুর্গাপূজা-রাসযাত্রা-শিবরাত্রি
+       সবই **চান্দ্র** মাসের। ফলে ২১ সেপ্টেম্বর ২০২৬-এ "বিজয়া দশমী" দেখাত
+       (সৌর আশ্বিন ১৭ সেপ্টে–১৬ অক্টো), আর আসল দিনে (২১ অক্টোবর)
+       কিছুই দেখাত না — গোটা ব্লকটাই এক মাস সরে ছিল (মেপে দেখা, ২০২৬-০৯-২১)।
+       এখন তারিখগুলো আসে festival-dates.json থেকে — যেটি
+       `npm run build-festival-dates` ওয়েবসাইটের নিজের (ছাপা পঞ্জিকার
+       বিরুদ্ধে যাচাই করা) ইঞ্জিন চালিয়ে বানায়। তিথি-নিরপেক্ষ নিয়ম
+       (একাদশী · পূর্ণিমা · অমাবস্যা · প্রদোষ) মাস দেখে না, তাই অক্ষত। */
     for (const f of TITHI_FESTIVALS) {
-      if (f.tithiIdx === day.tithiIdx && (f.bnMonthIdx === -1 || f.bnMonthIdx === bnMonthIdx)) {
-        add(day.dateStr, f.name, 'তিথি');
-      }
+      if (f.bnMonthIdx !== -1) continue;
+      if (f.tithiIdx === day.tithiIdx) add(day.dateStr, f.name, 'তিথি');
     }
 
     if (day.bengaliDay !== null) {
@@ -203,6 +212,15 @@ export function getFestivalsForMonth(year, month, calendarDays) {
         }
       }
     }
+  }
+
+  /* সারণির উৎসব — ওই গ্রেগরীয় মাসের সব তারিখ, calendarDays নির্বিশেষে।
+     ⚠️ সীমার বাইরে (২০২৫–২০৩২) কিছু দেখানো হয় না — ভুল দিন দেখানোর
+     চেয়ে না দেখানো ভালো। সীমা বাড়াতে জেনারেটরের FROM/TO বদলান। */
+  const pfx = `${year}-${mmPrefix}-`;
+  for (const iso of Object.keys(FEST_DATES.dates)) {
+    if (!iso.startsWith(pfx)) continue;
+    for (const name of FEST_DATES.dates[iso]) add(iso, name, 'উৎসব');
   }
 
   return results.sort((a, b) => a.dateStr.localeCompare(b.dateStr));

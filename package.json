@@ -23,7 +23,9 @@
     "verify-print-bundle": "node scripts/verify-print-bundle.js",
     "check:startup": "node scripts/check-startup-weight.js",
     "verify-hook-order": "node scripts/verify-hook-order.js",
-    "verify-r8": "node scripts/verify-r8.js"
+    "verify-r8": "node scripts/verify-r8.js",
+    "build-festival-dates": "node scripts/build-festival-dates.js",
+    "verify-festival-dates": "node scripts/verify-festival-dates.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
