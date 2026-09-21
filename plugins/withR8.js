@@ -1,24 +1,28 @@
-const { withAppBuildGradle } = require('@expo/config-plugins');
+const { withAppBuildGradle, withGradleProperties } = require('@expo/config-plugins');
+const { applyR8 } = require('./r8-transform');
 
-// Play Console-এর "app's memory and performance" সুপারিশ — রিলিজ বিল্ডে R8
-// চালু করা। R8 জাভা/কোটলিন কোড ছেঁটে ছোট করে।
+// Play Console-এর "DEX code optimisation" সুপারিশ — রিলিজ বিল্ডে R8 চালু
+// করা। R8 জাভা/কোটলিন কোড ছেঁটে ছোট করে এবং ক্লাসের নাম বদলে দেয়
+// (obfuscation)।
 //
 // ⚠️ প্রথম চেষ্টা কেন ভেঙেছিল (২০২৬-০৮-০৯, বিল্ড ব্যর্থ):
 // gradle.properties-এ দুটো সুইচ বসানো হয়েছিল —
 //   android.enableProguardInReleaseBuilds        (কোড ছোট করা)
 //   android.enableShrinkResourcesInReleaseBuilds (রিসোর্স বাদ দেওয়া)
-// কিন্তু Expo SDK 54 / RN 0.81-এর টেমপ্লেট দ্বিতীয়টা পড়ে, প্রথমটা পড়ে না —
-// build.gradle-এ minifyEnabled আসে একটা স্থানীয় def থেকে, gradle property
-// থেকে নয়। ফলে রিসোর্স-ছাঁটাই চালু হলো অথচ কোড-ছাঁটাই হলো না, আর Android
-// নিজেই বিল্ড থামিয়ে দিল:
+// কিন্তু টেমপ্লেট দ্বিতীয়টা পড়ে, প্রথমটা পড়ে না — ফলে রিসোর্স-ছাঁটাই চালু
+// হলো অথচ কোড-ছাঁটাই হলো না, আর Android নিজেই বিল্ড থামিয়ে দিল:
 //   "Removing unused resources requires unused code shrinking to be turned on"
+// তাই রিসোর্স-ছাঁটাই আজও ছোঁয়া হয় না — ওটাই ভাঙার কারণ ছিল, আর লাভও কম।
 //
-// তাই এখন gradle property-র ভরসায় না থেকে build.gradle-এর minifyEnabled
-// লাইনটাই সরাসরি বদলানো হয়, আর রিসোর্স-ছাঁটাই ছোঁয়া হয় না (ওটাই ভাঙার
-// কারণ ছিল, আর লাভও ওটাতেই কম)।
-//
-// 🛟 লাইনটা না মিললে ফাইল অক্ষত রেখে দেওয়া হয় — তখন R8 চালু হয় না, কিন্তু
-// বিল্ড ঠিকঠাক হয়। অর্থাৎ এই প্লাগিন আর কখনো বিল্ড ভাঙতে পারবে না।
+// ⛔ দ্বিতীয় দফার আসল দোষ (২০২৬-০৯-২১): regex কেবল দুটো আকৃতি চিনত —
+// `minifyEnabled false` ও `minifyEnabled enableProguardInReleaseBuilds`।
+// Expo SDK 53/54-এর টেমপ্লেট লেখে
+//   minifyEnabled (findProperty('android.enableMinifyInReleaseBuilds')?.toBoolean() ?: true)
+// — কোনোটাই মেলে না। প্লাগিন তখন `console.warn` করে **নীরবে এড়িয়ে যেত**,
+// আর EAS-এর হাজার লাইনের লগে ওই সতর্কতা কেউ দেখে না। ফলাফল: Play Console
+// বলল Obfuscation ১%। এই রিপোর পুরনো নিয়মটাই আবার — নীরব no-op সবচেয়ে
+// খারাপ ব্যর্থতা। **তাই এখন না মিললে বিল্ড থেমে যায়**, আর prebuild
+// সেকেন্ডের কাজ, তাই থামাটা সস্তা।
 //
 // ⚠️ R8 ক্লাসের নাম বদলে দেয়, তাই যে লাইব্রেরি নাম ধরে (reflection) ক্লাস
 // খোঁজে সেটা রিলিজ বিল্ডে নীরবে ভাঙতে পারে — ডিবাগ বিল্ডে ধরা পড়ে না।
@@ -28,25 +32,28 @@ const { withAppBuildGradle } = require('@expo/config-plugins');
 // ↩️ বন্ধ করতে: নিচের ENABLED-কে false করে আবার বিল্ড করুন।
 const ENABLED = true;
 
-// টেমপ্লেটে লাইনটা "minifyEnabled false" বা
-// "minifyEnabled enableProguardInReleaseBuilds" — দুটোর যেকোনোটা হতে পারে।
-const MINIFY_RE = /minifyEnabled\s+(?:false|enableProguardInReleaseBuilds)\b/g;
+// build.gradle-এর লাইনটা সরাসরি বদলানোই আসল কাজ; নিচের দুটো property
+// কেবল অতিরিক্ত সুরক্ষা — টেমপ্লেট যদি কোনোদিন property-টাই পড়ে, তখনও
+// যেন উত্তরটা "হ্যাঁ" হয়। (shrinkResources ইচ্ছে করেই বাদ।)
+const PROPS = {
+  'android.enableMinifyInReleaseBuilds': 'true',
+  'android.enableProguardInReleaseBuilds': 'true',
+};
 
 module.exports = function withR8(config) {
   if (!ENABLED) return config;
-  return withAppBuildGradle(config, (config) => {
-    const src = config.modResults.contents;
-    const hits = src.match(MINIFY_RE);
-    // ঠিক একটা লাইনই আশা করা হয় (release ব্লকের)। একাধিক বা শূন্য হলে
-    // টেমপ্লেট বদলে গেছে — অনুমানে হাত না দিয়ে ছেড়ে দেওয়াই নিরাপদ।
-    if (!hits || hits.length !== 1) {
-      console.warn(
-        '[withR8] minifyEnabled লাইনটা ঠিক একবার পাওয়া গেল না ('
-        + (hits ? hits.length : 0) + 'বার) — R8 চালু করা হলো না, বিল্ড আগের মতোই চলবে।'
-      );
-      return config;
+  config = withGradleProperties(config, (config) => {
+    const keys = Object.keys(PROPS);
+    config.modResults = config.modResults.filter(
+      (item) => !(item.type === 'property' && keys.includes(item.key))
+    );
+    for (const key of keys) {
+      config.modResults.push({ type: 'property', key, value: PROPS[key] });
     }
-    config.modResults.contents = src.replace(MINIFY_RE, 'minifyEnabled true');
+    return config;
+  });
+  return withAppBuildGradle(config, (config) => {
+    config.modResults.contents = applyR8(config.modResults.contents);
     return config;
   });
 };
