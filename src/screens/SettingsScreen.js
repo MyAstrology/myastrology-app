@@ -360,14 +360,14 @@ export function SettingsScreen({ navigation }) {
               icon="map-marker-outline"
               label="পঞ্চাঙ্গের অবস্থান"
               sub={panchangCity
-                ? t('{city} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়').replace('{city}', panchangCity.label)
+                ? t('{city} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়').replace('{city}', t(panchangCity.label))
                 : 'লোড হচ্ছে…'}
             />
             <View style={s.divider} />
             <Row
               icon="information-outline"
               label="ভার্সন"
-              sub={BUILD_NO ? `${APP_VERSION} (বিল্ড ${BUILD_NO})` : APP_VERSION}
+              sub={BUILD_NO ? t('{v} (বিল্ড {n})').replace('{v}', APP_VERSION).replace('{n}', String(BUILD_NO)) : APP_VERSION}
             />
           </View>
         </View>

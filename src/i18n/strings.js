@@ -8,6 +8,14 @@
  *  "period of Rahu" লিখলে সেটা আর জ্যোতিষ থাকে না। (ওয়েবসাইটের একই নিয়ম।)
  */
 export const STRINGS = {
+  "গণনা সম্পূর্ণ অফলাইনে · {place}": {
+    "en": "All calculations run fully offline · {place}",
+    "hi": "गणना पूरी तरह ऑफ़लाइन · {place}"
+  },
+  "{v} (বিল্ড {n})": {
+    "en": "{v} (build {n})",
+    "hi": "{v} (बिल्ड {n})"
+  },
   "{city} — পঞ্জিকা ট্যাবের 📍 বোতাম থেকে বদলানো যায়": {
     "en": "{city} — you can change it from the 📍 button on the Panjika tab",
     "hi": "{city} — पंचांग टैब के 📍 बटन से बदला जा सकता है"

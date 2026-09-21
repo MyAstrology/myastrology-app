@@ -502,8 +502,12 @@ export function HomeScreen() {
     }
   }, [iso, nowTick, engReady, city.lat, city.lon, city.tz]);
 
-  // "রানাঘাট, ভারত (IST)" — পাঠক যেন জানেন সময়গুলো কোন জায়গা ও কোন ঘড়ির
-  const placeLine = `${city.label}${city.country ? ', ' + city.country : ''} (${tzLabel(city.tz)})`;
+  /*  "রানাঘাট, ভারত (IST)" — পাঠক যেন জানেন সময়গুলো কোন জায়গা ও কোন ঘড়ির।
+      ⚠️ শহর ও দেশের নাম **আলাদা করে** অনুবাদ করতে হয় — আগে গোটা লাইনটা
+      একটা টুকরো-জোড়া স্ট্রিং ছিল, তাই অভিধানে কখনোই মিলত না আর ইংরেজি
+      পাঠক "গণনা সম্পূর্ণ অফলাইনে · রানাঘাট, ভারত (IST)" দেখতেন
+      (মালিকের স্ক্রিনশট, ২০২৬-০৯-২১)। নামদুটো সাইটের অভিধানেই আছে। */
+  const placeLine = `${t(city.label)}${city.country ? ', ' + t(city.country) : ''} (${tzLabel(city.tz)})`;
 
   const enDateStr = `${today.getDate()} ${EN_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
   /* গোটা বাক্যটাই একটা চাবি — টুকরো জুড়লে ইংরেজি/হিন্দিতে শব্দক্রম ভাঙত,
@@ -718,7 +722,7 @@ export function HomeScreen() {
 
           <View style={s.infoStrip}>
             <MaterialCommunityIcons name="information-outline" size={13} color={colors.primary} />
-            <Text style={s.infoText}>  গণনা সম্পূর্ণ অফলাইনে · {placeLine}</Text>
+            <Text style={s.infoText} noTranslate>  {t('গণনা সম্পূর্ণ অফলাইনে · {place}').replace('{place}', placeLine)}</Text>
           </View>
         </ScrollView>
     </View>
