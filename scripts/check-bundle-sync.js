@@ -121,12 +121,26 @@ function checkEngineCopies() {
   const dir = path.join(__dirname, '..', 'src', 'engine');
   if (!fs.existsSync(dir)) return [];
   const stale = [];
+  /* GENERATED: some copies are not a plain copy of the site file but the
+     declared output of a generator. Compare against what the generator
+     produces, so a legitimate patch is not reported forever -- a check
+     that cries wolf is the one nobody reads. */
+  /* ⚠️ কিছু কপি সাইটের হুবহু কপি নয়, একটা জেনারেটরের **ঘোষিত ফল**
+     (panjika-pd Metro-র জন্য module.exports জোড়ে)। জেনারেটরের নিজের
+     render()-ই ডাকা হয় — এখানে আবার লিখলে সেটাই হত দ্বিতীয় কপি, আর
+     দুটো কপি একদিন সরে যায়। তখন পরীক্ষাটা চিরকাল মিথ্যে লাল দিত,
+     আর মিথ্যে-লাল পরীক্ষা কেউ পড়ে না। */
+  const GENERATED = {
+    'panjika-pd.js': require('./build-panjika-pd.js').render,
+  };
+
   for (const f of fs.readdirSync(dir)) {
     const web = path.join(SITE, 'src', f);
-    if (!fs.existsSync(web)) continue;          // অ্যাপের নিজস্ব ফাইল — মেলানোর কিছু নেই
-    if (fs.readFileSync(path.join(dir, f), 'utf8').trim() !== fs.readFileSync(web, 'utf8').trim()) {
-      stale.push('src/engine/' + f);
-    }
+    if (!fs.existsSync(web)) continue;
+    const webSrc = fs.readFileSync(web, 'utf8');
+    const appSrc = fs.readFileSync(path.join(dir, f), 'utf8');
+    const want = GENERATED[f] ? GENERATED[f](webSrc) : webSrc;
+    if (appSrc.trim() !== want.trim()) stale.push('src/engine/' + f);
   }
   return stale.length
     ? [`src/engine: ${stale.length}টি ফাইল ওয়েবসাইটের সাথে মিলছে না (${stale.join(', ')}) — পোর্ট করা বাকি।`]

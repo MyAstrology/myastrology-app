@@ -16,12 +16,23 @@
 const fs = require('fs'), path = require('path');
 const SITE = path.resolve(__dirname, '..', '..', 'services', 'src', 'panjika-pd.js');
 const OUT  = path.resolve(__dirname, '..', 'src', 'engine', 'panjika-pd.js');
-if (!fs.existsSync(SITE)) { console.error('✗ ওয়েবসাইটের src/panjika-pd.js নেই'); process.exit(1); }
-const src = fs.readFileSync(SITE, 'utf8');
-if (src.indexOf('var PD=') < 0) { console.error('✗ PD পাওয়া গেল না — ফাইলের আকার বদলেছে'); process.exit(1); }
-/* Metro CJS — ওয়েবসাইটের ফাইলে module.exports নেই, তাই এক লাইন জোড়া */
-fs.writeFileSync(OUT,
-  '// AUTO-GENERATED — হাতে সম্পাদনা করবেন না।\n' +
-  '// Run: node scripts/build-panjika-pd.js\n' +
-  src.replace(/\s+$/, '') + '\nmodule.exports = PD;\n', 'utf8');
-console.log('✓ src/engine/panjika-pd.js  (' + src.length + ' অক্ষর)');
+/* Metro CJS — ওয়েবসাইটের ফাইলে module.exports নেই, তাই এক লাইন জোড়া।
+   ⚠️ রূপান্তরটা রপ্তানি করা হয়, কারণ check-bundle-sync-কেও জানতে হয়
+   এই ফাইলটা সাইটের হুবহু কপি নয়। পরীক্ষাটা নিজে আবার লিখলে সেটাই
+   হত দ্বিতীয় কপি — আর দুটো কপি একদিন সরে যায়। */
+function render(src) {
+  return '// AUTO-GENERATED — হাতে সম্পাদনা করবেন না।\n'
+       + '// Run: node scripts/build-panjika-pd.js\n'
+       + src.replace(/\s+$/, '') + '\nmodule.exports = PD;\n';
+}
+module.exports = { render, SITE, OUT };
+
+/* ⚠️ require() করলে কোনো পার্শ্বপ্রতিক্রিয়া নয় — check-bundle-sync
+   কেবল render() চায়, ফাইল লেখা বা process.exit() নয়। */
+if (require.main === module) {
+  if (!fs.existsSync(SITE)) { console.error('✗ ওয়েবসাইটের src/panjika-pd.js নেই'); process.exit(1); }
+  const src = fs.readFileSync(SITE, 'utf8');
+  if (src.indexOf('var PD=') < 0) { console.error('✗ PD পাওয়া গেল না — ফাইলের আকার বদলেছে'); process.exit(1); }
+  fs.writeFileSync(OUT, render(src), 'utf8');
+  console.log('✓ src/engine/panjika-pd.js  (' + src.length + ' অক্ষর)');
+}

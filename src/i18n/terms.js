@@ -151,6 +151,10 @@ export const TERMS = {
     "en": "Amavasya",
     "hi": "अमावस्या"
   },
+  "অমাবস্যা তিথি চলাকালীন রাত্রিকাল": {
+    "en": "At night, while the Amavasya tithi runs",
+    "hi": "रात्रिकाल में, अमावस्या तिथि के चलते हुए"
+  },
   "অমৃতযোগ": {
     "en": "Amrita Yoga",
     "hi": "अमृत योग"
@@ -511,6 +515,10 @@ export const TERMS = {
     "en": "Oṁ Namo Bhagavate Vāsudevāya. Hare Kṛṣṇa Hare Kṛṣṇa.",
     "hi": "ॐ नमो भगवते वासुदेवाय। हरे कृष्ण हरे कृष्ण।"
   },
+  "ওঁ নাগায় নমঃ।": {
+    "en": "Oṁ Nāgāya Namaḥ.",
+    "hi": "ॐ नागाय नमः।"
+  },
   "ওঁ নৃসিংহায় নমঃ।": {
     "en": "Oṁ Nṛsiṁhāya Namaḥ.",
     "hi": "ॐ नृसिंहाय नमः।"
@@ -626,6 +634,10 @@ export const TERMS = {
   "ওঁ হোলিকায়ৈ নমঃ। অসতো মা সদ্গময়, তমসো মা জ্যোতির্গময়।": {
     "en": "Oṁ Holikāyai Namaḥ. Asato mā sadgamaya, tamaso mā jyotirgamaya.",
     "hi": "ॐ होलिकायै नमः। असतो मा सद्गमय, तमसो मा ज्योतिर्गमय।"
+  },
+  "ওঁ হ্রীং স্ত্রীং হুং ফট্": {
+    "en": "Om Hreem Streem Hum Phat",
+    "hi": "ॐ ह्रीं स्त्रीं हुं फट्"
   },
   "ওষুধ সেবন": {
     "en": "Taking medicine",
@@ -798,6 +810,10 @@ export const TERMS = {
   "কৌলব": {
     "en": "Kaulava",
     "hi": "कौलव"
+  },
+  "কৌশিকী অমাবস্যা": {
+    "en": "Kaushiki Amavasya",
+    "hi": "कौशिकी अमावस्या"
   },
   "গঙ্গা দশহরা": {
     "en": "Ganga Dussehra",
@@ -1390,6 +1406,14 @@ export const TERMS = {
   "নাগ পঞ্চমী": {
     "en": "Naga Panchami",
     "hi": "नाग पंचमी"
+  },
+  "নাগপঞ্চমী": {
+    "en": "Naga Panchami",
+    "hi": "नाग पंचमी"
+  },
+  "নাগমূর্তি বা নাগচিত্রের সামনে অনন্তাদি অষ্টনাগের পূজা করুন। নৈবেদ্য হিসেবে দুধ ও ঘি নিবেদন করুন।": {
+    "en": "Worship Ananta and the eight Nāgas before an image or a picture of the Nāga. Offer milk and ghee as naivedya.",
+    "hi": "नागमूर्ति या नागचित्र के सामने अनन्तादि अष्टनाग की पूजा करें। नैवेद्य के रूप में दूध और घी अर्पित करें।"
   },
   "নাগাসাকি দিবস": {
     "en": "Nagasaki Day",
@@ -2127,6 +2151,10 @@ export const TERMS = {
     "en": "Bhadra Krishna Ekadashi. The shastra says that keeping this vrata during the Pitri Paksha brings liberation to the souls of the ancestors.",
     "hi": "भाद्र कृष्ण एकादशी। शास्त्र कहते हैं कि पितृपक्ष में यह व्रत करने से पूर्वजों की आत्मा को मुक्ति मिलती है।"
   },
+  "ভাদ্র মাসের কৃষ্ণপক্ষের অমাবস্যা। তারাপীঠে মা তারার আবির্ভাব তিথি হিসেবে পালিত হয়; শাক্ত ও তান্ত্রিক সাধনার বিশেষ রাত্রি।": {
+    "en": "The Amavasya of the Krishna Paksha of Bhadra. It is kept at Tarapith as the tithi on which Ma Tara appeared; a special night for Shakta and Tantric sadhana.",
+    "hi": "भाद्र मास के कृष्ण पक्ष की अमावस्या। तारापीठ में मां तारा के आविर्भाव की तिथि के रूप में मनाई जाती है; शाक्त और तांत्रिक साधना की विशेष रात्रि।"
+  },
   "ভাদ্র শুক্লা অষ্টমীতে শ্রীরাধারাণীর জন্মতিথি।": {
     "en": "Bhadra Shukla Ashtami is the birth tithi of Shri Radharani.",
     "hi": "भाद्र शुक्ल अष्टमी को श्रीराधारानी की जन्मतिथि।"
@@ -2770,6 +2798,10 @@ export const TERMS = {
   "শ্রাবণ শুক্লা একাদশী। পবিত্রারোপণ ব্রত।": {
     "en": "Shravana Shukla Ekadashi. The Pavitraropana vrata.",
     "hi": "श्रावण शुक्ल एकादशी। पवित्रारोपण व्रत।"
+  },
+  "শ্রাবণ শুক্লা পঞ্চমী। অনন্ত আদি মহানাগ ও অষ্টনাগের পূজা — সর্পভয় থেকে রক্ষা পাওয়াই এই পূজার উদ্দেশ্য।": {
+    "en": "Śrāvaṇa Śukla Pañcamī. Worship of Ananta and the other great Nāgas, and of the eight Nāgas (Aṣṭanāga) — the purpose of this pūjā is protection from the fear of snakes.",
+    "hi": "श्रावण शुक्ल पंचमी। अनन्त आदि महानागों तथा अष्टनाग की पूजा — सर्पभय से रक्षा पाना ही इस पूजा का उद्देश्य है।"
   },
   "শ্রাবণী কৃষ্ণ অষ্টমীতে ভগবান শ্রীকৃষ্ণের জন্মতিথি। মধ্যরাতে পূজা।": {
     "en": "On Shravani Krishna Ashtami falls the birth tithi of Lord Shri Krishna. The puja is at midnight.",
