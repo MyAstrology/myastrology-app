@@ -35,8 +35,38 @@ export function withPrintData(html, rawJson, lang) {
   const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
   const L = (lang === 'en' || lang === 'hi') ? lang : (lang === 'bn' ? 'bn' : null);
   const langJs = L ? `try{document.documentElement.setAttribute('data-mya-lang',${JSON.stringify(L)});}catch(e){}` : '';
-  return html.replace('<head>', () => `<head><script>window.__myaPrintData=${safe};${langJs}<\/script>`);
+  return html.replace('<head>', () => `<head><script>window.__myaPrintData=${safe};${langJs}${IMG_FIX_JS}<\/script>`);
 }
+
+/*  ⛔ ছাপার তথ্যের ভিতরে কিছু ছবির **ঠিকানা** থাকে (সংখ্যা জ্যোতিষের
+ *  দেবতা ও রত্ন — `/gallery/shukra_dev.webp`)। কোনটা আসবে সেটা পাঠকের
+ *  সংখ্যা ঠিক করে, তাই বান্ডলে আগে থেকে বসিয়ে রাখা যায় না।
+ *
+ *  কিন্তু অ্যাপে পাতাটা আসে `source={{html}}` থেকে, যার ভিত্তি-ঠিকানা
+ *  about:blank — সেখানে "/gallery/…" কোনো ঠিকানাই নয়, তাই ছবিটা
+ *  **নীরবে** ফাঁকা বাক্স হয়ে যায় আর পাশের লেখা সরে এসে ওভারল্যাপ
+ *  দেখায় (মালিকের অভিযোগ খ২)। তাই মূল-থেকে-লেখা প্রতিটি পথ লাইভ
+ *  সাইটের ঠিকানায় বদলে দেওয়া হয় — পাতা নিজে যখনই নতুন ছবি বসাক। */
+const IMG_FIX_JS = `(function(){try{
+  var SITE='https://myastrology.in';
+  function fix(n){
+    if(!n||n.nodeType!==1)return;
+    var list=(n.tagName==='IMG')?[n]:(n.querySelectorAll?n.querySelectorAll('img'):[]);
+    for(var i=0;i<list.length;i++){
+      var s=list[i].getAttribute('src')||'';
+      if(s.charAt(0)==='/'&&s.charAt(1)!=='/') list[i].setAttribute('src',SITE+s);
+    }
+  }
+  fix(document.documentElement);
+  if(window.MutationObserver){
+    new MutationObserver(function(ms){
+      for(var i=0;i<ms.length;i++){
+        var a=ms[i].addedNodes;
+        for(var j=0;j<a.length;j++) fix(a[j]);
+      }
+    }).observe(document.documentElement,{childList:true,subtree:true});
+  }
+}catch(e){}})();`;
 
 /* পাতার নিজের `window.print()`-কে বদলে দেয়: DOM-এর একটা কপি নিয়ে
    <script> ফেলে দিয়ে স্ট্যাটিক HTML পাঠায়। স্ক্রিপ্ট রাখলে expo-print
@@ -71,6 +101,15 @@ export const PAGE_PRINT_JS = `(function(){try{
  */
 export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   var root=document.getElementById('printRoot');
+  /* ⛔ ছবি নামার আগেই ধরলে PDF-এ ফাঁকা বাক্স পড়ে, আর ছবি
+     শূন্য হওয়ায় পাশের লেখা সরে এসে ওভারল্যাপ দেখায় (খ২)।
+     তাই সব ছবি শেষ হওয়া পর্যন্ত অপেক্ষা — তবে বেশিজোর ~৬ সেকেন্ড,
+     নয়তো নেট না থাকলে PDF-টাই কখনো তৈরি হতো না। */
+  window.__myaImgWait=(window.__myaImgWait||0)+1;
+  var imgs=root?root.querySelectorAll('img'):[];
+  var pending=0;
+  for(var q=0;q<imgs.length;q++) if(!imgs[q].complete) pending++;
+  if(pending && window.__myaImgWait < 15){ setTimeout(poll,400); return; }
   if(root && root.innerHTML.length > ${minLen}){
     [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
     var h=document.documentElement.outerHTML, C=200000, n=Math.ceil(h.length/C)||1;

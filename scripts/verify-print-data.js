@@ -73,6 +73,34 @@ function serve() {
     PAGE_HTML[name + '.html'] = withPrintData(decode(path.join(APP, 'src/web-html', name + '.js')), fs.readFileSync(fp, 'utf8'));
   }
 
+  /* ⛔ ছাপার পাতায় কোনো ছবি নেট থেকে আসতে পারে না। PDF তৈরি হয়
+     একটা লুকোনো WebView-এ, আর ছবি নামার আগেই সে পাতাটা ধরে ফেলতে
+     পারে — লোগোর জায়গায় ফাঁকা বাক্স, আর ছবি শূন্য হলে পাশের লেখা
+     সরে এসে ওভারল্যাপ দেখায় (মালিকের অভিযোগ খ২)। নেট না থাকলে
+     তো কখনোই আসত না। */
+  for (const [name] of PAGES) {
+    const html = PAGE_HTML[name + '.html'];
+    if (!html) continue;
+    /* ⚠️ যে পথ চালানোর সময়ে জোড়া হয় (`src="'+esc(d.deity)+'"`) সেটা এখানে
+       গোনা যায় না — ওগুলো withPrintData()-এর IMG_FIX_JS সামলায়।
+       তাই সেই রক্ষীটা আছে কি না, সেটাও দেখা হয়। */
+    const imgs = html.match(/<img[^>]+src="[^"]*"/g) || [];
+    const remote = imgs.filter(t => /src="https?:\/\//.test(t)).length;
+    const rel = imgs.filter(t => !/src="(?:data:|https?:)/.test(t) && !/'\s*\+/.test(t)).length;
+    if (remote || rel) bad(`${name} — ${remote}টি নেট-ছবি, ${rel}টি আপেক্ষিক ছবি (স্থির ছবি base64 হওয়া দরকার)`);
+    else ok(`${name} — পাতার স্থির ছবিগুলো বান্ডলের ভিতরে`);
+  }
+
+  {
+    const wp = fs.readFileSync(path.join(APP, 'src/utils/webPrint.js'), 'utf8');
+    const okFix = /IMG_FIX_JS/.test(wp) && /MutationObserver/.test(wp) && /myastrology\.in/.test(wp);
+    const okWait = /__myaImgWait/.test(wp);
+    if (okFix) ok('চালানোর সময়ে বসা ছবির মূল-পথ লাইভ সাইটে বদলে দেওয়া হয়');
+    else bad('withPrintData()-এ IMG_FIX_JS নেই — `/gallery/…` ছবি অ্যাপে ফাঁকা বাক্স হয়ে যাবে');
+    if (okWait) ok('ছবি নামা শেষ না হলে PDF ধরা হয় না');
+    else bad('makeCaptureJS ছবির জন্য অপেক্ষা করে না — অর্ধেক-আঁকা পাতা ছাপা পড়তে পারে');
+  }
+
   const srv = await serve();
   const br = await cr.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   for (const [name] of PAGES) {

@@ -36,8 +36,29 @@ const PATCHES = [
     to:   '<link rel="stylesheet" href="https://myastrology.in/css/noto-sans-font.css">' },
   { why: 'expo-print পর্দার DOM ধরে ছাপে, তাই #printRoot পর্দাতেও দেখা যেতে হবে',
     find: '@media screen{#printRoot{display:none}}', to: '#printRoot{display:block!important}' },
-  { why: 'file:// পাতায় আপেক্ষিক ছবি ৪০৪ — লাইভ সাইটের ঠিকানা',
-    find: /src="(images|gallery)\//g, to: 'src="https://myastrology.in/$1/' },
+  /* ⛔ আগে ছবিগুলো লাইভ সাইট থেকে নামানো হতো। কিন্তু PDF তৈরি হয় একটা
+     **লুকোনো** WebView-এ, আর ছবি নামার আগেই সে পাতাটা ধরে ফেলতে পারে —
+     তখন লোগোর জায়গায় ফাঁকা বাক্স, আর গণেশের ছবি শূন্য হয়ে যাওয়ায়
+     পাশের লেখা ওই জায়গায় সরে এসে ওভারল্যাপ দেখায় (মালিকের অভিযোগ
+     খ২ ও "লোগোর ফাঁকা বাক্স", ২০২৬-০৯-২১)। নেট না থাকলে তো কখনোই
+     আসত না। তাই ছোট ছবি (≤২০০ KB) সরাসরি base64-এ বসানো হয় —
+     bundle-web-assets.js বাকি ছাপার পাতায় যেমন করে। */
+  { why: 'ছোট ছবি base64-এ — লুকোনো WebView ছবি নামার আগেই ছাপতে পারে',
+    find: /src=(["'])((?:images|gallery)\/[^"']+)\1/g,
+    to: (m, q, rel) => {
+      try {
+        const f = path.resolve(__dirname, '..', '..', 'services', rel);
+        const st = fs.statSync(f);
+        if (st.size > 200 * 1024) return m;
+        const ext = path.extname(f).slice(1).toLowerCase();
+        const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : 'image/' + ext;
+        return 'src=' + q + 'data:' + mime + ';base64,' + fs.readFileSync(f).toString('base64') + q;
+      } catch (e) {
+        /* বড় ছবি বা পাওয়া গেল না — অন্তত লাইভ সাইট থেকে নামুক;
+           আপেক্ষিক পথ file://-এ সবসময় ৪০৪। */
+        return 'src=' + q + 'https://myastrology.in/' + rel + q;
+      }
+    } },
   { why: 'ফিরে যাওয়ার লিংকও নিরঙ্কুশ',
     find: /href="kundali"/g, to: 'href="https://myastrology.in/kundali"' },
   /* ⛔ এটাই ছিল "ইংরেজি PDF-এ বাংলা"-র আসল কারণ: পাতাটা /js/i18n.js
