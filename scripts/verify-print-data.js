@@ -101,6 +101,29 @@ function serve() {
     else bad('makeCaptureJS ছবির জন্য অপেক্ষা করে না — অর্ধেক-আঁকা পাতা ছাপা পড়তে পারে');
   }
 
+  /* ⛔ PDF-এর গোটা যন্ত্রপাতি তৈরি থাকা সত্ত্বেও নামকরণে একটাই CSS
+     লাইন যে বোতামটা ওদের ডাকে সেটাই লুকিয়ে রেখেছিল — অর্থাৎ পাঠক
+     কখনো PDF-এ পৌঁছতেই পারতেন না (মালিকের অভিযোগ খ৮)। কোনো পার্স
+     বা রানটাইম পরীক্ষা এটা ধরতে পারত না। */
+  {
+    const dir = path.join(APP, 'src', 'screens');
+    let checked = 0, hidden = 0;
+    for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js'))) {
+      const src = fs.readFileSync(path.join(dir, f), 'utf8');
+      if (!/onPrint=\{/.test(src)) continue;
+      checked++;
+      /* রুল-ধরে দেখা: যে রুল .prt বাছে আর display:none বসায় */
+      for (const m of src.matchAll(/([^{}\n]*\.prt[^{}]*)\{([^}]*)\}/g)) {
+        if (/display\s*:\s*none/.test(m[2])) {
+          bad(`${f} — CSS প্রিন্ট-বোতাম লুকিয়ে রাখে (অথচ পর্দাটা onPrint দেয়): ${m[1].trim().slice(0, 60)}`);
+          hidden++;
+        }
+      }
+    }
+    if (!checked) bad('onPrint দেয় এমন কোনো পর্দাই পাওয়া গেল না');
+    else if (!hidden) ok(`${checked}টি ছাপার পর্দার কোনোটাতেই PDF-বোতাম লুকোনো নয়`);
+  }
+
   const srv = await serve();
   const br = await cr.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   for (const [name] of PAGES) {

@@ -79,7 +79,18 @@ footer,.site-footer{display:none!important;}
 /* সারিতে তিনটে বোতাম আছে: WhatsApp শেয়ার · কপি · প্রিন্ট। ফোনে শেষ দুটো
    অর্থহীন — অ্যান্ড্রয়েডের শেয়ারেই কপি ও PDF দুটোই পাওয়া যায়, আর তিনটে
    পাশাপাশি থাকায় আসল কাজটা (পরিবারকে নাম পাঠানো) চোখে পড়ত না। */
-.share-row .btn-share.copy,.share-row .btn-share.prt{display:none!important;}
+.share-row .btn-share.copy{display:none!important;}
+/* ⛔ প্রিন্ট-বোতামটাও লুকানো ছিল, আর যুক্তিটা ভুল ছিল:
+   অ্যান্ড্রয়েডের শেয়ার কেবল **লেখা** পাঠায়, আমাদের ডিজাইন-করা A4 PDF
+   নয়। আর সেই PDF-এর সব যন্ত্রপাতি (namakaran-print বান্ডল, handlePrint,
+   deliverPdf) তৈরিই ছিল — কেবল যে বোতামটা ওদের ডাকে সেটাই দেখা যেত না
+   (মালিকের অভিযোগ খ৮)। বাকি চারটা ক্যালকুলেটরে PDF আছে, এখানেও থাকবে। */
+.share-row .btn-share.prt{
+  display:inline-flex!important;align-items:center!important;gap:6px!important;
+  background:#fff!important;color:#7a2e2e!important;
+  border:1.5px solid #d4af37!important;border-radius:11px!important;
+  padding:12px 22px!important;font-size:.9rem!important;font-weight:800!important;
+}
 .share-row .btn-share.wa{
   background:linear-gradient(135deg,#25d366,#1ea952)!important;color:#fff!important;
   border:none!important;border-radius:11px!important;padding:12px 26px!important;

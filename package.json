@@ -27,7 +27,8 @@
     "build-festival-dates": "node scripts/build-festival-dates.js",
     "verify-festival-dates": "node scripts/verify-festival-dates.js",
     "check:imports": "node scripts/check-imports.js",
-    "verify-print-data": "node scripts/verify-print-data.js"
+    "verify-print-data": "node scripts/verify-print-data.js",
+    "verify-page-fill": "node scripts/verify-page-fill.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
