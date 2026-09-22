@@ -560,8 +560,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
           গেছে মনে হয় (কুণ্ডলী ও পঞ্জিকার পর্দায় শেখা)। */}
       {makingPdf && (
         <View style={s.pdfVeil}>
-          <ActivityIndicator size="large" color={colors.gold} />
-          <Text style={s.msg}>PDF তৈরি হচ্ছে…</Text>
+          {/* ⚠️ লেখাটা একটা নিরেট কার্ডে — আগে সরাসরি আধা-স্বচ্ছ পর্দার
+              উপরে বসত, তাই ঠিক নিচে কোনো বোতাম পড়লে দুটো লেখা একস্থানে
+              দেখাত (মালিকের স্ক্রিনশট, ২০২৬-০৯-২২)। */}
+          <View style={s.pdfCard}>
+            <ActivityIndicator size="large" color={colors.gold} />
+            <Text style={s.msg}>PDF তৈরি হচ্ছে…</Text>
+          </View>
         </View>
       )}
       {showBnOnly && (
@@ -593,7 +598,15 @@ const s = StyleSheet.create({
   pdfVeil: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(254,250,242,0.92)',
+    backgroundColor: 'rgba(254,250,242,0.97)',
+  },
+  pdfCard: {
+    backgroundColor: '#fff', borderRadius: 16,
+    paddingVertical: 22, paddingHorizontal: 30,
+    alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(201,146,42,.35)',
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
   msg:    { marginTop: 10, color: colors.textSecondary, fontSize: 13 },
   err:    { color: '#DC2626', fontSize: 13, textAlign: 'center', paddingHorizontal: 20 },

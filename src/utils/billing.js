@@ -85,6 +85,40 @@ function listen(m) {
   } catch (e) { /* শ্রোতা বসাতে না পারলে নিচের timeout-ই শেষ ভরসা */ }
 }
 
+let _warm = null;        // শেষ সফল fetchProducts-এর ফল (দামের জন্যও কাজে লাগে)
+
+/*  ⛔ ২০২৬-০৯-২২ — `initConnection()` true ফেরত দিলেও Play-র বিলিং
+ *  ক্লায়েন্ট তখনো তৈরি না-ও থাকতে পারে; তখন সঙ্গে সঙ্গে fetchProducts()
+ *  ডাকলে "Billing client not ready" আসে। আমার আগের সংশোধনে ওই ভুলেই
+ *  কেনা **থেমে যেত** (মালিকের স্ক্রিনশট: product-fetch-failed ·
+ *  basic_numerology_report · Billing client not ready) — অর্থাৎ যে
+ *  পাহারাটা [developer-error] আটকাতে বসিয়েছিলাম, সেটাই নতুন দরজা বন্ধ
+ *  করে দিয়েছিল।
+ *
+ *  তাই এখন একবার নয়, ধৈর্য ধরে কয়েকবার — আর "তৈরি নয়" বললে সংযোগটা
+ *  ভেঙে আবার জোড়া হয়। এক নিঃশ্বাসে হার মানা আর নিঃশব্দে এড়িয়ে যাওয়া,
+ *  দুটোই এখানে ভুল হতো। */
+async function fetchSkus(m, skus) {
+  const notReady = e => /not ready|not prepared|not initialized|not connected/i.test(
+    String((e && (e.message || e.code)) || ''));
+  let last = null;
+  for (let i = 0; i < 4; i++) {
+    try {
+      const list = await m.fetchProducts({ skus, type: 'in-app' });
+      if (list && list.length) { _warm = list; return list; }
+      last = new Error('product-unavailable');
+    } catch (e) {
+      last = e;
+      if (notReady(e)) {
+        _connected = false;
+        try { await m.initConnection(); _connected = true; } catch (e2) {}
+      }
+    }
+    await new Promise(r => setTimeout(r, 500 + 500 * i));
+  }
+  throw last || new Error('product-fetch-failed');
+}
+
 async function connect() {
   const m = iap();
   if (!m) throw new Error('billing-unavailable');
@@ -96,6 +130,10 @@ async function connect() {
     if (ok === false) throw new Error('not-prepared');
     _connected = true;
     listen(m);
+    /* ⚠️ তালিকাটা এখানেই একবার তুলে রাখা হয় — পাঠক বোতাম চাপার আগেই,
+       যাতে চাপার মুহূর্তে অপেক্ষা করতে না হয়। ব্যর্থ হলে চুপ: buy()
+       আবার চেষ্টা করবে, আর তখন ব্যর্থ হলে সেটা জোরেই বলবে। */
+    try { await fetchSkus(m, PRODUCT_IDS); } catch (e) {}
     /* ⚠️ আগের কোনো ক্রয় যদি যাচাইয়ের আগেই অ্যাপ বন্ধ হয়ে গিয়ে আটকে
        থাকে, সেটা এখানে শেষ করা হয় — নইলে পাঠক টাকা দিয়েছেন অথচ কিছুই
        পাননি, আর Google ৩ দিনে টাকা ফেরত দিয়ে দিত। */
@@ -123,7 +161,7 @@ const verify = httpsCallable(fns, 'verifyPlayPurchase');
  *  কারণ পাঠক অন্য দেশে অন্য মুদ্রায় দেখবেন। */
 export async function loadPrices() {
   const m = await connect();
-  const list = await m.fetchProducts({ skus: PRODUCT_IDS, type: 'in-app' });
+  const list = (_warm && _warm.length) ? _warm : await fetchSkus(m, PRODUCT_IDS);
   const out = {};
   for (const p of list || []) {
     const key = KEY_BY_ID[p.id || p.productId];
@@ -154,18 +192,17 @@ export async function buy(key) {
      নীরবে এড়ানো হয় না — Play যে জিনিসটা ক্রয় করার আগে বর্ণনাই
      দিতে পারল না, সেটা বিক্রিও করতে পারত না। এখানে থামা নিরাপদ,
      কারণ এখনও কোনো টাকা লেনদেন শুরু হয়নি। */
-  let found;
-  try {
-    found = await m.fetchProducts({ skus: [item.id], type: 'in-app' });
-  } catch (e) {
-    const err = new Error('product-fetch-failed · ' + item.id + ' · ' + String((e && e.message) || e));
-    err.code = 'product-fetch-failed';
-    throw err;
-  }
-  if (!found || !found.length) {
-    const err = new Error('product-unavailable · ' + item.id);
-    err.code = 'product-unavailable';
-    throw err;
+  /* connect()-এ তালিকা গরম হয়ে থাকলে এটা সঙ্গে সঙ্গেই ফেরে */
+  const already = (_warm || []).some(x => (x && (x.id || x.productId)) === item.id);
+  if (!already) {
+    try {
+      await fetchSkus(m, [item.id]);
+    } catch (e) {
+      const why = String((e && (e.message || e.code)) || e);
+      const err = new Error('product-fetch-failed · ' + item.id + ' · ' + why);
+      err.code = 'product-fetch-failed';
+      throw err;
+    }
   }
 
   /* ⚠️ ফল আসে শ্রোতার হাত ধরে, তাই এখানে একটা প্রতিশ্রুতি বসিয়ে অপেক্ষা

@@ -406,13 +406,21 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
          নিজের ব্যাখ্যা-মন্তব্যে fetchProducts শব্দটা দেখে সবুজ হয়ে যেত —
          কোডটা মুছে দিলেও (মেপে দেখা, ২০২৬-০৯-২১)। */
       const body = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-      const iF = body.indexOf('fetchProducts(');
+      /* সরাসরি fetchProducts(), বা পুনঃচেষ্টার মোড়ক fetchSkus() — দুটোই চলবে */
+      const iFa = body.indexOf('fetchProducts('), iFb = body.indexOf('fetchSkus(');
+      const iF = (iFa < 0) ? iFb : (iFb < 0 ? iFa : Math.min(iFa, iFb));
       const iR = body.indexOf('requestPurchase(');
       if (!body) bad('billing.js-এ buy() খুঁজে পাওয়া গেল না');
       else if (iF < 0) bad('buy()-এ fetchProducts() নেই — ProductDetails ছাড়া Play কিছু বেচতে দেয় না');
       else if (iR < 0) bad('buy()-এ requestPurchase() নেই');
       else if (iF > iR) bad('buy()-এ fetchProducts() requestPurchase()-এর **পরে** ডাকা হচ্ছে');
-      else ok('buy() আগে fetchProducts(), তবে requestPurchase()');
+      else ok('buy() আগে প্রোডাক্ট তুলে আনে, তবে requestPurchase()');
+      /* ⛔ তুলে আনাটা একবারের হলে হবে না — initConnection() true বললেও Play-র
+         ক্লায়েন্ট তখনো তৈরি না-ও থাকতে পারে ("Billing client not ready"),
+         আর তখন পাহারাটাই কেনা আটকে দিত (মালিকের স্ক্রিনশট, ২০২৬-০৯-২২)। */
+      if (/function fetchSkus\([\s\S]{0,900}?for \(/.test(bill) && /not ready\|not prepared/.test(bill))
+        ok('প্রোডাক্ট তুলতে পুনঃচেষ্টা আছে, আর "তৈরি নয়" হলে সংযোগ আবার জোড়া হয়');
+      else bad('fetchSkus()-এ পুনঃচেষ্টা নেই — একবার "Billing client not ready" হলেই কেনা আটকে যাবে');
     }
 
     if ((pkg.dependencies || {})['react-native-nitro-modules'])
