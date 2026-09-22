@@ -81,19 +81,26 @@ svg.tab-icon{width:18px!important;height:18px!important;min-width:18px!important
   window.open=function(url,target,f){
     if(url&&typeof url==='string'&&/\.html/.test(url)){
       var raw='';
-      /* ⚠️ localStorage-ই একমাত্র উৎস ছিল। WebView-এ ওটা কোনো কোনো
-         ফোনে/অবস্থায় নিঃশব্দে ব্যর্থ হয় (setItem-ও try/catch-এ মোড়া),
-         আর তখন raw ফাঁকা যেত — ফলে হয় "ডেটা পাওয়া যায়নি", নয়তো
-         মলাট+সূচিপত্র+বিজ্ঞাপনের চার পাতার ফাঁকা PDF। পাতাটা একই
-         payload window._matchPrintData / window._kundaliPrintData-তেও
-         রাখে, তাই সেটাই ফলব্যাক। */
-      try{raw=localStorage.getItem('match_print_data')||'';}catch(e){}
-      try{ if(!raw&&window._matchPrintData) raw=JSON.stringify(window._matchPrintData); }catch(e){}
-      try{ if(!raw&&window._kundaliPrintData) raw=JSON.stringify(window._kundaliPrintData); }catch(e){}
-      try{ if(!raw) raw=localStorage.getItem('numerology_print_data')||''; }catch(e){}
-      try{ if(!raw&&window._nuPrintData) raw=JSON.stringify(window._nuPrintData); }catch(e){}
-      try{ if(!raw) raw=localStorage.getItem('varshaphala_print_data')||''; }catch(e){}
-      try{ if(!raw) raw=localStorage.getItem('namakaran_print_data')||''; }catch(e){}
+      /* ⛔ এখানে দুটো হাতে-লেখা তালিকা ছিল, আর দুটোর মাপ সমান ছিল না:
+         মিলন · কুণ্ডলী · সংখ্যা-জ্যোতিষ — তিনটের window-ফলব্যাক ছিল, কিন্তু
+         **বর্ষফল ও নামকরণের ছিল না**। তাই ওই দুটোয় localStorage একটুও
+         নড়লে raw ফাঁকা যেত — অর্থাৎ টাকা কাটা হয়েও PDF আসত না
+         (মালিকের অভিযোগ, ২০২৬-০৯-২২: "পেমেন্ট নিয়ে, pdf দিচ্ছে না")।
+
+         CLAUDE.md-এর নিয়ম: যে তালিকা অসম্পূর্ণ হলে নীরবে কিছু বাদ পড়ে,
+         সেটা হাতে লেখা রাখা চলবে না। এখন পাঁচটাই এক লুপে, আর প্রতিটির
+         localStorage ও window — দুটো পথই দেখা হয়। */
+      var KEYS=[
+        ['match_print_data',       '_matchPrintData'],
+        ['kundali_print_data',     '_kundaliPrintData'],
+        ['numerology_print_data',  '_nuPrintData'],
+        ['varshaphala_print_data', '_vpPrintData'],
+        ['namakaran_print_data',   '_nkPrintData']
+      ];
+      for(var ki=0; ki<KEYS.length && !raw; ki++){
+        try{ raw=localStorage.getItem(KEYS[ki][0])||''; }catch(e){}
+        try{ if(!raw && window[KEYS[ki][1]]) raw=JSON.stringify(window[KEYS[ki][1]]); }catch(e){}
+      }
       if(window.ReactNativeWebView){
         window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'open',url:url,raw:raw}));
       }

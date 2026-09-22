@@ -124,6 +124,35 @@ function serve() {
     else if (!hidden) ok(`${checked}টি ছাপার পর্দার কোনোটাতেই PDF-বোতাম লুকোনো নয়`);
   }
 
+  /* ⛔ বান্ডলের window.open-সেতু যে চাবিগুলো দেখে, সেই তালিকাতে
+     বর্ষফল ও নামকরণের window-ফলব্যাক ছিল না — তাই localStorage একটু
+     নড়লেই টাকা কাটা হয়েও PDF আসত না। তালিকাটা এখন সাইটের পাতা
+     পড়ে মিলিয়ে দেখা হয় — নতুন ক্যালকুলেটর এলে সেটাও ধরা পড়বে। */
+  {
+    const SITE = '/home/user/services';
+    const bundler = fs.readFileSync(path.join(APP, 'scripts/bundle-web-assets.js'), 'utf8');
+    let miss = 0, seen = 0;
+    if (!fs.existsSync(SITE)) bad('services রিপো পাওয়া গেল না — চাবির তালিকা মেলানো গেল না');
+    else {
+      /* ⚠️ `-print.html` পাতা তথ্য **পড়ে**, লেখে না — বাদ। আর `=` হতে হবে
+         বসানো, তুলনা (`===`) নয় — প্রথম রূপে ঠিক সেই তুলনাগুলোই পাঁচটি
+         মিথ্যে লাল দিয়েছিল (CLAUDE.md-এর ২ নং নিয়ম)। */
+      for (const f of fs.readdirSync(SITE).filter(x => x.endsWith('.html') && !x.endsWith('-print.html'))) {
+        const src = fs.readFileSync(path.join(SITE, f), 'utf8');
+        for (const m of src.matchAll(/window\.(_\w*PrintData)\s*=(?!=)/g)) {
+          seen++;
+          if (!bundler.includes("'" + m[1] + "'")) { bad(`${f} — window.${m[1]} সেতুর তালিকায় নেই`); miss++; }
+        }
+        for (const m of src.matchAll(/localStorage\.setItem\('(\w+_print_data)'/g)) {
+          seen++;
+          if (!bundler.includes("'" + m[1] + "'")) { bad(`${f} — '${m[1]}' সেতুর তালিকায় নেই`); miss++; }
+        }
+      }
+      if (!seen) bad('সাইটে একটাও ছাপার-তথ্যের চাবি খুঁজে পাওয়া গেল না — পরীক্ষাটাই অন্ধ');
+      else if (!miss) ok(`ছাপার-তথ্যের ${seen}টি চাবিই সেতুর তালিকায় আছে`);
+    }
+  }
+
   const srv = await serve();
   const br = await cr.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   for (const [name] of PAGES) {
