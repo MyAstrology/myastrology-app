@@ -221,19 +221,73 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
      পরীক্ষা; তাই লাইভে সীমাটা কেবল "কিছু একটা আঁকা হয়েছে"-র পাহারা। */
   var _min=/^https?:/.test(location.protocol)?Math.min(${minLen},2000):${minLen};
   if(root && _len > _min && _settled){
+    if(window.__myaCapBusy) return; window.__myaCapBusy=1;
     [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
-    /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — expo-print
-       ওগুলো খুঁজে পায় কেবল <base> থাকলে। বান্ডলে (about:blank) দরকার নেই। */
-    if(/^https?:/.test(location.protocol) && !document.querySelector('base')){
+    var live=/^https?:/.test(location.protocol);
+    /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — <base>
+       থাকলে অন্তত ঠিকানাটা ঠিক থাকে। বান্ডলে (about:blank) দরকার নেই। */
+    if(live && !document.querySelector('base')){
       var b=document.createElement('base'); b.href=location.origin+'/';
       document.head.insertBefore(b, document.head.firstChild);
     }
-    var h=document.documentElement.outerHTML, C=200000, n=Math.ceil(h.length/C)||1;
-    for(var i=0;i<n;i++){
-      window.ReactNativeWebView.postMessage(JSON.stringify({
-        __rn:${JSON.stringify(type)}, i:i, total:n, chunk:h.substring(i*C,(i+1)*C)
-      }));
+    /* ⛔ ২০২৬-০৯-২৫ — কিন্তু ঠিকানা ঠিক থাকলেই চলে না। সহকর্মীর ফোনে ইংরেজি
+       বর্ষফল ও সংখ্যা জ্যোতিষের PDF: লোগোর জায়গায় ফাঁকা বাক্স, গণেশ ও দেবতার
+       ছবি নেই, পাতার ফ্রেম নেই, "Page 1 | …" লেখার মাঝখানে। expo-print
+       (Android) ছাপার সময় নেট থেকে কিছুই নামায় না — ব্রাউজারে নেট আটকে
+       হুবহু একই চেহারা পাওয়া গেল। বাংলা বান্ডল ঠিক থাকে কারণ সেখানে সব
+       ছবি ও CSS পাতার ভিতরেই থাকে। তাই এখানেও তাই করা হয়: স্টাইলশিট →
+       <style>, আর প্রতিটি ছবি/ফন্ট → data: ঠিকানা (একই সাইট, তাই fetch চলে)।
+       কোনোটা না নামলে আগের ঠিকানাই থাকে; সব মিলিয়ে বেশিজোর ১০ সেকেন্ড। */
+    function abs(u,base){try{return new URL(u,base).href;}catch(e){return u;}}
+    function toData(u){
+      if(/^data:/.test(u)) return Promise.resolve(u);
+      return fetch(u).then(function(r){ if(!r.ok) throw 0; return r.blob(); }).then(function(bl){
+        return new Promise(function(res){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=function(){res(u);}; fr.readAsDataURL(bl); });
+      }).catch(function(){ return u; });
     }
+    var URL_RE=/url\(\s*['"]?([^'")]+)['"]?\s*\)/g;
+    function inlineCss(css, base){
+      var urls=[], m; URL_RE.lastIndex=0;
+      while((m=URL_RE.exec(css))) if(urls.indexOf(m[1])<0) urls.push(m[1]);
+      return Promise.all(urls.map(function(u){ return toData(abs(u,base)); })).then(function(ds){
+        return css.replace(URL_RE, function(all,u){ var i=urls.indexOf(u); return 'url("'+(i>=0?ds[i]:abs(u,base))+'")'; });
+      });
+    }
+    function inlineAll(){
+      var jobs=[];
+      [].slice.call(document.querySelectorAll('link[rel~="stylesheet"][href]')).forEach(function(l){
+        var href=l.href;
+        jobs.push(fetch(href).then(function(r){ return r.ok?r.text():''; }).then(function(css){
+          if(!css) return;
+          return inlineCss(css, href).then(function(c2){
+            var st=document.createElement('style'); st.textContent=c2;
+            if(l.media && l.media!=='all') st.media=l.media;
+            l.parentNode && l.parentNode.replaceChild(st,l);
+          });
+        }).catch(function(){}));
+      });
+      [].slice.call(document.querySelectorAll('style')).forEach(function(st){
+        if(st.textContent.indexOf('url(')<0) return;
+        jobs.push(inlineCss(st.textContent, document.baseURI).then(function(c2){ st.textContent=c2; }));
+      });
+      [].slice.call(document.querySelectorAll('img[src]')).forEach(function(im){
+        jobs.push(toData(im.src).then(function(d){ im.setAttribute('src',d); im.removeAttribute('srcset'); im.removeAttribute('loading'); }));
+      });
+      [].slice.call(document.querySelectorAll('[style*="url("]')).forEach(function(el){
+        jobs.push(inlineCss(el.getAttribute('style'), document.baseURI).then(function(c2){ el.setAttribute('style',c2); }));
+      });
+      return Promise.race([Promise.all(jobs), new Promise(function(r){ setTimeout(r,10000); })]);
+    }
+    function send(){
+      var h=document.documentElement.outerHTML, C=200000, n=Math.ceil(h.length/C)||1;
+      for(var i=0;i<n;i++){
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          __rn:${JSON.stringify(type)}, i:i, total:n, chunk:h.substring(i*C,(i+1)*C)
+        }));
+      }
+      window.__myaCapBusy=0;
+    }
+    if(live && window.fetch && window.Promise) inlineAll().then(send, send); else send();
   } else { setTimeout(poll,400); }
 })();true;`;
 

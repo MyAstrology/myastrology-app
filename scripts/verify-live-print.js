@@ -36,6 +36,23 @@ function loadWebPrint() {
   return ctx.module.exports;
 }
 
+
+/* ⛔ ২০২৬-০৯-২৫ — expo-print (Android) ছাপার সময় নেট থেকে কিছু নামায় না।
+   তাই ধরা HTML-কে এখানে **নেট ছাড়া** আঁকা হয় — আগে এটা স্থানীয় সার্ভার থেকে
+   ছবি-CSS পেয়ে সবুজ দেখাত, অথচ সহকর্মীর ফোনে লোগো-গণেশ-ফ্রেম সব ফাঁকা। */
+async function offline(p) { await p.route(u => /^https?:/.test(u.href), r => r.abort()); }
+let brokenBad = 0;
+async function brokenImgs(p, tag) {
+  const r = await p.evaluate(() => ({
+    imgs: [...document.images].filter(i => i.getAttribute('src') && !(i.complete && i.naturalWidth > 0)).map(i => i.getAttribute('src').slice(0, 60)),
+    links: document.querySelectorAll('link[rel~="stylesheet"]').length,
+  }));
+  if (r.imgs.length || r.links) {
+    brokenBad++;
+    console.log(`❌ ${tag || ''} — নেট ছাড়া: ${r.imgs.length}টি ছবি ফাঁকা (${r.imgs.slice(0, 2).join(', ')}) · বাইরের স্টাইলশিট ${r.links}`);
+  }
+}
+
 (async () => {
   const W = loadWebPrint();
   const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: SVC, stdio: 'ignore' });
@@ -89,7 +106,9 @@ function loadWebPrint() {
       if (!html) { bad++; console.log(`❌ ${tag} — capture কিছু পাঠায়নি`); await ctx.close(); continue; }
       /* expo-print যা পায় — কেবল HTML; <base> দিয়েই CSS/ফন্ট/ছবি পৌঁছয় */
       const out = await ctx.newPage();
+      await offline(out);
       await out.setContent(html, { waitUntil: 'load' });
+      await brokenImgs(out, tag);
       await out.emulateMedia({ media: 'print' });
       const text = await out.evaluate(() => document.body.innerText);
       const bnLines = text.split('\n').filter(l => BN.test(l) && !/^\s*বাংলা\s*$/.test(l));
@@ -156,7 +175,9 @@ function loadWebPrint() {
       });
       if (!html) { bad++; console.log(`❌ ${tag} — capture কিছু পাঠায়নি`); await ctx.close(); continue; }
       const out = await ctx.newPage();
+      await offline(out);
       await out.setContent(html, { waitUntil: 'load' });
+      await brokenImgs(out, tag);
       await out.emulateMedia({ media: 'print' });
       const aBn = bnOf(await out.evaluate(() => document.body.innerText));
       const aPages = countPages(await out.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }));
@@ -201,7 +222,9 @@ function loadWebPrint() {
         if (!html) { bad++; console.log('❌ প্রিমিয়াম কুণ্ডলী (আমার রিপোর্ট) — capture কিছু পাঠায়নি'); }
         else {
           const out = await ctx.newPage();
+          await offline(out);
           await out.setContent(html, { waitUntil: 'load' });
+          await brokenImgs(out, 'প্রিমিয়াম কুণ্ডলী');
           const pdf = await out.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
           const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
           /* ⚠️ নির্দিষ্ট সংখ্যার সঙ্গে নয় — প্রথমবার "৪০-এর নিচে ভুল" লিখে মিথ্যে-লাল
@@ -223,6 +246,7 @@ function loadWebPrint() {
     if (br) await br.close();
     stop();
   }
+  bad += brokenBad;
   if (bad) { console.log(`\n✗ ${bad}টি ভাষায় অ্যাপের PDF-পথ ভাঙা`); process.exit(1); }
   console.log('\n✓ অ্যাপের en/hi PDF-পথ: সেতু → লাইভ অনূদিত ছাপার পাতা → সম্পূর্ণ PDF');
 })();
