@@ -157,6 +157,10 @@ export const PAGE_PRINT_JS = `(function(){try{
       var clone=document.documentElement.cloneNode(true);
       var sc=clone.querySelectorAll('script');
       for(var i=0;i<sc.length;i++){ sc[i].parentNode&&sc[i].parentNode.removeChild(sc[i]); }
+      /* ⚠️ expo-print JS ছাড়া আঁকে — <noscript>-এর "JavaScript প্রয়োজন" লেখাটা
+         তখন প্রতি পাতায় ছাপা হত (বর্ষফল, ২০২৬-০৯-২৫) */
+      var ns=clone.querySelectorAll('noscript');
+      for(var q=0;q<ns.length;q++){ ns[q].parentNode&&ns[q].parentNode.removeChild(ns[q]); }
       var html='<!DOCTYPE html>'+clone.outerHTML;
       if(!window.ReactNativeWebView) return;
       var CHUNK=200000, total=Math.ceil(html.length/CHUNK)||1;
@@ -222,7 +226,7 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   var _min=/^https?:/.test(location.protocol)?Math.min(${minLen},2000):${minLen};
   if(root && _len > _min && _settled){
     if(window.__myaCapBusy) return; window.__myaCapBusy=1;
-    [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
+    [].slice.call(document.querySelectorAll('script,noscript')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
     var live=/^https?:/.test(location.protocol);
     /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — <base>
        থাকলে অন্তত ঠিকানাটা ঠিক থাকে। বান্ডলে (about:blank) দরকার নেই। */
