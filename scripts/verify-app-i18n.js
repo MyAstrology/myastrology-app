@@ -312,33 +312,31 @@ console.log('⑥ ক্যালকুলেটরের ভাষা-রুট�
 
   /* একই প্রশ্ন REMOTE_LANG_PATHS-এর জন্যেও — ওই লাইভ পাতাগুলোর
      en/hi সংস্করণ সাইটে না থাকলে পাঠক ৪০৪ পাবেন। */
-  const lwv = fs.readFileSync(path.join(APP, 'src/components/LocalWebView.js'), 'utf8');
-  const rlp = /REMOTE_LANG_PATHS\s*=\s*\[([^\]]*)\]/.exec(lwv);
-  if (!rlp) bad('LocalWebView-এ REMOTE_LANG_PATHS নেই');
+  /* ⛔ ২০২৬-০৯-২৫ — তালিকাটা এখন navigation/langPages.js-এ, পাতা → ভাষা।
+     আগে "en ও hi দুটোই, নয়তো কিছুই না" — তাই কেবল-হিন্দি /hi/booking
+     অ্যাপে কখনো খুলত না, আর পরীক্ষাটাও সেটা ধরত না। */
+  const lpSrc = fs.readFileSync(path.join(APP, 'src/navigation/langPages.js'), 'utf8');
+  const RLP = (() => {
+    const m = /REMOTE_LANG_PATHS\s*=\s*(\{[\s\S]*?\});/.exec(lpSrc);
+    return m ? Function('return ' + m[1])() : null;
+  })();
+  if (!RLP) bad('langPages.js-এ REMOTE_LANG_PATHS নেই');
+  else if (!fs.existsSync(SERVICES)) ok(`${Object.keys(RLP).length}টি ভাষা-পাতা — রিপো নেই, ফাইল-যাচাই বাদ`);
   else {
-    const list = rlp[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
-    if (!fs.existsSync(SERVICES)) ok(`${list.length}টি REMOTE_LANG_PATHS — রিপো নেই, ফাইল-যাচাই বাদ`);
-    else {
-      const miss = [];
-      for (const p0 of list) for (const l of ['en', 'hi'])
-        if (!fs.existsSync(path.join(SERVICES, l, p0 + '.html'))) miss.push(`${l}/${p0}`);
-      if (!miss.length) ok(`${list.length}টি লাইভ পাতার en/hi সংস্করণ ওয়েবসাইটে আছে`);
-      else miss.forEach(m => bad(`REMOTE_LANG_PATHS বলছে /${m}, কিন্তু ফাইলটা নেই`));
+    const miss = [];
+    for (const [p0, langs] of Object.entries(RLP)) for (const l of langs)
+      if (!fs.existsSync(path.join(SERVICES, l, p0 + '.html'))) miss.push(`${l}/${p0}`);
+    if (!miss.length) ok(`${Object.keys(RLP).length}টি লাইভ পাতার তালিকাভুক্ত প্রতিটি ভাষা-সংস্করণ ওয়েবসাইটে আছে`);
+    else miss.forEach(m => bad(`langPages বলছে /${m}, কিন্তু ফাইলটা নেই — ওই ভাষায় ৪০৪`));
+    const late = [];
+    for (const f of fs.readdirSync(path.join(APP, 'src/screens'))) {
+      const src = fs.readFileSync(path.join(APP, 'src/screens', f), 'utf8');
+      for (const m of src.matchAll(/remoteUrl="https:\/\/myastrology\.in\/([a-z0-9-]+?)(?:\.html)?"/g))
+        for (const l of ['en', 'hi'])
+          if (fs.existsSync(path.join(SERVICES, l, m[1] + '.html')) && !(RLP[m[1]] || []).includes(l)) late.push(`${l}/${m[1]}`);
     }
-    if (fs.existsSync(SERVICES)) {
-      const late = [];
-      for (const f of fs.readdirSync(path.join(APP, 'src/screens'))) {
-        const src = fs.readFileSync(path.join(APP, 'src/screens', f), 'utf8');
-        for (const m of src.matchAll(/remoteUrl="https:\/\/myastrology\.in\/([a-z0-9-]+?)(?:\.html)?"/g)) {
-          const b = m[1];
-          if (list.includes(b)) continue;
-          if (fs.existsSync(path.join(SERVICES, 'en', b + '.html')) &&
-              fs.existsSync(path.join(SERVICES, 'hi', b + '.html'))) late.push(b);
-        }
-      }
-      if (!late.length) ok('en/hi আছে এমন লাইভ পাতা তালিকার বাইরে নেই');
-      else late.forEach(b => bad(`/${b}-এর en/hi আছে, অথচ REMOTE_LANG_PATHS-এ নেই`));
-    }
+    if (!late.length) ok('সাইটে থাকা কোনো ভাষা-পাতা তালিকার বাইরে নেই');
+    else late.forEach(b => bad(`/${b} সাইটে আছে, অথচ langPages-এ নেই — পাঠক বাংলা পাতা পান`));
   }
 
   /* কুণ্ডলী স্ক্রিন নিজের WebView চালায়, তাই আলাদা করে দেখা */
@@ -595,22 +593,23 @@ console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্য
   }
 
   const mi = fs.readFileSync(path.join(APP, 'src/navigation/menuItems.js'), 'utf8');
-  const marked = new Set();
-  for (const m of mi.matchAll(/\{ tab: '(\w+)',[^\n]*bnOnly: true/g)) marked.add(m[1]);
+  const pageOf = {};
+  for (const m of mi.matchAll(/\{ tab: '(\w+)',[^\n]*page: '([a-z0-9-]+)'/g)) pageOf[m[1]] = m[2];
   const tabs = [...mi.matchAll(/\{ tab: '(\w+)'/g)].map(m => m[1]);
   let mism = 0;
   for (const tab of tabs) {
     const f = path.join(APP, 'src/screens/' + tab + 'Screen.js');
     if (!fs.existsSync(f)) continue;
-    const remote = /remoteUrl=/.test(fs.readFileSync(f, 'utf8'));
-    if (remote !== marked.has(tab)) {
-      bad(tab + ' — bnOnly=' + marked.has(tab) + ' কিন্তু স্ক্রিনে remoteUrl=' + remote);
-      mism++;
-    }
+    const src = fs.readFileSync(f, 'utf8');
+    const remote = /remoteUrl=/.test(src);
+    const fixed = /remoteUrl="https:\/\/myastrology\.in\/([a-z0-9-]+?)(?:\.html)?"/.exec(src);
+    if (remote !== !!pageOf[tab]) { bad(tab + ' — মেনুতে page=' + (pageOf[tab] || '—') + ' কিন্তু স্ক্রিনে remoteUrl=' + remote); mism++; }
+    else if (fixed && fixed[1] !== pageOf[tab]) { bad(tab + ' — মেনুর page=' + pageOf[tab] + ', স্ক্রিন খোলে /' + fixed[1]); mism++; }
   }
-  if (!mism) ok(marked.size + 'টি bnOnly চিহ্নই স্ক্রিনের সঙ্গে মেলে');
-  if (/item\.bnOnly/.test(drawer)) ok('MenuDrawer চিহ্নটা সত্যিই দেখায়');
-  else bad('bnOnly তালিকা আছে কিন্তু কেউ পড়ে না — নীরব no-op');
+  if (!mism) ok(Object.keys(pageOf).length + 'টি মেনু-পাতার page স্ক্রিনের ঠিকানার সঙ্গে মেলে');
+  if (/bnOnly\s*:/.test(mi)) bad('menuItems-এ হাতে লেখা bnOnly ফিরে এসেছে — langPages.js থেকেই আসার কথা');
+  if (/hasLang\(item\.page, lang\)/.test(drawer)) ok('MenuDrawer চিহ্নটা langPages থেকে পড়ে');
+  else bad('মেনুর "বাংলা" চিহ্ন langPages পড়ে না — নীরব no-op');
 }
 
 /* ⑫ WebView নিজের পাতাতেই ফিরে যাওয়া চলবে না

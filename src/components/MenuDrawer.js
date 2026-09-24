@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../i18n/Text';
 import { useLanguage } from '../context/LanguageContext';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
+import { hasLang } from '../navigation/langPages';
 import { colors } from '../theme/colors';
 
 /* হ্যামবার্গার মেনুর ড্রয়ার — একটাই কপি।
@@ -53,7 +54,7 @@ export function MenuDrawer({ visible, onClose, navigation, insetTop = 0 }) {
                   না। বদলে চাপার **আগেই** বলা হয়, পরে নয়। লেবেলটা ভাষার নাম,
                   তাই অনূদিত হয় না — নইলে ইংরেজি পাঠক "Bengali" দেখতেন আর
                   সেটা আর চিনতেন না। */}
-              {item.bnOnly && lang !== 'bn' && (
+              {item.page && !hasLang(item.page, lang) && (
                 <Text style={s.bnChip} noTranslate>বাংলা</Text>
               )}
               <MaterialCommunityIcons name="chevron-right" size={16} color={colors.textSecondary} />

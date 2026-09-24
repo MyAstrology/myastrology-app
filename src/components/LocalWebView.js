@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { langRemote } from '../navigation/langPages';
 import { usePriceJS } from '../utils/localPrices';
 import { resolveWebNav } from '../utils/webNav';
 import { View, ActivityIndicator, StyleSheet, Linking, BackHandler } from 'react-native';
@@ -170,22 +171,7 @@ const PRINT_PAGES = new Set([
  */
 const SITE = 'https://myastrology.in/';
 
-/* যে লাইভ পাতাগুলোর সত্যিকারের /en/ ও /hi/ সংস্করণ সাইটে আছে।
-   ⚠️ এই তালিকাটা না থাকায় হস্তরেখা · রত্ন · জ্যোতিষ-শাস্ত্র তিনটেই
-   ঠিকানা হাতে লেখা ছিল (`…/palmistry.html`), তাই ভাষা যা-ই হোক বাংলা
-   পাতাই খুলত আর নিচে মিথ্যে করে "কেবল বাংলায়" লেখা ভেসে উঠত।
-   নতুন পথ যোগ করার আগে সাইটে en/ ও hi/ ফাইল দুটো আছে কিনা দেখে নিন —
-   `verify-app-i18n` সেটা মিলিয়ে দেখে। */
-/* ২০২৬-০৯-২৪ — vastu-science: সহকর্মী নিজে en/hi পাতা বানিয়েছেন;
-   verify-app-i18n সঙ্গে সঙ্গে ধরেছে যে অ্যাপ তখনো বাংলাটাই খুলছিল। */
-export const REMOTE_LANG_PATHS = ['palmistry', 'gemstone', 'astrology', 'vastu-science'];
-
-function langRemote(url, lang) {
-  if (!url || lang === 'bn') return url;
-  const m = /^https:\/\/myastrology\.in\/([a-z0-9-]+?)(?:\.html)?$/.exec(url);
-  if (!m || !REMOTE_LANG_PATHS.includes(m[1])) return url;
-  return SITE + lang + '/' + m[1];
-}
+/* কোন লাইভ পাতা কোন ভাষায় আছে — src/navigation/langPages.js (একটাই উৎস) */
 
 export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl: remoteUrlRaw, webPath, hideResultsOnBack = true, pagePrint }) {
   /* pagePrint = {fileName, dialogTitle} — যে পাতাগুলো নিজেরাই ছাপে
