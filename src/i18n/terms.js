@@ -2019,6 +2019,10 @@ export const TERMS = {
     "en": "Taurus",
     "hi": "वृषभ"
   },
+  "বৃষ সংক্রান্তি": {
+    "en": "Vrishabha Sankranti",
+    "hi": "वृषभ संक्रांति"
+  },
   "বৃহস্পতিবার": {
     "en": "Thursday",
     "hi": "गुरुवार"
@@ -3110,6 +3114,10 @@ export const TERMS = {
   "সূর্যের বৃশ্চিক রাশিতে প্রবেশ।": {
     "en": "The Sun enters Vrishchika rashi.",
     "hi": "सूर्य का वृश्चिक राशि में प्रवेश।"
+  },
+  "সূর্যের বৃষ রাশিতে প্রবেশ।": {
+    "en": "The Sun enters Vrishabha rashi.",
+    "hi": "सूर्य का वृषभ राशि में प्रवेश।"
   },
   "সূর্যের মিথুন রাশিতে প্রবেশ।": {
     "en": "The Sun enters Mithuna rashi.",

@@ -78,6 +78,6 @@ async function calc(pg) {
     if (!/yv:\(window\._yvResult\|\|null\)[\s\S]*yv:\(window\._yvResult\|\|null\)/.test(html)) fail('① প্রিমিয়াম PDF-এর দুই snapshot-এ yv নেই');
     if (errs.length) fail('বান্ডলে ত্রুটি: ' + errs[0]);
     if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো`);
-  } finally { await br.close(); }
+  } finally { await br.close(); try { srv.kill(); } catch (e) {} }
   if (bad) { console.log(`\n✗ ${bad}টি সমস্যা`); process.exit(1); }
 })();
