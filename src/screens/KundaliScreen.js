@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { usePriceJS } from '../utils/localPrices';
 import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, BackHandler, Linking } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
@@ -489,6 +490,8 @@ export function KundaliScreen() {
   const alertT = useAlert();
   /* ভাষা বদলালেই নতুন করে তৈরি — ইনজেক্ট হওয়া লেখাও তখন পাঠকের ভাষায় */
   const injectedJS = React.useMemo(() => makeInjectedJS(t), [t]);
+  /* বিদেশি পাঠকের জন্য পাতার ₹ → Play-র দাম (localPrices.js) */
+  const priceJs = usePriceJS(webViewRef);
   const [langFellBack, setLangFellBack] = useState(false);
   const langBase = ((lang === 'en' || lang === 'hi') && !langFellBack)
     ? 'https://myastrology.in/' + lang + '/kundali'
@@ -622,7 +625,7 @@ export function KundaliScreen() {
               geolocationEnabled={true}
               scrollEnabled={true}
               injectedJavaScriptBeforeContentLoaded={EARLY_CSS_JS}
-              injectedJavaScript={injectedJS}
+              injectedJavaScript={injectedJS + '\n' + priceJs}
               onNavigationStateChange={state => {
                 setWebCanGoBack(state.canGoBack);
                 if (state.loading) return;

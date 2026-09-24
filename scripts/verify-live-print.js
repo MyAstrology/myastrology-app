@@ -29,7 +29,9 @@ function loadWebPrint() {
   src = src.replace(/^import .*;$/mg, '')
     .replace(/^export (const|function|async function) /mg, '$1 ');
   src += '\nmodule.exports={OPEN_BRIDGE_JS,printSource,livePrintSource,makeCaptureJS,SITE_ORIGIN};';
-  const ctx = { module: { exports: {} }, JSON, Object, String };
+  const ctx = { module: { exports: {} }, JSON, Object, String,
+    /* localPrices.js — ভারতীয় পাঠক (map null): দাম-বদল নেই */
+    getPriceMap: () => null, priceJS: () => '' };
   vm.runInNewContext(src, ctx);
   return ctx.module.exports;
 }

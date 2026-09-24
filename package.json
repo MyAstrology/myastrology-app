@@ -29,7 +29,8 @@
     "verify-festival-dates": "node scripts/verify-festival-dates.js",
     "check:imports": "node scripts/check-imports.js",
     "verify-print-data": "node scripts/verify-print-data.js",
-    "verify-page-fill": "node scripts/verify-page-fill.js"
+    "verify-page-fill": "node scripts/verify-page-fill.js",
+    "verify-local-prices": "node scripts/verify-local-prices.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

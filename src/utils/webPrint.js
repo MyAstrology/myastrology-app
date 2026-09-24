@@ -15,6 +15,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { getPriceMap, priceJS } from './localPrices';
 
 export const PDF_CHUNK = 'pagePdfChunk';
 
@@ -35,7 +36,10 @@ export function withPrintData(html, rawJson, lang) {
   const safe = JSON.stringify(rawJson).replace(/</g, '\\u003c');
   const L = (lang === 'en' || lang === 'hi') ? lang : (lang === 'bn' ? 'bn' : null);
   const langJs = L ? `try{document.documentElement.setAttribute('data-mya-lang',${JSON.stringify(L)});}catch(e){}` : '';
-  return html.replace('<head>', () => `<head><script>window.__myaPrintData=${safe};${langJs}${IMG_FIX_JS}<\/script>`);
+  /* বিদেশি পাঠকের PDF-এর শেষ পাতায় ₹-এর বদলে Play-র দাম (localPrices.js) —
+     দাম পড়া হয় এখন, ছাপার মুহূর্তে */
+  const pj = priceJS(getPriceMap());
+  return html.replace('<head>', () => `<head><script>window.__myaPrintData=${safe};${langJs}${IMG_FIX_JS}${pj}<\/script>`);
 }
 
 /*  ⛔ ২০২৬-০৯-২৪ — ইংরেজি/হিন্দি ক্রেতার PDF-এর উৎস।
@@ -82,7 +86,7 @@ export function livePrintSource(url, rawJson, lang) {
     uri: SITE_ORIGIN + path,
     before: `(function(){try{var r=${safe};`
       + `try{localStorage.setItem(${JSON.stringify(PRINT_KEYS[m[1]])},r);}catch(e){}`
-      + `window.__myaPrintData=r;}catch(e){}})();true;`,
+      + `window.__myaPrintData=r;}catch(e){}})();` + priceJS(getPriceMap()) + `true;`,
   };
 }
 

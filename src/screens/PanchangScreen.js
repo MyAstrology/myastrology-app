@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, forwardRef } from 'react';
+import { usePriceJS } from '../utils/localPrices';
 import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
@@ -427,6 +428,8 @@ const EARLY_CSS_JS = buildEarlyCSS(APP_CSS);
 const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMessage, earlyJS, onReady, onUtsab, onLoadFail }, ref) {
   const navigation = useNavigation();
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
+  /* ₹২১-এর পঞ্জিকা PDF ও ₹৫০১-এর প্রচার — বিদেশি পাঠকের জন্য Play-র দাম */
+  const priceJs = usePriceJS(ref);
 
   const handleNavRequest = (request) => {
     const url = request.url || '';
@@ -480,11 +483,11 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
         startInLoadingState={true}
         geolocationEnabled={true}
         injectedJavaScriptBeforeContentLoaded={earlyJS !== undefined ? earlyJS : EARLY_CSS_JS}
-        injectedJavaScript={injectedJavaScript}
+        injectedJavaScript={injectedJavaScript + '\n' + priceJs}
         // পাতার ভিতরের লিংকে গেলে (যেমন উৎসব-হাব থেকে কোনো উৎসবের নিজস্ব
         // পাতায়) injectedJavaScript আপনাআপনি আর চলে না — তখন সাইটের হেডার/
         // ফুটার ফিরে আসত। তাই প্রতি লোডের শেষে আবার বসানো হচ্ছে।
-        onLoadEnd={() => { ref?.current?.injectJavaScript(injectedJavaScript); if (onReady) onReady(); }}
+        onLoadEnd={() => { ref?.current?.injectJavaScript(injectedJavaScript + '\n' + priceJs); if (onReady) onReady(); }}
         onMessage={onMessage}
         onShouldStartLoadWithRequest={handleNavRequest}
         onLoadStart={onLoadStart}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { usePriceJS } from '../utils/localPrices';
 import { resolveWebNav } from '../utils/webNav';
 import { View, ActivityIndicator, StyleSheet, Linking, BackHandler } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
@@ -453,6 +454,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
 
       হুক সবসময় শর্তের **উপরে** — কোনো ব্যতিক্রম নেই।                    */
   const resultsTrackerJS = React.useMemo(() => makeResultsTrackerJS(t), [t]);
+  /* বিদেশি পাঠকের জন্য পাতার ₹ → Play-র দাম (১০/১১ নম্বর; localPrices.js) */
+  const priceJs = usePriceJS(webViewRef);
 
   if (error) {
     return (
@@ -485,7 +488,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const fullInjectedJS = (injectedJS || '') + '\n' + resultsTrackerJS
     + '\n' + HIDE_LANG_SWITCH_JS
     + (isLive ? '\n' + OPEN_BRIDGE_JS : '')
-    + (pagePrint ? '\n' + PAGE_PRINT_JS : '');
+    + (pagePrint ? '\n' + PAGE_PRINT_JS : '')
+    + (priceJs ? '\n' + priceJs : '');
 
   // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
   // Vastu/Palmistry/...) এর মানে হলো ওয়েবসাইটের নিজস্ব header/nav/footer-সহ
