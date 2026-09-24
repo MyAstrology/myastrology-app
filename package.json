@@ -21,6 +21,7 @@
     "verify-app-a11y": "node scripts/verify-app-a11y.js",
     "build-kundali-print": "node scripts/build-kundali-print.js",
     "verify-print-bundle": "node scripts/verify-print-bundle.js",
+    "verify-live-print": "TZ=Asia/Kolkata node scripts/verify-live-print.js",
     "check:startup": "node scripts/check-startup-weight.js",
     "verify-hook-order": "node scripts/verify-hook-order.js",
     "verify-r8": "node scripts/verify-r8.js",

@@ -176,6 +176,11 @@ TypeScript-এর পার্সার (`/opt/node22/lib/node_modules/typescrip
 **কিন্তু নীরবে নয়** — নিচে এক লাইনে বলা হয়। নতুন `webPath` বসালে সাইটে ওই
 পথের `/en/` ও `/hi/` ফাইল **থাকতেই হবে**।
 
+⚠️ **en/hi PDF আসে লাইভ ছাপার পাতা থেকে** (`printSource`), বান্ডল থেকে নয় —
+বান্ডলে অনুবাদ-যন্ত্র নেই, তাই আগে মলাট-সূচি-বিজ্ঞাপন বাংলা থাকত। লাইভ
+পাতায় window.open-সেতু বসায় `LocalWebView` (`OPEN_BRIDGE_JS`); capture অনুবাদ
+বসা পর্যন্ত অপেক্ষা করে — না করলে ৬৪টি বাংলা লাইন (মেপে দেখা)।
+
 ⚠️ **`KundaliScreen` নিজের WebView চালায়** — `LocalWebView`-এর প্রতিটি
 সংশোধন ওখানে **আলাদা করে** বসাতে হয়। একই কারণে পাঁচটা জিনিস বাদ পড়েছে
 (ভাষা-রুটিং, ভাষা-সারি ঢাকা, Play-বিজ্ঞাপন ঢাকা, ব্যাক-পুনরুদ্ধার,
@@ -249,6 +254,7 @@ TypeScript-এর পার্সার (`/opt/node22/lib/node_modules/typescrip
 npm run check:parse          # ৮০ ফাইল + ১৩ বান্ডল (node --check নয়!)
 npm run verify-app-i18n      # ভাষা, t()-এর scope, দুই WebView, webPath
 npm run verify-print-bundle  # kundali-print বান্ডল জেনারেটরের সঙ্গে মেলে
+npm run verify-live-print    # en/hi PDF: সেতু → লাইভ অনূদিত ছাপার পাতা (../services লাগে)
 npm run verify-play-billing  # API-আকৃতি, ক্রম, চিহ্ন-মোছা, দুই দিক
 npm run verify-app-a11y      # কেবল-আইকন বোতামে লেবেল
 npm run verify-r8            # minify সত্যিই চালু

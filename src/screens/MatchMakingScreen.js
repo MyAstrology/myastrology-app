@@ -4,6 +4,7 @@ import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
 import { Text } from '../i18n/Text';
+import { useLanguage } from '../context/LanguageContext';
 import { useAlert } from '../i18n/Text';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -16,11 +17,8 @@ import PRINT_HTML from '../web-html/match-making-print';
 import { colors } from '../theme/colors';
 import { haptics } from '../utils/haptics';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
-import { makeCaptureJS, collectPdfChunk, withPrintData } from '../utils/webPrint';
+import { makeCaptureJS, collectPdfChunk, printSource } from '../utils/webPrint';
 
-function buildPrintHtml(rawJson) {
-  return withPrintData(PRINT_HTML, rawJson);
-}
 
 const MM_CSS = `
 /* ── Hide website chrome ── */
@@ -354,6 +352,8 @@ const CAPTURE_JS = makeCaptureJS('mmPdfChunk');
 export function MatchMakingScreen() {
   /* Alert-এর শিরোনাম, বার্তা ও বোতামের লেখা পাঠকের ভাষায় */
   const alertT = useAlert();
+  /* ইংরেজি/হিন্দিতে PDF লাইভ অনূদিত ছাপার পাতা থেকে — printSource দেখুন */
+  const { lang } = useLanguage();
   const [generating, setGenerating] = useState(false);
   const [pdfRenderHtml, setPdfRenderHtml] = useState(null);
   const pdfWebViewRef = useRef(null);
@@ -368,8 +368,8 @@ export function MatchMakingScreen() {
     }
     pdfBusyRef.current = true;
     setGenerating(true);
-    setPdfRenderHtml(buildPrintHtml(rawJson));
-  }, []);
+    setPdfRenderHtml(printSource('match-making-print', PRINT_HTML, rawJson, lang));
+  }, [lang]);
 
   const handlePdfRendered = useCallback(async (e) => {
     let m;
@@ -452,7 +452,8 @@ export function MatchMakingScreen() {
           style={s.pdfRenderer}
           javaScriptEnabled={true}
           domStorageEnabled={true}
-          source={{ html: pdfRenderHtml }}
+          source={pdfRenderHtml.uri ? { uri: pdfRenderHtml.uri } : { html: pdfRenderHtml.html }}
+          injectedJavaScriptBeforeContentLoaded={pdfRenderHtml.before}
           onLoadEnd={() => {
             pdfWebViewRef.current?.injectJavaScript(CAPTURE_JS);
           }}

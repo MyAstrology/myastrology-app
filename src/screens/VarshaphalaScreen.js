@@ -7,7 +7,8 @@ import html from '../web-html/varshaphala';
 import { colors } from '../theme/colors';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 import PRINT_HTML from '../web-html/varshaphala-print';
-import { makeCaptureJS, collectPdfChunk, deliverPdf, withPrintData } from '../utils/webPrint';
+import { makeCaptureJS, collectPdfChunk, deliverPdf, printSource } from '../utils/webPrint';
+import { useLanguage } from '../context/LanguageContext';
 import { useAlert, Text } from '../i18n/Text';
 
 const APP_CSS = `
@@ -242,14 +243,13 @@ const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('varshaphala');
 /*  A4 ছাপার পাতা — /varshaphala-print.html-এর বান্ডল।
  *  ⚠️ localStorage অ্যাপের WebView-এ সবসময় ভরসাযোগ্য নয়, তাই payload
  *  সরাসরি HTML-এর ভিতরেই বসানো হয় (নিউমেরোলজির প্রমাণিত ধাঁচ)। */
-function buildPrintHtml(rawJson) {
-  return withPrintData(PRINT_HTML, rawJson);
-}
 
 const CAPTURE_JS = makeCaptureJS('vpPdfChunk', 8000);
 
 export function VarshaphalaScreen() {
   const alertT = useAlert();
+  /* ইংরেজি/হিন্দিতে PDF লাইভ অনূদিত ছাপার পাতা থেকে — printSource দেখুন */
+  const { lang } = useLanguage();
   const [pdfHtml, setPdfHtml] = useState(null);
   const [busy, setBusy] = useState(false);
   const chunksRef = useRef({ parts: [], total: 0 });
@@ -259,8 +259,8 @@ export function VarshaphalaScreen() {
     if (busyRef.current) return;
     if (!rawJson) { alertT('ত্রুটি', 'PDF ডেটা পাওয়া যায়নি। আগে বিশ্লেষণ করুন।'); return; }
     busyRef.current = true; setBusy(true);
-    setPdfHtml(buildPrintHtml(rawJson));
-  }, [alertT]);
+    setPdfHtml(printSource('varshaphala-print', PRINT_HTML, rawJson, lang));
+  }, [alertT, lang]);
 
   const onPdfMessage = useCallback(async (e) => {
     let m; try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
@@ -289,7 +289,8 @@ export function VarshaphalaScreen() {
       ) : null}
       {pdfHtml ? (
         <WebView
-          source={{ html: pdfHtml }}
+          source={pdfHtml.uri ? { uri: pdfHtml.uri } : { html: pdfHtml.html }}
+          injectedJavaScriptBeforeContentLoaded={pdfHtml.before}
           style={s.hidden}
           javaScriptEnabled
           domStorageEnabled

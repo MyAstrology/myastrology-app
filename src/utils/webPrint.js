@@ -38,6 +38,64 @@ export function withPrintData(html, rawJson, lang) {
   return html.replace('<head>', () => `<head><script>window.__myaPrintData=${safe};${langJs}${IMG_FIX_JS}<\/script>`);
 }
 
+/*  ⛔ ২০২৬-০৯-২৪ — ইংরেজি/হিন্দি ক্রেতার PDF-এর উৎস।
+ *  অ্যাপের বান্ডল করা ছাপার পাতাগুলো বাংলা-only (অনুবাদ-যন্ত্র নেই), অথচ
+ *  en/hi-তে ক্যালকুলেটর চলে লাইভ ওয়েবসাইটে, তাই রিপোর্টের লেখা ইংরেজি।
+ *  ফল: ভিতরে ইংরেজি, আর মলাট · সূচিপত্র · শেষ পাতা · বিজ্ঞাপন বাংলায় —
+ *  সহকর্মীর ১৬ নম্বর অভিযোগ হুবহু। ওয়েবসাইটের লাইভ ছাপার পাতা সম্পূর্ণ
+ *  অনূদিত (verify-kundali-pdf-lang), তাই en/hi-তে লুকোনো WebView ওটাই
+ *  খোলে, আর তথ্যটা পাতার নিজের JS চলার **আগেই** বসিয়ে দেওয়া হয়
+ *  (localStorage ও window.__myaPrintData — ছাপার পাতা দুটোই পড়ে)।
+ *  বাংলায় আগের মতোই বান্ডল — নেট ছাড়াও চলে। */
+export const SITE_ORIGIN = 'https://myastrology.in';
+const PRINT_KEYS = {
+  'match-making-print': 'match_print_data',
+  'kundali-print':      'kundali_print_data',
+  'numerology-print':   'numerology_print_data',
+  'varshaphala-print':  'varshaphala_print_data',
+  'namakaran-print':    'namakaran_print_data',
+};
+export function printSource(page, bundleHtml, rawJson, lang) {
+  if ((lang === 'en' || lang === 'hi') && PRINT_KEYS[page]) {
+    const raw = typeof rawJson === 'string' ? rawJson : JSON.stringify(rawJson);
+    const safe = JSON.stringify(raw).replace(/</g, '\\u003c');
+    return {
+      uri: `${SITE_ORIGIN}/${page}.html?lang=${lang}`,
+      before: `(function(){try{var r=${safe};`
+        + `try{localStorage.setItem(${JSON.stringify(PRINT_KEYS[page])},r);}catch(e){}`
+        + `window.__myaPrintData=r;}catch(e){}})();true;`,
+    };
+  }
+  return { html: withPrintData(bundleHtml, rawJson, lang) };
+}
+
+/*  ⛔ ২০২৬-০৯-২৪ — লাইভ (en/hi) ক্যালকুলেটর পাতার window.open-সেতু।
+ *  বান্ডলে এই সেতু bundle-web-assets.js বসায়; লাইভ পাতায় কেউ বসাত না।
+ *  ফলে ইংরেজি/হিন্দি পাঠক প্রোমো/পেমেন্টের পর PDF চাপলে ছাপার পাতাটা
+ *  হয় নিঃশব্দে হারাত, নয়তো একই WebView-এ খুলে যেত — যেখান থেকে
+ *  ডাউনলোডের কোনো পথ নেই (window.print() WebView-এ কিছুই করে না)।
+ *  কেবল *-print পাতা ধরা হয়; বাকি সব window.open আগের মতোই চলে। */
+export const OPEN_BRIDGE_JS = `(function(){try{
+  if(window.__myaOpenBridge) return; window.__myaOpenBridge=1;
+  var _o=window.open;
+  var KEYS=${JSON.stringify(Object.entries(PRINT_KEYS).map(([pg, k]) => [pg, k]))};
+  var WIN={'match_print_data':'_matchPrintData','kundali_print_data':'_kundaliPrintData','numerology_print_data':'_nuPrintData','varshaphala_print_data':'_vpPrintData','namakaran_print_data':'_nkPrintData'};
+  window.open=function(url,target,f){
+    var u=String(url||''), m=/([a-z-]+-print)(?:\\.html)?(?:[?#]|$)/.exec(u);
+    if(m && window.ReactNativeWebView){
+      var key=null, raw='';
+      for(var i=0;i<KEYS.length;i++) if(KEYS[i][0]===m[1]) key=KEYS[i][1];
+      if(key){
+        try{ raw=localStorage.getItem(key)||''; }catch(e){}
+        try{ if(!raw && window[WIN[key]]) raw=JSON.stringify(window[WIN[key]]); }catch(e){}
+      }
+      window.ReactNativeWebView.postMessage(JSON.stringify({__rn:'open',url:u,raw:raw}));
+      return {focus:function(){},closed:false,close:function(){}};
+    }
+    return _o?_o.call(window,url,target,f):null;
+  };
+}catch(e){}})();`;
+
 /*  ⛔ ছাপার তথ্যের ভিতরে কিছু ছবির **ঠিকানা** থাকে (সংখ্যা জ্যোতিষের
  *  দেবতা ও রত্ন — `/gallery/shukra_dev.webp`)। কোনটা আসবে সেটা পাঠকের
  *  সংখ্যা ঠিক করে, তাই বান্ডলে আগে থেকে বসিয়ে রাখা যায় না।
@@ -101,6 +159,18 @@ export const PAGE_PRINT_JS = `(function(){try{
  */
 export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   var root=document.getElementById('printRoot');
+  /* ⛔ ২০২৬-০৯-২৪ — লাইভ (en/hi) ছাপার পাতায় অভিধান আসে নেটওয়ার্ক থেকে,
+     অনুবাদ বসে তার পরে। আগেভাগে ধরলে মলাট বাংলা থেকে যেত (কুণ্ডলীর
+     পর্দায় একই শিক্ষা, ২০২৬-০৯-০৮)। MyaI18n.ready + ৬০০ms, সর্বোচ্চ ~১২ সে.। */
+  if(!window.__myaI18nOk){
+    window.__myaI18nT0=window.__myaI18nT0||Date.now();
+    if(window.MyaI18n && window.MyaI18n.ready && !window.__myaI18nHooked){
+      window.__myaI18nHooked=1;
+      window.MyaI18n.ready.then(function(){ setTimeout(function(){ window.__myaI18nOk=1; },600); });
+    }
+    if(!window.MyaI18n || Date.now()-window.__myaI18nT0>12000) window.__myaI18nOk=1;
+    if(!window.__myaI18nOk){ setTimeout(poll,400); return; }
+  }
   /* ⛔ ছবি নামার আগেই ধরলে PDF-এ ফাঁকা বাক্স পড়ে, আর ছবি
      শূন্য হওয়ায় পাশের লেখা সরে এসে ওভারল্যাপ দেখায় (খ২)।
      তাই সব ছবি শেষ হওয়া পর্যন্ত অপেক্ষা — তবে বেশিজোর ~৬ সেকেন্ড,
@@ -112,6 +182,12 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   if(pending && window.__myaImgWait < 15){ setTimeout(poll,400); return; }
   if(root && root.innerHTML.length > ${minLen}){
     [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
+    /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — expo-print
+       ওগুলো খুঁজে পায় কেবল <base> থাকলে। বান্ডলে (about:blank) দরকার নেই। */
+    if(/^https?:/.test(location.protocol) && !document.querySelector('base')){
+      var b=document.createElement('base'); b.href=location.origin+'/';
+      document.head.insertBefore(b, document.head.firstChild);
+    }
     var h=document.documentElement.outerHTML, C=200000, n=Math.ceil(h.length/C)||1;
     for(var i=0;i<n;i++){
       window.ReactNativeWebView.postMessage(JSON.stringify({

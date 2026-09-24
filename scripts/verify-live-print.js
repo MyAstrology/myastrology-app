@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+/* ইংরেজি/হিন্দি পাঠকের PDF — অ্যাপের আসল পথ, ব্রাউজারে অনুকরণ করে।
+
+   কেন (২০২৬-০৯-২৪): অ্যাপে en/hi ক্যালকুলেটর চলে লাইভ ওয়েবসাইটে, কিন্তু
+   (১) লাইভ পাতায় window.open-সেতু ছিল না — PDF অনুরোধ onPrint-এ পৌঁছতই না;
+   (২) PDF বানানো হতো বাংলা ছাপার বান্ডল দিয়ে — মলাট, সূচি, বিজ্ঞাপন বাংলায়
+   (সহকর্মীর ৬ ও ১৬ নম্বর অভিযোগ)। এখন সেতু বসে (OPEN_BRIDGE_JS) আর
+   en/hi-তে লুকোনো WebView লাইভ অনূদিত ছাপার পাতা খোলে (printSource)।
+
+   অ্যাপ এখানে চালানো যায় না, তাই ঠিক সেই তিনটে জিনিস — webPrint.js-এর
+   OPEN_BRIDGE_JS, printSource ও makeCaptureJS — **হুবহু** ব্রাউজারে চালানো হয়,
+   ওয়েবসাইট রিপো (../services) স্থানীয় সার্ভারে "সাইট" হয়ে:
+     ১. /<lang>/match-making-এ গণনা → _doMatchPrint() → সেতুর বার্তায় raw আছে?
+     ২. printSource(...) → before-স্ক্রিপ্ট আগে বসিয়ে লাইভ ছাপার পাতা খোলা
+     ৩. makeCaptureJS-এর টুকরো জোড়া লাগিয়ে HTML → আসল PDF: পাতা ও বাংলা গোনা
+
+   চালানো:  node scripts/verify-live-print.js   (../services-এর node_modules লাগে) */
+const fs = require('fs'), path = require('path'), vm = require('vm');
+const { spawn } = require('child_process');
+const SVC = path.resolve(__dirname, '..', '..', 'services');
+const { chromium } = require(path.join(SVC, 'node_modules', '@playwright', 'test'));
+const PW_EXE = fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined;
+const PORT = 8981, ORIGIN = 'http://127.0.0.1:' + PORT;
+const BN = /[অ-হৎড়-য়]/;
+
+/* webPrint.js — import/export ছেঁটে vm-এ; বাকিটা হুবহু, যাতে পরীক্ষা আর কোড আলাদা না হয় */
+function loadWebPrint() {
+  let src = fs.readFileSync(path.join(__dirname, '..', 'src', 'utils', 'webPrint.js'), 'utf8');
+  src = src.replace(/^import .*;$/mg, '')
+    .replace(/^export (const|function|async function) /mg, '$1 ');
+  src += '\nmodule.exports={OPEN_BRIDGE_JS,printSource,makeCaptureJS,SITE_ORIGIN};';
+  const ctx = { module: { exports: {} }, JSON, Object, String };
+  vm.runInNewContext(src, ctx);
+  return ctx.module.exports;
+}
+
+(async () => {
+  const W = loadWebPrint();
+  const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: SVC, stdio: 'ignore' });
+  const stop = () => { try { srv.kill(); } catch (e) {} };
+  process.on('exit', stop);
+  await new Promise(r => setTimeout(r, 1500));
+  let bad = 0, br;
+  try {
+    br = await chromium.launch({ executablePath: PW_EXE });
+    for (const lang of ['en', 'hi']) {
+      const ctx = await br.newContext({ viewport: { width: 412, height: 900 } });
+      /* ১. লাইভ ক্যালকুলেটর + সেতু */
+      const pg = await ctx.newPage();
+      await pg.addInitScript(() => { window.__rnMsgs = []; window.ReactNativeWebView = { postMessage: m => window.__rnMsgs.push(m) }; });
+      await pg.goto(`${ORIGIN}/${lang}/match-making.html`, { waitUntil: 'domcontentloaded' });
+      await pg.waitForTimeout(4000);
+      await pg.evaluate(W.OPEN_BRIDGE_JS);
+      await pg.evaluate(() => {
+        const S = (id, v) => { const e = document.getElementById(id); if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } };
+        S('boyName', 'Rahul'); S('boyDobDay', '12'); S('boyDobMonth', '3'); S('boyDobYear', '1994'); S('boyTobHour', '10'); S('boyTobMin', '30'); S('boyCity', 'Kolkata'); S('boyLat', '22.5726'); S('boyLon', '88.3639');
+        S('girlName', 'Priya'); S('girlDobDay', '5'); S('girlDobMonth', '8'); S('girlDobYear', '1996'); S('girlTobHour', '6'); S('girlTobMin', '15'); S('girlCity', 'Kolkata'); S('girlLat', '22.5726'); S('girlLon', '88.3639');
+        runMatchCalc();
+      });
+      await pg.waitForTimeout(12000);
+      await pg.evaluate(() => _doMatchPrint());
+      const msg = await pg.evaluate(() => (window.__rnMsgs || []).map(m => JSON.parse(m)).find(m => m.__rn === 'open'));
+      const tag = `${lang} মিলন`;
+      if (!msg || !/match-making-print/.test(msg.url) || !msg.raw || msg.raw.length < 1000) {
+        bad++; console.log(`❌ ${tag} — সেতু: বার্তা ${msg ? `এল, raw ${msg.raw ? msg.raw.length : 0}` : 'আসেনি'}`); await ctx.close(); continue;
+      }
+      /* ২. printSource — অ্যাপ যে উৎস বানায় সেটাই, কেবল সাইটের ঠিকানা স্থানীয় */
+      const src = W.printSource('match-making-print', '<html><head></head><body></body></html>', msg.raw, lang);
+      if (!src.uri) { bad++; console.log(`❌ ${tag} — printSource লাইভ পাতা দেয়নি`); await ctx.close(); continue; }
+      const pr = await ctx.newPage();
+      await pr.addInitScript(() => { window.__rnMsgs = []; window.ReactNativeWebView = { postMessage: m => window.__rnMsgs.push(m) }; });
+      await pr.addInitScript({ content: src.before });
+      /* আগের কোনো সঠিক তথ্য localStorage-এ থেকে গিয়ে পরীক্ষাকে ধোঁকা না দেয় */
+      await pg.evaluate(() => localStorage.removeItem('match_print_data'));
+      await pr.goto(src.uri.replace(W.SITE_ORIGIN, ORIGIN), { waitUntil: 'domcontentloaded' });
+      /* ৩. অ্যাপের capture */
+      await pr.evaluate(W.makeCaptureJS('mmPdfChunk'));
+      await pr.waitForFunction(() => {
+        const ms = (window.__rnMsgs || []).map(m => JSON.parse(m)).filter(m => m.__rn === 'mmPdfChunk');
+        return ms.length && ms.length === ms[0].total;
+      }, null, { timeout: 45000 }).catch(() => {});
+      const html = await pr.evaluate(() => {
+        const ms = (window.__rnMsgs || []).map(m => JSON.parse(m)).filter(m => m.__rn === 'mmPdfChunk');
+        if (!ms.length || ms.length !== ms[0].total) return '';
+        return ms.sort((a, b) => a.i - b.i).map(m => m.chunk).join('');
+      });
+      if (!html) { bad++; console.log(`❌ ${tag} — capture কিছু পাঠায়নি`); await ctx.close(); continue; }
+      /* expo-print যা পায় — কেবল HTML; <base> দিয়েই CSS/ফন্ট/ছবি পৌঁছয় */
+      const out = await ctx.newPage();
+      await out.setContent(html, { waitUntil: 'load' });
+      await out.emulateMedia({ media: 'print' });
+      const text = await out.evaluate(() => document.body.innerText);
+      const bnLines = text.split('\n').filter(l => BN.test(l) && !/^\s*বাংলা\s*$/.test(l));
+      const pdf = await out.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
+      const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+      const hasBase = /<base [^>]*href=/.test(html);
+      if (bnLines.length || pages < 8 || !hasBase) {
+        bad++;
+        console.log(`❌ ${tag} — PDF ${pages} পাতা · বাংলা লাইন ${bnLines.length} · <base> ${hasBase}`);
+        bnLines.slice(0, 6).forEach(l => console.log('     · ' + l.trim().slice(0, 90)));
+      } else console.log(`✓ ${tag} — সেতু raw ${msg.raw.length} · লাইভ ছাপার পাতা · PDF ${pages} পাতা · বাংলা ০`);
+      await ctx.close();
+    }
+  } finally {
+    if (br) await br.close();
+    stop();
+  }
+  if (bad) { console.log(`\n✗ ${bad}টি ভাষায় অ্যাপের PDF-পথ ভাঙা`); process.exit(1); }
+  console.log('\n✓ অ্যাপের en/hi PDF-পথ: সেতু → লাইভ অনূদিত ছাপার পাতা → সম্পূর্ণ PDF');
+})();

@@ -15,7 +15,7 @@ import { useWebViewError, WebViewErrorOverlay } from './WebViewErrorOverlay';
 import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { HIDE_LANG_SWITCH_JS, RESULTS_CONTAINER_IDS, FORM_CONTAINER_IDS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { handleShareText } from '../utils/webShareBridge';
-import { PAGE_PRINT_JS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
+import { PAGE_PRINT_JS, collectPdfChunk, deliverPdf, OPEN_BRIDGE_JS } from '../utils/webPrint';
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
 import { useLanguage } from '../context/LanguageContext';
@@ -174,7 +174,9 @@ const SITE = 'https://myastrology.in/';
    পাতাই খুলত আর নিচে মিথ্যে করে "কেবল বাংলায়" লেখা ভেসে উঠত।
    নতুন পথ যোগ করার আগে সাইটে en/ ও hi/ ফাইল দুটো আছে কিনা দেখে নিন —
    `verify-app-i18n` সেটা মিলিয়ে দেখে। */
-export const REMOTE_LANG_PATHS = ['palmistry', 'gemstone', 'astrology'];
+/* ২০২৬-০৯-২৪ — vastu-science: সহকর্মী নিজে en/hi পাতা বানিয়েছেন;
+   verify-app-i18n সঙ্গে সঙ্গে ধরেছে যে অ্যাপ তখনো বাংলাটাই খুলছিল। */
+export const REMOTE_LANG_PATHS = ['palmistry', 'gemstone', 'astrology', 'vastu-science'];
 
 function langRemote(url, lang) {
   if (!url || lang === 'bn') return url;
@@ -466,8 +468,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   /* ভাষা-বদলের সারিটা অ্যাপে দেখানো হয় না — অ্যাপে ভাষা ঠিক হয়
      Settings থেকে, আর পাতার নিজের সারি সেটাকে না জানিয়েই বদলে দিত।
      এক জায়গায় বসানো, তাই প্রতিটি স্ক্রিনেই খাটে। */
+  /* ⛔ ২০২৬-০৯-২৪ — লাইভ পাতায় (en/hi ক্যালকুলেটর) window.open-সেতু।
+     বান্ডলে এটা bundle-web-assets.js বসায়; লাইভ পাতায় কেউ বসাত না, তাই
+     ইংরেজি/হিন্দি পাঠকের "PDF" অনুরোধ onPrint পর্যন্ত পৌঁছতই না। */
+  const isLive = /^https?:/i.test(uri || remoteUrl || langUrl || '');
   const fullInjectedJS = (injectedJS || '') + '\n' + resultsTrackerJS
     + '\n' + HIDE_LANG_SWITCH_JS
+    + (isLive ? '\n' + OPEN_BRIDGE_JS : '')
     + (pagePrint ? '\n' + PAGE_PRINT_JS : '');
 
   // injectedJavaScript চলে পেজ লোড হওয়ার *পরে* — remoteUrl পেজে (Gemstone/
