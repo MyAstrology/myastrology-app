@@ -25,9 +25,14 @@ export function remotePath(url) {
   return m ? m[1] : null;
 }
 
+/* যে পাতা আলাদা /en/ ফাইল নয়, ঠিকানার ?lang= দিয়ে ভাষা বদলায়
+   (blog-list — বাংলা, ইংরেজি ও হিন্দি পোস্ট একই তালিকায়; ২০২৬-০৯-২৫) */
+export const QUERY_LANG_PAGES = { 'blog-list': ['en', 'hi'] };
+
 /** এই ভাষায় পাতাটা আছে? বাংলা সবসময় আছে */
 export function hasLang(page, lang) {
-  return lang === 'bn' || (REMOTE_LANG_PATHS[page] || []).includes(lang);
+  return lang === 'bn' || (REMOTE_LANG_PATHS[page] || []).includes(lang)
+    || (QUERY_LANG_PAGES[page] || []).includes(lang);
 }
 
 /** ভাষা অনুযায়ী ঠিকানা — ওই ভাষার সংস্করণ না থাকলে বাংলা ঠিকানাই */

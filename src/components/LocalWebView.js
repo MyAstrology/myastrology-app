@@ -202,7 +202,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
      মিথ্যে করে "কেবল বাংলায়" লেখা ভেসে উঠত — ইংরেজি পাতার উপরে
      ইংরেজিতে লেখা "This page is still available in Bengali only"।
      ঠিকানায় আগে থেকেই /en/ বা /hi/ থাকলে লেখাটা আর দেখানো হয় না। */
-  const bnOnly = !!remoteUrl && lang !== 'bn' && !/\/(en|hi)\//.test(remoteUrl);
+  /* ?lang=en|hi — যে পাতা ঠিকানার প্রশ্ন দিয়ে ভাষা বদলায় (blog-list) */
+  const bnOnly = !!remoteUrl && lang !== 'bn' && !/\/(en|hi)\/|[?&]lang=(en|hi)\b/.test(remoteUrl);
   const [showBnOnly, setShowBnOnly] = useState(false);
   useEffect(() => {
     if (!bnOnly) { setShowBnOnly(false); return; }

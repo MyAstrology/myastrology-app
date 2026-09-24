@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { View, StyleSheet } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
 import { AppHeader } from '../components/AppHeader';
@@ -39,9 +40,12 @@ const INJECTED_JS = buildInjectedJS(APP_CSS);
 
 export function BlogScreen({ route }) {
   const slug = route?.params?.slug;
+  /* তালিকা অ্যাপের ভাষায় (সহকর্মীর ১৩) — blog-list ?lang= মানে, আর &app=1 পেলে
+     নিজের ভাষা-সারি লুকোয় (অ্যাপে ভাষা ঠিক হয় সেটিংস থেকে) */
+  const { lang } = useLanguage();
   const url = slug
     ? `https://myastrology.in/blog/${slug}.html`
-    : 'https://myastrology.in/blog-list.html';
+    : `https://myastrology.in/blog-list.html?lang=${lang === 'en' || lang === 'hi' ? lang : 'bn'}&app=1`;
   return (
     <View style={s.root}>
       <AppHeader />
