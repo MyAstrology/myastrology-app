@@ -1,7 +1,11 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
+import { HiddenPrintRenderer } from '../components/HiddenPrintRenderer';
 import { AppHeader } from '../components/AppHeader';
+import { Text } from '../i18n/Text';
+import { useLanguage } from '../context/LanguageContext';
+import { livePrintSource } from '../utils/webPrint';
 import { colors } from '../theme/colors';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -62,10 +66,31 @@ function safePath(raw) {
 export function WebPageScreen({ route }) {
   const path = safePath(route?.params?.path);
   const url = ORIGIN + '/' + path;
+  const { lang } = useLanguage();
+  const [printSrc, setPrintSrc] = useState(null);
+  /* ⛔ ২০২৬-০৯-২৪ — /my-reports-এর "ডাউনলোড" পাতা থেকে ছাপার পাতা খুলতে
+     চায় (kundali-print?premium=1 ইত্যাদি)। আগে এই পর্দায় onPrint-ই ছিল না,
+     তাই কেনা প্রিমিয়াম রিপোর্ট অ্যাপ থেকে নামানোই যেত না (সহকর্মীর ৮ নম্বর)। */
+  const onPrint = useCallback((raw, openUrl) => {
+    if (printSrc || !raw) return;
+    const src = livePrintSource(openUrl, raw, lang);
+    if (src) setPrintSrc(src);
+  }, [printSrc, lang]);
   return (
     <View style={s.root}>
       <AppHeader />
-      <LocalWebView key={url} name="webpage" remoteUrl={url} style={s.wv} injectedJS={INJECTED_JS} />
+      <LocalWebView key={url} name="webpage" remoteUrl={url} style={s.wv} injectedJS={INJECTED_JS}
+        onPrint={onPrint} />
+      {printSrc ? (
+        <View style={s.veil}>
+          <View style={s.card}>
+            <ActivityIndicator size="large" color={colors.gold} />
+            <Text style={s.msg}>PDF তৈরি হচ্ছে…</Text>
+          </View>
+        </View>
+      ) : null}
+      <HiddenPrintRenderer source={printSrc} fileName="MyAstrology_report.pdf"
+        onFinish={() => setPrintSrc(null)} />
     </View>
   );
 }
@@ -73,4 +98,8 @@ export function WebPageScreen({ route }) {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   wv:   { flex: 1 },
+  veil: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0,
+          backgroundColor: 'rgba(250,248,243,0.97)', alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: '#fff', borderRadius: 14, paddingVertical: 22, paddingHorizontal: 28, alignItems: 'center' },
+  msg:  { marginTop: 12, color: colors.text || '#333', fontSize: 15 },
 });

@@ -57,16 +57,33 @@ const PRINT_KEYS = {
 };
 export function printSource(page, bundleHtml, rawJson, lang) {
   if ((lang === 'en' || lang === 'hi') && PRINT_KEYS[page]) {
-    const raw = typeof rawJson === 'string' ? rawJson : JSON.stringify(rawJson);
-    const safe = JSON.stringify(raw).replace(/</g, '\\u003c');
-    return {
-      uri: `${SITE_ORIGIN}/${page}.html?lang=${lang}`,
-      before: `(function(){try{var r=${safe};`
-        + `try{localStorage.setItem(${JSON.stringify(PRINT_KEYS[page])},r);}catch(e){}`
-        + `window.__myaPrintData=r;}catch(e){}})();true;`,
-    };
+    return livePrintSource(`/${page}.html`, rawJson, lang);
   }
   return { html: withPrintData(bundleHtml, rawJson, lang) };
+}
+
+/*  যেকোনো ছাপার-পাতার ঠিকানা (পাতা যা window.open করল, যেমন
+ *  '/kundali-print.html?premium=1') → লাইভ উৎস। "আমার রিপোর্ট"-এর প্রিমিয়াম
+ *  PDF এভাবেই বানানো হয় — ?premium=1 সহ ঠিকানাটা হুবহু রাখা হয়।
+ *  ভাষা **সবসময়** পাঠানো হয় (বাংলাও) — না পেলে ছাপার পাতা localStorage-এর
+ *  পুরনো পছন্দ ধরে (match-making.html-এর ২০২৬-০৮-২৫ শিক্ষা)।
+ *  🔒 origin সবসময় নিজেদের সাইট; বাইরের ঠিকানা এলে null। */
+export function livePrintSource(url, rawJson, lang) {
+  let path = String(url || '').replace(/^https?:\/\/(www\.)?myastrology\.in/i, '');
+  if (/^[a-z][a-z0-9+.-]*:/i.test(path) || path.startsWith('//')) return null;
+  if (!path.startsWith('/')) path = '/' + path;
+  const m = /^\/([a-z-]+-print)(?:\.html)?(?=[?#]|$)/.exec(path);
+  if (!m || !PRINT_KEYS[m[1]]) return null;
+  const L = (lang === 'en' || lang === 'hi') ? lang : 'bn';
+  if (!/[?&]lang=/.test(path)) path += (path.includes('?') ? '&' : '?') + 'lang=' + L;
+  const raw = typeof rawJson === 'string' ? rawJson : JSON.stringify(rawJson);
+  const safe = JSON.stringify(raw).replace(/</g, '\\u003c');
+  return {
+    uri: SITE_ORIGIN + path,
+    before: `(function(){try{var r=${safe};`
+      + `try{localStorage.setItem(${JSON.stringify(PRINT_KEYS[m[1]])},r);}catch(e){}`
+      + `window.__myaPrintData=r;}catch(e){}})();true;`,
+  };
 }
 
 /*  ⛔ ২০২৬-০৯-২৪ — লাইভ (en/hi) ক্যালকুলেটর পাতার window.open-সেতু।
@@ -180,7 +197,20 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   var pending=0;
   for(var q=0;q<imgs.length;q++) if(!imgs[q].complete) pending++;
   if(pending && window.__myaImgWait < 15){ setTimeout(poll,400); return; }
-  if(root && root.innerHTML.length > ${minLen}){
+  /* ⛔ ২০২৬-০৯-২৪ — আগে printRoot-এ minLen অক্ষর দেখলেই ধরে নেওয়া হতো।
+     কিন্তু ছাপার পাতা ধাপে ধাপে গড়ে — প্রিমিয়াম কুণ্ডলী মেপে দেখা গেল
+     অর্ধেক-আঁকা অবস্থায় ধরা পড়ে ১৭ পাতার PDF, অথচ পুরোটা ৮০+ পাতা।
+     সহকর্মীর "একবার ৩৯ পাতা, আবার নামালে ৯০+" — এটাই। এখন ধরা হয় তখনই,
+     যখন "লোড হচ্ছে" বার্তা লুকিয়েছে **এবং** আকার টানা তিনবার (১.২ সে.)
+     একই থেকেছে; সর্বোচ্চ ~৪০ সেকেন্ড, তারপর যা আছে। */
+  var _len=root?root.innerHTML.length:0, _lm=document.getElementById('loadMsg');
+  var _loading=!!(_lm && _lm.style.display!=='none' && _lm.offsetParent!==null);
+  window.__myaCapT0=window.__myaCapT0||Date.now();
+  if(_len===window.__myaLastLen && !_loading) window.__myaStable=(window.__myaStable||0)+1;
+  else window.__myaStable=0;
+  window.__myaLastLen=_len;
+  var _settled=window.__myaStable>=3 || (Date.now()-window.__myaCapT0>40000);
+  if(root && _len > ${minLen} && _settled){
     [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
     /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — expo-print
        ওগুলো খুঁজে পায় কেবল <base> থাকলে। বান্ডলে (about:blank) দরকার নেই। */

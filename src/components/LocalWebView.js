@@ -226,6 +226,12 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const [error, setError] = useState(null);
   const navigation = useNavigation();
   const webViewRef = useRef(null);
+  /* ⛔ ২০২৬-০৯-২৪ — লগইন-সেতু একবারই পাঠানো হতো, পর্দা খোলার মুহূর্তে।
+     পাতা তখনো লোড হতে থাকলে বার্তাটা হারাত, আর /my-reports "সাইন-ইন
+     করুন" দেখাত — সহকর্মী অ্যাপে লগইন থাকা অবস্থাতেই আবার লগইন করতে
+     বাধ্য হয়েছিলেন। টোকেন মনে রেখে প্রতিটি লোড-শেষে আবার পাঠানো হয়
+     (custom token এক ঘণ্টা চলে, তাই ৫০ মিনিটের পুরনো হলে নয়)। */
+  const authTokenRef = useRef(null);
   const { webError, onLoadStart: onWebLoadStart, onError: handleWebError, onHttpError: handleHttpError, retry: handleRetry, renderError: renderWebError } = useWebViewError(webViewRef);
   const canGoBackRef = useRef(false);
   /* ⚠️ ২০২৬-০৯-০৮ — ব্যাক চেপে সংখ্যা-জ্যোতিষের পাতা থেকে বেরোনো যেত না।
@@ -278,6 +284,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
     if (uid) {
       fetchWebViewAuthToken().then((token) => {
         if (cancelled || !token || !webViewRef.current) return;
+        authTokenRef.current = { token, at: Date.now() };
         webViewRef.current.injectJavaScript(buildBridgeSignInJS(token));
       });
       /* সেভ করা প্রোফাইল — নেটিভ Firebase দিয়ে সরাসরি (profileBridge.js-এর
@@ -288,6 +295,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
       });
     } else {
+      authTokenRef.current = null;
       webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
       webViewRef.current.injectJavaScript(PROFILE_CLEAR_JS);
     }
@@ -368,7 +376,9 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
 
     // PDF print request — delegate to parent screen
     if (PRINT_PAGES.has(page)) {
-      onPrint && onPrint(msg.raw || '');
+      /* দ্বিতীয় আর্গুমেন্ট: পাতা যে ঠিকানা খুলতে চেয়েছিল (?premium=1 সহ) —
+         "আমার রিপোর্ট"-এর প্রিমিয়াম PDF ওটা ছাড়া বানানো যায় না। */
+      onPrint && onPrint(msg.raw || '', msg.url || '');
       return;
     }
 
@@ -546,7 +556,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         injectedJavaScriptBeforeContentLoaded={earlyInjectedJS}
         injectedJavaScript={fullInjectedJS}
         onLoadStart={onWebLoadStart}
-        onLoadEnd={() => { webViewRef.current?.injectJavaScript(fullInjectedJS); }}
+        onLoadEnd={() => {
+          webViewRef.current?.injectJavaScript(fullInjectedJS);
+          const tk = authTokenRef.current;
+          if (uid && tk && Date.now() - tk.at < 50 * 60 * 1000 && /^https:\/\/myastrology\.in\//.test(uri || remoteUrl || langUrl || '')) {
+            webViewRef.current?.injectJavaScript(buildBridgeSignInJS(tk.token));
+          }
+        }}
         onError={(e) => {
           /* ইংরেজি/হিন্দিতে লাইভ পাতা না এলে বাংলা বান্ডলে ফেরা — কিন্তু
              নীরবে নয়, নিচে এক লাইনে বলা হয়। */

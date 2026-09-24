@@ -28,7 +28,7 @@ function loadWebPrint() {
   let src = fs.readFileSync(path.join(__dirname, '..', 'src', 'utils', 'webPrint.js'), 'utf8');
   src = src.replace(/^import .*;$/mg, '')
     .replace(/^export (const|function|async function) /mg, '$1 ');
-  src += '\nmodule.exports={OPEN_BRIDGE_JS,printSource,makeCaptureJS,SITE_ORIGIN};';
+  src += '\nmodule.exports={OPEN_BRIDGE_JS,printSource,livePrintSource,makeCaptureJS,SITE_ORIGIN};';
   const ctx = { module: { exports: {} }, JSON, Object, String };
   vm.runInNewContext(src, ctx);
   return ctx.module.exports;
@@ -100,6 +100,52 @@ function loadWebPrint() {
         bnLines.slice(0, 6).forEach(l => console.log('     · ' + l.trim().slice(0, 90)));
       } else console.log(`✓ ${tag} — সেতু raw ${msg.raw.length} · লাইভ ছাপার পাতা · PDF ${pages} পাতা · বাংলা ০`);
       await ctx.close();
+    }
+    /* ⛔ ২০২৬-০৯-২৪ — "আমার রিপোর্ট" (WebPage পর্দা): /my-reports পাতা
+       '/kundali-print.html?premium=1' খোলে; অ্যাপ সেটা livePrintSource দিয়ে
+       লুকোনো WebView-এ আঁকে। আগে এই পর্দায় onPrint-ই ছিল না (৮ নম্বর)। */
+    {
+      const fx = path.join(__dirname, '__fixtures__', 'print', 'kundali.json');
+      const raw = JSON.stringify(Object.assign(JSON.parse(fs.readFileSync(fx, 'utf8')), { isPremium: true }));
+      const bogus = W.livePrintSource('https://evil.example/kundali-print.html', raw, 'bn');
+      const src = W.livePrintSource('/kundali-print.html?premium=1', raw, 'bn');
+      if (bogus && !/^https:\/\/myastrology\.in\//.test(bogus.uri)) { bad++; console.log('❌ livePrintSource বাইরের ঠিকানা মেনে নিল'); }
+      if (!src || !/\/kundali-print\.html\?premium=1&lang=bn$/.test(src.uri)) { bad++; console.log('❌ প্রিমিয়াম ঠিকানা ভুল: ' + (src && src.uri)); }
+      else {
+        const ctx = await br.newContext({ viewport: { width: 412, height: 900 } });
+        const pr = await ctx.newPage();
+        await pr.addInitScript(() => { window.__rnMsgs = []; window.ReactNativeWebView = { postMessage: m => window.__rnMsgs.push(m) }; });
+        await pr.addInitScript({ content: src.before });
+        await pr.goto(src.uri.replace(W.SITE_ORIGIN, ORIGIN), { waitUntil: 'domcontentloaded' });
+        await pr.evaluate(W.makeCaptureJS('hpPdfChunk'));
+        await pr.waitForFunction(() => {
+          const ms = (window.__rnMsgs || []).map(m => JSON.parse(m)).filter(m => m.__rn === 'hpPdfChunk');
+          return ms.length && ms.length === ms[0].total;
+        }, null, { timeout: 45000 }).catch(() => {});
+        const html = await pr.evaluate(() => {
+          const ms = (window.__rnMsgs || []).map(m => JSON.parse(m)).filter(m => m.__rn === 'hpPdfChunk');
+          return ms.length && ms.length === ms[0].total ? ms.sort((a, b) => a.i - b.i).map(m => m.chunk).join('') : '';
+        });
+        if (!html) { bad++; console.log('❌ প্রিমিয়াম কুণ্ডলী (আমার রিপোর্ট) — capture কিছু পাঠায়নি'); }
+        else {
+          const out = await ctx.newPage();
+          await out.setContent(html, { waitUntil: 'load' });
+          const pdf = await out.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
+          const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+          /* ⚠️ নির্দিষ্ট সংখ্যার সঙ্গে নয় — প্রথমবার "৪০-এর নিচে ভুল" লিখে মিথ্যে-লাল
+             পেয়েছিলাম (এই নমুনার পূর্ণ রিপোর্টই ১৭ পাতা)। মাপকাঠি: একই তথ্যে
+             ওয়েবসাইটের পাতা সরাসরি যত পাতা ছাপে। */
+          const dp = await ctx.newPage();
+          await dp.addInitScript(r => { try { localStorage.setItem('kundali_print_data', r); } catch (e) {} }, raw);
+          await dp.goto(src.uri.replace(W.SITE_ORIGIN, ORIGIN), { waitUntil: 'domcontentloaded' });
+          await dp.waitForTimeout(9000);
+          const dpdf = await dp.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
+          const want = (dpdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+          if (Math.abs(pages - want) > 1) { bad++; console.log(`❌ প্রিমিয়াম কুণ্ডলী (আমার রিপোর্ট) — অ্যাপে ${pages} পাতা, ওয়েবসাইটে ${want}`); }
+          else console.log(`✓ প্রিমিয়াম কুণ্ডলী (আমার রিপোর্ট) — ?premium=1 সহ লাইভ পাতা · অ্যাপে ${pages} পাতা = ওয়েবসাইটে ${want}`);
+        }
+        await ctx.close();
+      }
     }
   } finally {
     if (br) await br.close();
