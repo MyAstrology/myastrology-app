@@ -8,6 +8,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { AppHeader } from '../components/AppHeader';
+import { RatePrompt } from '../components/RatePrompt';
 /* ⛔ পঞ্জিকা/রাশিফলের ইঞ্জিন **static import নয়**। মেপে দেখা: অ্যাপ
    চালুর মুহূর্তে যত JS পার্স হয় তার সবচেয়ে বড় টুকরো এই তিনটে —
    panjika-ephemeris ৭৮৫ KB + vsop87 ১২৪ KB + panjika-data ৮৫ KB ≈ ১ MB,
@@ -690,6 +691,7 @@ export function HomeScreen() {
           )}
 
           {/* ── পরামর্শ বুকিং ── */}
+          <RatePrompt />
           <BookingBanner onPress={() => { haptics.tap(); navigation.navigate('Booking'); }} />
 
           {/* ── সাম্প্রতিক ব্লগ ও সংবাদ ── */}

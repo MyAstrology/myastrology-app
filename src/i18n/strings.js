@@ -8,6 +8,22 @@
  *  "period of Rahu" লিখলে সেটা আর জ্যোতিষ থাকে না। (ওয়েবসাইটের একই নিয়ম।)
  */
 export const STRINGS = {
+  "অ্যাপটা কেমন লাগছে?": {
+    "en": "How are you finding the app?",
+    "hi": "ऐप कैसा लग रहा है?"
+  },
+  "Play স্টোরে আপনার রেটিং দেখে অন্যরাও অ্যাপটা খুঁজে পান": {
+    "en": "Your rating on the Play Store helps others find the app",
+    "hi": "Play Store पर आपकी रेटिंग से दूसरे भी यह ऐप ढूँढ पाते हैं"
+  },
+  "রেটিং দিন": {
+    "en": "Rate the app",
+    "hi": "रेटिंग दें"
+  },
+  "পরে": {
+    "en": "Later",
+    "hi": "बाद में"
+  },
   "গণনা সম্পূর্ণ অফলাইনে · {place}": {
     "en": "All calculations run fully offline · {place}",
     "hi": "गणना पूरी तरह ऑफ़लाइन · {place}"
