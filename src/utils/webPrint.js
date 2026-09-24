@@ -303,9 +303,100 @@ export function collectPdfChunk(msg, store, type = PDF_CHUNK) {
   return html;
 }
 
+/*  ⛔ ২০২৬-০৯-২৫ — PDF-এর আগে শেষ পাহারা: নেটের ঠিকানায় থাকা ছবি/CSS/ফন্ট
+ *  ফোনেই নামিয়ে HTML-এর ভিতরে বসানো।
+ *  সহকর্মী: "ডাউনলোডের আগে পর্যন্ত ঠিক, ডাউনলোড করলে খারাপ" — পর্দার WebView
+ *  নেট থেকে ছবি পায়, কিন্তু expo-print (Android) PDF বানানোর সময় কিছুই
+ *  নামায় না। makeCaptureJS লাইভ পাতায় এটা আগেই করে; কিন্তু বাংলা বান্ডলেও
+ *  নেটের ঠিকানা থাকে — সংখ্যা জ্যোতিষের দেবতা ও রত্নের ছবি (তথ্য থেকে আসে,
+ *  IMG_FIX_JS https করে), কুণ্ডলীর noto-sans-font.css। এখানে RN-এর দিকে
+ *  করা হয়, তাই CORS-এর বাধা নেই আর সব পথেই (বান্ডল, লাইভ, কুণ্ডলী,
+ *  পঞ্জিকা) একই পাহারা।
+ *  🔒 কেবল নিজেদের সাইটের ঠিকানা। কোনোটা না নামলে আগের ঠিকানাই থাকে। */
+const OWN = /^https:\/\/(www\.)?myastrology\.in\//i;
+const MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+  svg: 'image/svg+xml', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf' };
+function absUrl(u, base) { try { return new URL(u, base).href; } catch (e) { return null; } }
+async function toDataUri(url, cache) {
+  if (cache[url]) return cache[url];
+  const ext = (/\.([a-z0-9]+)(?:[?#]|$)/i.exec(url) || [])[1];
+  const mime = MIME[(ext || '').toLowerCase()];
+  if (!mime) return null;
+  const p = (async () => {
+    try {
+      const dest = FileSystem.cacheDirectory + 'pdfimg_' + url.replace(/[^a-z0-9]/gi, '_').slice(-80) + '.' + ext;
+      const r = await FileSystem.downloadAsync(url, dest);
+      if (!r || r.status !== 200) return null;
+      const b64 = await FileSystem.readAsStringAsync(r.uri, { encoding: FileSystem.EncodingType.Base64 });
+      return b64 && b64.length < 4e6 ? `data:${mime};base64,${b64}` : null;
+    } catch (e) { return null; }
+  })();
+  cache[url] = p;
+  return p;
+}
+const CSS_URL = /url\(\s*(['"]?)([^'")]+)\1\s*\)/g;
+async function inlineCssUrls(css, base, cache) {
+  const found = [];
+  css.replace(CSS_URL, (a, q, u) => { if (!/^data:/.test(u)) found.push(u); return a; });
+  const map = {};
+  await Promise.all(found.map(async u => {
+    const a = absUrl(u, base);
+    if (a && OWN.test(a)) { const d = await toDataUri(a, cache); if (d) map[u] = d; }
+  }));
+  return css.replace(CSS_URL, (a, q, u) => (map[u] ? `url("${map[u]}")` : a));
+}
+async function withTimeout(p, ms, fallback) {
+  let t;
+  const r = await Promise.race([p, new Promise(res => { t = setTimeout(() => res(fallback), ms); })]);
+  clearTimeout(t);
+  return r;
+}
+export async function inlineRemote(html) {
+  if (!html || typeof html !== 'string') return html;
+  const work = (async () => {
+    const bm = /<base\s[^>]*href=["']([^"']+)["']/i.exec(html);
+    const base = bm ? bm[1] : SITE_ORIGIN + '/';
+    const cache = {};
+    let out = html;
+    /* ১. বাইরের স্টাইলশিট → <style> */
+    const links = out.match(/<link\b[^>]*rel=["']?stylesheet[^>]*>/gi) || [];
+    for (const tag of links) {
+      const hm = /href=["']([^"']+)["']/i.exec(tag);
+      const a = hm && absUrl(hm[1].replace(/&amp;/g, '&'), base);
+      if (!a || !OWN.test(a)) continue;
+      try {
+        const res = await withTimeout(fetch(a), 8000, null);
+        if (!res || !res.ok) continue;
+        const css = await inlineCssUrls(await res.text(), a, cache);
+        out = out.split(tag).join(`<style>${css.replace(/<\/style/gi, '<\\/style')}</style>`);
+      } catch (e) {}
+    }
+    /* ২. <img src> */
+    const srcs = new Set();
+    out.replace(/<img\b[^>]*?\ssrc=["']([^"']+)["']/gi, (a, u) => { if (!/^data:/.test(u)) srcs.add(u); return a; });
+    const map = {};
+    await Promise.all([...srcs].map(async u => {
+      const a = absUrl(u.replace(/&amp;/g, '&'), base);
+      if (a && OWN.test(a)) { const d = await toDataUri(a, cache); if (d) map[u] = d; }
+    }));
+    out = out.replace(/(<img\b[^>]*?\ssrc=)(["'])([^"']+)\2/gi, (a, pre, q, u) => (map[u] ? `${pre}${q}${map[u]}${q}` : a));
+    /* ৩. <style> ও style="" -এর url() */
+    const styles = out.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [];
+    for (const st of styles) {
+      if (st.indexOf('url(') < 0) continue;
+      const fixed = await inlineCssUrls(st, base, cache);
+      if (fixed !== st) out = out.split(st).join(fixed);
+    }
+    return out;
+  })();
+  /* নেট না থাকলে PDF আটকে থাকবে না — বেশিজোর ২০ সেকেন্ড, তারপর যা আছে */
+  return withTimeout(work.catch(() => html), 20000, html);
+}
+
 /** HTML → PDF, তারপর পাঠককে সংরক্ষণ বা শেয়ারের সুযোগ।
  *  alertT আসে useAlert() থেকে, তাই বার্তাগুলো পাঠকের ভাষায়। */
 export async function deliverPdf(html, { alertT, fileName, dialogTitle }) {
+  html = await inlineRemote(html);
   const { uri } = await Print.printToFileAsync({ html, base64: false, width: 595, height: 842 });
   alertT('PDF তৈরি হয়েছে', 'কী করতে চান?', [
     {

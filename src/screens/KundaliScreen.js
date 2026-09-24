@@ -25,7 +25,7 @@ import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewError
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { pullProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { resolveWebNav, isExternalHandoffUrl } from '../utils/webNav';
-import { withPrintData } from '../utils/webPrint';
+import { withPrintData, inlineRemote } from '../utils/webPrint';
 import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
@@ -793,7 +793,7 @@ export function KundaliScreen() {
               pdfChunksRef.current = [];
               setPdfRenderState(null);
               pdfBusyRef.current = false;
-              const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
+              const { uri } = await Print.printToFileAsync({ html: await inlineRemote(fullHtml), base64: false, width: 595, height: 842 });
               setPdfGenerating(false);
               haptics.success();
               alertT(

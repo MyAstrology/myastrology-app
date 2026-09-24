@@ -265,6 +265,7 @@ npm run check:sync           # src/engine সাইটের সঙ্গে ম
 npm run check:engine-drift   # বান্ডলের ইনলাইন ইঞ্জিন কত পিছিয়ে (রেখাচিহ্ন ২)
 npm run verify-local-prices   # বিদেশি পাঠক: পাতা ও PDF-এ Play-র দাম (../services লাগে)
 npm run verify-webview-recover # প্রতিটি <WebView>-এ recoverProps — নতুন WebView বসালেও
+npm run verify-pdf-inline      # PDF-এর আগে ছবি/CSS ভিতরে বসে — expo-print নেট থেকে কিছু নামায় না
 ```
 
 ⚠️ **`check:engine-drift`-এর রেখাচিহ্ন ২** — `result.js`-এর `js/main.js` ও

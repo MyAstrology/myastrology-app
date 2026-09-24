@@ -17,7 +17,7 @@ import PRINT_HTML from '../web-html/match-making-print';
 import { colors } from '../theme/colors';
 import { haptics } from '../utils/haptics';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
-import { makeCaptureJS, collectPdfChunk, printSource } from '../utils/webPrint';
+import { makeCaptureJS, collectPdfChunk, printSource, inlineRemote } from '../utils/webPrint';
 import { recoverProps } from '../utils/webRecover';
 
 
@@ -382,7 +382,7 @@ export function MatchMakingScreen() {
     setPdfRenderHtml(null);
     try {
       const { uri } = await Print.printToFileAsync({
-        html: fullHtml,
+        html: await inlineRemote(fullHtml),
         base64: false,
         width: 595,
         height: 842,

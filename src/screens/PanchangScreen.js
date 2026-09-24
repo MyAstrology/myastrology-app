@@ -10,6 +10,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
+import { inlineRemote } from '../utils/webPrint';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import PANJIKA_HTML from '../web-html/panjika';
@@ -637,7 +638,7 @@ export function PanchangScreen() {
     if (pdfBusyRef.current) return;
     pdfBusyRef.current = true;
     try {
-      const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
+      const { uri } = await Print.printToFileAsync({ html: await inlineRemote(fullHtml), base64: false, width: 595, height: 842 });
       haptics.success();
       alertT(
         'PDF তৈরি হয়েছে',
