@@ -651,5 +651,38 @@ console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্য
   else bad('LocalWebView — selfPage পাহারা শর্তে বসানো হয়নি');
 }
 
+console.log('\n⑨ সরাসরি বাংলা Alert — অনুবাদ এড়িয়ে যাওয়া');
+/* ⛔ ২০২৬-০৯-২৪ — কুণ্ডলী ও পঞ্জিকার পর্দায় PDF-এর "সংরক্ষণ করুন / শেয়ার
+   করুন / বাতিল" সরাসরি Alert.alert-এ বাংলায় লেখা ছিল; ইংরেজি/হিন্দি ক্রেতা
+   বাংলা বোতাম দেখতেন। অভিধানে লেখাগুলো ছিলই — কেবল ডাকটা t() এড়িয়ে যেত।
+   নিয়ম: Alert.alert-এর ভিতরে বাংলা লেখা t(...) ছাড়া চলবে না; alertT/useAlert
+   বা t() ব্যবহার করুন। গাছ-হাঁটা, হাতে লেখা ফাইল-তালিকা নয়। */
+{
+  const BNQ = /(['"`])[^'"`\n]*[\u0985-\u09B9\u09CE\u09DC-\u09DF][^'"`\n]*\1/;
+  const hits = [];
+  const walk = d => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const q = path.join(d, e.name);
+      if (e.isDirectory()) { if (e.name !== 'web-html') walk(q); continue; }
+      if (!/\.js$/.test(e.name) || /i18n[\\/]Text\.js$/.test(q)) continue;
+      const src = fs.readFileSync(q, 'utf8');
+      let i = -1;
+      while ((i = src.indexOf('Alert.alert(', i + 1)) >= 0) {
+        /* ডাকের ভিতরের লেখা — বন্ধনী মিলিয়ে, সর্বোচ্চ ৪০০০ অক্ষর */
+        let depth = 0, j = i + 'Alert.alert'.length;
+        for (; j < src.length && j < i + 4000; j++) {
+          if (src[j] === '(') depth++;
+          else if (src[j] === ')') { depth--; if (!depth) break; }
+        }
+        const body = src.slice(i, j).replace(/\bt\(\s*(['"`])(?:\\.|(?!\1).)*\1/g, 't(__)');
+        if (BNQ.test(body)) hits.push(path.relative(APP, q) + ':' + (src.slice(0, i).split('\n').length));
+      }
+    }
+  };
+  walk(path.join(APP, 'src'));
+  if (hits.length) bad(hits.length + 'টি Alert.alert-এ অনুবাদ-ছাড়া বাংলা — ' + hits.slice(0, 5).join(', '));
+  else ok('কোনো Alert.alert-এ অনুবাদ-ছাড়া বাংলা নেই (alertT বা t() ছাড়া)');
+}
+
 console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
 process.exit(fail ? 1 : 0);

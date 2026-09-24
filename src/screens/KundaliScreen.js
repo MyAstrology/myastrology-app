@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, BackHandler, Alert, Linking } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, BackHandler, Linking } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
@@ -15,6 +15,7 @@ import KUNDALI_HTML from '../web-html/kundali';
 import KUNDALI_PRINT_HTML from '../web-html/kundali-print';
 import { ensureWebFile } from '../utils/webAssetFile';
 import { useLanguage } from '../context/LanguageContext';
+import { useAlert } from '../i18n/Text';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
@@ -482,6 +483,10 @@ export function KundaliScreen() {
      আগের মতোই বান্ডল, অর্থাৎ ইন্টারনেট ছাড়াও চলে।
      ⚠️ ভাষা রেন্ডারের সময় পড়া হয়, মডিউল লোডে নয়। */
   const { lang, t } = useLanguage();
+  /* ⛔ ২০২৬-০৯-২৪ — PDF-এর "সংরক্ষণ করুন / শেয়ার করুন / বাতিল" এখানে
+     সরাসরি Alert.alert-এ বাংলায় লেখা ছিল, তাই ইংরেজি/হিন্দি ক্রেতাও বাংলা
+     বোতাম দেখতেন (সহকর্মীর অভিযোগ)। alertT শিরোনাম-বার্তা-বোতাম সবই অনুবাদ করে। */
+  const alertT = useAlert();
   /* ভাষা বদলালেই নতুন করে তৈরি — ইনজেক্ট হওয়া লেখাও তখন পাঠকের ভাষায় */
   const injectedJS = React.useMemo(() => makeInjectedJS(t), [t]);
   const [langFellBack, setLangFellBack] = useState(false);
@@ -672,7 +677,7 @@ export function KundaliScreen() {
                   }
                   if (msg.type === 'generatePdf') {
                     if (!msg.printData || msg.printData === '{}' || msg.printData === 'null') {
-                      Alert.alert('ত্রুটি', 'কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।');
+                      alertT('ত্রুটি', 'কোষ্ঠীর তথ্য পাওয়া যায়নি। প্রথমে কোষ্ঠী গণনা করুন।');
                       return;
                     }
                     if (pdfBusyRef.current) return;
@@ -785,7 +790,7 @@ export function KundaliScreen() {
               const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
               setPdfGenerating(false);
               haptics.success();
-              Alert.alert(
+              alertT(
                 'PDF তৈরি হয়েছে',
                 'কী করতে চান?',
                 [
@@ -801,7 +806,7 @@ export function KundaliScreen() {
                           );
                           const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
                           await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
-                          Alert.alert('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
+                          alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
                         }
                       } catch (_) {
                         await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });

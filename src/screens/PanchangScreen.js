@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, forwardRef } from 'react';
-import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
    পাঠকের ভাষায় যায়; অনুবাদ না থাকলে বাংলাটাই থাকে। */
@@ -634,7 +634,7 @@ export function PanchangScreen() {
     try {
       const { uri } = await Print.printToFileAsync({ html: fullHtml, base64: false, width: 595, height: 842 });
       haptics.success();
-      Alert.alert(
+      alertT(
         'PDF তৈরি হয়েছে',
         'কী করতে চান?',
         [
