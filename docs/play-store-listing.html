@@ -1,0 +1,104 @@
+<title>MyAstrology Play তালিকা</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@600;700&family=Noto+Sans+Bengali:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans:wght@400;600&display=swap">
+<style>
+:root{--bg:#f3f5f8;--surface:#ffffff;--ink:#1c2233;--muted:#5b6475;--line:#d8dde6;--accent:#9b1c2e;--accent-ink:#ffffff;--ok:#1f7a4d;--warn:#a15c00;--chip:#f7e9eb;
+--sans:"Noto Sans","Noto Sans Bengali","Noto Sans Devanagari",system-ui,sans-serif;--head:"Noto Serif Bengali","Noto Sans Bengali",Georgia,serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11141b;--surface:#1a1f29;--ink:#e8ebf2;--muted:#9aa3b5;--line:#2c3342;--accent:#e0697a;--accent-ink:#1a0c10;--ok:#58c08c;--warn:#e0a24f;--chip:#2a1c22;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11141b;--surface:#1a1f29;--ink:#e8ebf2;--muted:#9aa3b5;--line:#2c3342;--accent:#e0697a;--accent-ink:#1a0c10;--ok:#58c08c;--warn:#e0a24f;--chip:#2a1c22;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:grid;gap:22px}
+h1{font-family:var(--head);font-size:1.6rem;line-height:1.3;margin:0;text-wrap:balance}
+h2{font-family:var(--head);font-size:1.15rem;margin:0 0 8px;text-wrap:balance}
+p{margin:0}
+.lead{color:var(--muted);max-width:62ch}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:8px;z-index:2}
+.tabs button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer;min-height:44px}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tabs .code{font-size:.78rem;opacity:.75;margin-left:6px;letter-spacing:.02em}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.fh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.fh .name{font-weight:600}
+.count{font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--ok);margin-right:auto}
+.count.over{color:var(--warn)}
+.copy{font:inherit;font-size:.9rem;font-weight:600;border:0;background:var(--chip);color:var(--accent);border-radius:8px;padding:8px 14px;min-height:40px;cursor:pointer}
+.copy:focus-visible,.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.text{white-space:pre-wrap;word-break:break-word;padding:12px;margin:0;font:inherit;user-select:all}
+.fields{display:grid;gap:14px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.note ul,.note ol{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.note b{color:var(--accent)}
+.muted{color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:no-preference){.copy{transition:background .15s}}
+</style>
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>Play স্টোরের তালিকা — তিন ভাষায়</h1>
+    <p class="lead">প্রতিটি ঘরের পাশে "কপি" চাপুন, তারপর Play Console-এর ঠিক সেই ঘরে বসান। সংখ্যাটা দেখায় কত অক্ষর হলো আর সীমা কত।</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="ভাষা" id="tabs"></nav>
+  <section class="fields" id="fields" aria-live="polite"></section>
+
+  <section class="note">
+    <h2>কোথায় বসাবেন</h2>
+    <ol>
+      <li>Play Console → <b>Grow users</b> → Store presence → <b>Main store listing</b>।</li>
+      <li>বাংলা লেখা মূল তালিকায়। তারপর <b>Manage translations</b> থেকে English (India) ও Hindi বেছে তাদের লেখা।</li>
+      <li><b>Change default language</b> → English (India) – en-IN। এতে মারাঠি, তামিল, ওড়িয়া ফোনের পাঠক বাংলার বদলে ইংরেজি দেখবেন। বাংলা ও হিন্দি ফোনে কিছু বদলায় না।</li>
+      <li>Save → <b>Send changes for review</b>।</li>
+    </ol>
+  </section>
+
+  <section class="note">
+    <h2>আগের লেখা থেকে কী বাদ দিলাম, আর কেন</h2>
+    <ul>
+      <li><b>রাশির নাম পরপর বসানো</b> ("aries horoscope today, leo…") — Google-এর নীতিতে নিষিদ্ধ। তালিকা ফেরত আসতে পারে।</li>
+      <li><b>"সবচেয়ে নির্ভুল" / "most accurate"</b> — প্রমাণ দেওয়া যায় না এমন শ্রেষ্ঠত্বের দাবিও নিষিদ্ধ।</li>
+      <li><b>Name Correction, নাম দিয়ে কুণ্ডলী মিলন, "100+ পৃষ্ঠা"</b> — অ্যাপে নেই, বা সব রিপোর্টে সত্যি নয়।</li>
+      <li><b>"আগামীকালের রাশিফল নেই"</b> — যা নেই তা বিবরণে লিখলে পাঠক ইনস্টলের আগেই একটা "না" পড়েন।</li>
+      <li><b>"AI" দিয়ে শুরু</b> — প্রিমিয়াম রিপোর্ট শেষে ড. আচার্য নিজে দেখেন, আসল মূল্য সেটাই।</li>
+      <li><b>বানান</b> — Mangolik → Manglik, "supportDownload"-এ ফাঁকা, Myastrology → MyAstrology।</li>
+    </ul>
+    <p class="muted" style="margin-top:10px">যোগ করেছি যা অ্যাপে সত্যিই আছে: রাহুকাল, অমৃতযোগ-মাহেন্দ্রযোগ, রাজযোগ, সাড়েসাতি, কালসর্প, রোজ সকাল ৬:৩০-এর পঞ্জিকা-নোটিফিকেশন।</p>
+  </section>
+</div>
+<script>
+const DATA = {"bn": {"label": "বাংলা", "code": "bn-BD", "fields": ["MyAstrology: কোষ্ঠী ও পঞ্জিকা", "বাংলা পঞ্জিকা, আজকের রাশিফল, জন্মকুণ্ডলী ও যোটক বিচার — বিনামূল্যে", "MyAstrology — বাংলা পঞ্জিকা, রাশিফল ও কোষ্ঠী বিচার এক অ্যাপে। তৈরি করেছেন রানাঘাটের ড. প্রদ্যুৎ আচার্য, বৈদিক জ্যোতিষে PhD (স্বর্ণপদক)।\n\nবিনামূল্যে যা পাবেন\n• আজকের পঞ্জিকা — তিথি, নক্ষত্র, যোগ, করণ, সূর্যোদয়-সূর্যাস্ত, রাহুকাল, অমৃতযোগ-মাহেন্দ্রযোগ আর বাংলা তারিখ\n• রাশিফল — বারো রাশির দৈনিক ও সাপ্তাহিক ফল\n• জন্মকুণ্ডলী (কোষ্ঠী) — জন্মের তারিখ, সময় ও স্থান থেকে লগ্ন, গ্রহের অবস্থান আর বিংশোত্তরী মহাদশা\n• যোগ ও দোষ — রাজযোগ-সহ নানা যোগ, মাঙ্গলিক দোষ, সাড়েসাতি ও কালসর্প বিচার\n• যোটক বিচার — বিয়ের জন্য অষ্টকূট গুণমিলন (৩৬ গুণ) ও মাঙ্গলিক বিচার\n• নামকরণ — জন্ম-নক্ষত্রের চরণ থেকে শিশুর নামের শুভ আদ্যক্ষর\n• বর্ষফল — জন্মদিন থেকে পরের জন্মদিন, বছরের কুণ্ডলী\n• সংখ্যাতত্ত্ব — মূলাঙ্ক, ভাগ্যাঙ্ক ও নামাঙ্ক\n• প্রশ্ন জ্যোতিষ — প্রশ্ন করার মুহূর্তের কুণ্ডলী থেকে উত্তর\n• পুজো ও উৎসবের তারিখ-সময়, হস্তরেখা, রত্নপাথর ও বাস্তু — আর ড. আচার্যের লেখা প্রবন্ধ\n\nনিজস্ব গণনা\nVSOP87-ভিত্তিক গ্রহ-গণনা আর লাহিড়ী অয়নাংশ, ছাপা পঞ্জিকার সঙ্গে মিলিয়ে দেখা। বাংলায় গণনা ফোনেই হয়, তাই নেট দুর্বল থাকলেও চলে।\n\nরোজ সকালে পঞ্জিকা\nপ্রতিদিন সকাল ৬:৩০-এ দিনের পঞ্জিকা আর প্রতিদিনের রাশিফল নোটিফিকেশনে আসে।\n\nতিন ভাষায়\nবাংলা, English ও हिन्दी — সেটিংস থেকে যখন খুশি বদলান।\n\nবিস্তারিত রিপোর্ট ও ব্যক্তিগত পরামর্শ\n• কুণ্ডলী ও যোটক বিচারের বিস্তারিত PDF রিপোর্ট\n• প্রিমিয়াম বিশ্লেষণ, যা ড. প্রদ্যুৎ আচার্য নিজে দেখে দেন\n• ফোনে ব্যক্তিগত পরামর্শের বুকিং\n\nজ্যোতিষ প্রবণতা ও সম্ভাবনা দেখায়, নিশ্চয়তা নয়। প্রতিকার ঐচ্ছিক প্রথাগত আচার, চিকিৎসা, আইনি বা আর্থিক পরামর্শের বিকল্প নয়।"]}, "en": {"label": "English", "code": "en-IN", "fields": ["MyAstrology: Kundli & Panchang", "Kundli, Kundli matching, daily Rashifal & Bengali Panjika (Panchang) — free", "MyAstrology brings authentic Vedic astrology to your phone — built by Dr. Prodyut Acharya, PhD (Gold Medalist) in Vedic Jyotish, from Ranaghat, West Bengal.\n\nWHAT YOU GET — FREE\n• Janam Kundli — your birth chart from date, time and place of birth: lagna, planetary positions and Vimshottari dasha\n• Yogas and doshas — Rajyoga and other yogas, Manglik dosha, Sade Sati and Kaal Sarp\n• Kundli matching — Ashtakoota Guna Milan (36 gunas) and Manglik dosha check for marriage\n• Daily Panchang — tithi, nakshatra, yoga, karana, sunrise, sunset, Rahu Kaal and auspicious muhurta, with the Bengali Panjika date\n• Rashifal — daily and weekly horoscope for all 12 signs\n• Numerology — your root (mulank), destiny and name numbers\n• Varshphal — your annual solar-return chart\n• Namkaran — auspicious first letters for a baby's name, from the birth nakshatra\n• Prashna — answers to a question from the moment it is asked\n• Festival dates and puja timings, palmistry, gemstones and Vastu — plus articles by Dr. Acharya\n\nOUR OWN CALCULATIONS\nVSOP87-based planetary positions with Lahiri ayanamsa, checked against the printed panjika.\n\nDAILY NOTIFICATIONS\nThe day's panchang every morning at 6:30, and your daily rashifal.\n\nTHREE LANGUAGES\nEnglish, हिन्दी and বাংলা — switch any time in Settings.\n\nDETAILED REPORTS AND PERSONAL CONSULTATION\n• Detailed PDF reports for your kundli and kundli matching\n• Premium analysis, reviewed by Dr. Prodyut Acharya himself\n• Book a personal phone consultation\n\nAstrology shows tendencies and possibilities, not certainties. Remedies are optional traditional practices and never a substitute for medical, legal or financial advice."]}, "hi": {"label": "हिन्दी", "code": "hi-IN", "fields": ["MyAstrology: कुंडली और पंचांग", "जन्म कुंडली, कुंडली मिलान, दैनिक राशिफल और पंचांग — हिंदी में, निःशुल्क", "MyAstrology आपके फ़ोन पर प्रामाणिक वैदिक ज्योतिष लाता है — रानाघाट, पश्चिम बंगाल के डॉ. प्रद्युत आचार्य, वैदिक ज्योतिष में PhD (स्वर्ण पदक) द्वारा निर्मित।\n\nनिःशुल्क सुविधाएँ\n• जन्म कुंडली — जन्म तिथि, समय और स्थान से लग्न, ग्रह-स्थिति और विंशोत्तरी दशा\n• योग और दोष — राजयोग सहित अनेक योग, मांगलिक दोष, साढ़ेसाती और कालसर्प विचार\n• कुंडली मिलान — विवाह के लिए अष्टकूट गुण मिलान (36 गुण) और मांगलिक दोष विचार\n• दैनिक पंचांग — तिथि, नक्षत्र, योग, करण, सूर्योदय, सूर्यास्त, राहुकाल और शुभ मुहूर्त\n• राशिफल — सभी 12 राशियों का दैनिक और साप्ताहिक राशिफल\n• अंक ज्योतिष — मूलांक, भाग्यांक और नामांक\n• वर्षफल — आपकी वार्षिक कुंडली\n• नामकरण — जन्म नक्षत्र से शिशु के नाम के शुभ अक्षर\n• प्रश्न ज्योतिष — प्रश्न पूछने के क्षण की कुंडली से उत्तर\n• त्योहारों की तिथियाँ व पूजा-मुहूर्त, हस्तरेखा, रत्न और वास्तु\n\nअपनी गणना\nVSOP87-आधारित ग्रह-स्थिति और लाहिड़ी अयनांश — छपे पंचांग से मिलाकर जाँची गई।\n\nरोज़ाना नोटिफ़िकेशन\nहर सुबह 6:30 बजे दिन का पंचांग, और दैनिक राशिफल।\n\nतीन भाषाओं में\nहिन्दी, English और বাংলা — सेटिंग्स से कभी भी बदलें।\n\nविस्तृत रिपोर्ट और व्यक्तिगत परामर्श\n• कुंडली और कुंडली मिलान की विस्तृत PDF रिपोर्ट\n• प्रीमियम विश्लेषण, जिसे डॉ. प्रद्युत आचार्य स्वयं देखते हैं\n• फ़ोन पर व्यक्तिगत परामर्श बुक करें\n\nज्योतिष प्रवृत्तियाँ और संभावनाएँ दिखाता है, निश्चितता नहीं। उपाय वैकल्पिक पारंपरिक अभ्यास हैं — चिकित्सा, कानूनी या वित्तीय सलाह का विकल्प नहीं।"]}};
+const NAMES = {bn:['অ্যাপের নাম','ছোট বিবরণ','পূর্ণ বিবরণ'], en:['App name','Short description','Full description'], hi:['App name','Short description','Full description']};
+const LIMIT = [30,80,4000];
+const BN = '০১২৩৪৫৬৭৮৯';
+const bnNum = n => String(n).replace(/\d/g, d => BN[d]);
+const tabs = document.getElementById('tabs'), box = document.getElementById('fields');
+let cur = 'bn';
+try { const s = localStorage.getItem('mya-lang'); if (DATA[s]) cur = s; } catch (e) {}
+if (DATA[location.hash.slice(1)]) cur = location.hash.slice(1);
+function render(){
+  tabs.innerHTML = '';
+  Object.keys(DATA).forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.role = 'tab'; b.id = 'tab-' + k;
+    b.setAttribute('aria-selected', k === cur ? 'true' : 'false');
+    b.innerHTML = DATA[k].label + '<span class="code">' + DATA[k].code + '</span>';
+    b.onclick = () => { cur = k; try { localStorage.setItem('mya-lang', k); } catch (e) {} render(); };
+    tabs.appendChild(b);
+  });
+  box.innerHTML = '';
+  DATA[cur].fields.forEach((t, i) => {
+    const len = [...t].length, over = len > LIMIT[i];
+    const f = document.createElement('article'); f.className = 'field';
+    f.innerHTML = '<div class="fh"><span class="name"></span><span class="count' + (over ? ' over' : '') + '"></span><button class="copy" type="button">কপি</button></div><pre class="text"></pre>';
+    f.querySelector('.name').textContent = NAMES[cur][i];
+    f.querySelector('.count').textContent = bnNum(len) + ' / ' + bnNum(LIMIT[i]) + ' অক্ষর' + (over ? ' — সীমা ছাড়িয়েছে' : '');
+    const pre = f.querySelector('.text'); pre.textContent = t;
+    const btn = f.querySelector('.copy');
+    btn.onclick = () => {
+      const done = () => { btn.textContent = 'কপি হয়েছে ✓'; setTimeout(() => btn.textContent = 'কপি', 1800); };
+      const sel = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'বাছাই হয়েছে — কপি করুন'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, sel); else sel();
+    };
+    box.appendChild(f);
+  });
+}
+render();
+</script>

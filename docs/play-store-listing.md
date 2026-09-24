@@ -11,7 +11,7 @@ Store presence → Main store listing)। Play Console (২৮ দিন): স�
 | রাশির নাম পরপর বসানো তালিকা ("aries horoscope today, leo horoscope today, libra…") | en | Play-র **metadata নীতিতে নিষিদ্ধ** (keyword stuffing)। তালিকা ফেরত আসতে পারে, আর সার্চে র‍্যাঙ্কও কমে |
 | "most accurate" / "সবচেয়ে নির্ভুল" | en · bn | প্রমাণ দেওয়া যায় না এমন শ্রেষ্ঠত্বের দাবিও নীতিতে নিষিদ্ধ ("best", "#1", "most") |
 | "Tomorrow's horoscope predictions are not available" | en | যা **নেই** তার বিজ্ঞাপন — পাঠক ইনস্টলের আগেই একটা "না" পড়েন |
-| "Name Correction", "100+ পৃষ্ঠার" | bn | অ্যাপে নাম-সংশোধনের কোনো সুবিধা নেই। PDF-এর পাতার সংখ্যাও তথ্য ধরে বদলায় |
+| "Name Correction", "100+ পৃষ্ঠার", "নাম দিয়ে কুণ্ডলী মিলন" | bn · en · hi | অ্যাপে নাম-সংশোধনের কোনো সুবিধা নেই, নাম দিয়ে যোটক বিচারও নেই (মিলন জন্মতথ্য থেকে হয়)। PDF-এর পাতার সংখ্যাও তথ্য ধরে বদলায় |
 | "AI" দিয়ে শুরু | en · bn · hi | প্রিমিয়াম রিপোর্ট শেষে ড. আচার্য নিজে দেখে দেন — ওটাই আসল মূল্য। "AI" লিখলে সেই মূল্য চাপা পড়ে |
 | "Mangolik", "supportDownload" (ফাঁকা নেই), "Myastrology" | en | বানান ভুল ভরসা কমায়। আর "Mangolik" কেউ সার্চও করেন না — সবাই লেখেন "Manglik" |
 | মূল ভাষা **Bangla – bn-BD** | সেটিং | নিচে দেখুন |
@@ -57,9 +57,10 @@ MyAstrology: কোষ্ঠী ও পঞ্জিকা
 MyAstrology — বাংলা পঞ্জিকা, রাশিফল ও কোষ্ঠী বিচার এক অ্যাপে। তৈরি করেছেন রানাঘাটের ড. প্রদ্যুৎ আচার্য, বৈদিক জ্যোতিষে PhD (স্বর্ণপদক)।
 
 বিনামূল্যে যা পাবেন
-• আজকের পঞ্জিকা — তিথি, নক্ষত্র, যোগ, করণ, সূর্যোদয়-সূর্যাস্ত, শুভ-অশুভ সময় আর বাংলা তারিখ
+• আজকের পঞ্জিকা — তিথি, নক্ষত্র, যোগ, করণ, সূর্যোদয়-সূর্যাস্ত, রাহুকাল, অমৃতযোগ-মাহেন্দ্রযোগ আর বাংলা তারিখ
 • রাশিফল — বারো রাশির দৈনিক ও সাপ্তাহিক ফল
 • জন্মকুণ্ডলী (কোষ্ঠী) — জন্মের তারিখ, সময় ও স্থান থেকে লগ্ন, গ্রহের অবস্থান আর বিংশোত্তরী মহাদশা
+• যোগ ও দোষ — রাজযোগ-সহ নানা যোগ, মাঙ্গলিক দোষ, সাড়েসাতি ও কালসর্প বিচার
 • যোটক বিচার — বিয়ের জন্য অষ্টকূট গুণমিলন (৩৬ গুণ) ও মাঙ্গলিক বিচার
 • নামকরণ — জন্ম-নক্ষত্রের চরণ থেকে শিশুর নামের শুভ আদ্যক্ষর
 • বর্ষফল — জন্মদিন থেকে পরের জন্মদিন, বছরের কুণ্ডলী
@@ -106,8 +107,9 @@ MyAstrology brings authentic Vedic astrology to your phone — built by Dr. Prod
 
 WHAT YOU GET — FREE
 • Janam Kundli — your birth chart from date, time and place of birth: lagna, planetary positions and Vimshottari dasha
+• Yogas and doshas — Rajyoga and other yogas, Manglik dosha, Sade Sati and Kaal Sarp
 • Kundli matching — Ashtakoota Guna Milan (36 gunas) and Manglik dosha check for marriage
-• Daily Panchang — tithi, nakshatra, yoga, karana, sunrise, sunset and auspicious muhurta, with the Bengali Panjika date
+• Daily Panchang — tithi, nakshatra, yoga, karana, sunrise, sunset, Rahu Kaal and auspicious muhurta, with the Bengali Panjika date
 • Rashifal — daily and weekly horoscope for all 12 signs
 • Numerology — your root (mulank), destiny and name numbers
 • Varshphal — your annual solar-return chart
@@ -153,8 +155,9 @@ MyAstrology आपके फ़ोन पर प्रामाणिक वै�
 
 निःशुल्क सुविधाएँ
 • जन्म कुंडली — जन्म तिथि, समय और स्थान से लग्न, ग्रह-स्थिति और विंशोत्तरी दशा
+• योग और दोष — राजयोग सहित अनेक योग, मांगलिक दोष, साढ़ेसाती और कालसर्प विचार
 • कुंडली मिलान — विवाह के लिए अष्टकूट गुण मिलान (36 गुण) और मांगलिक दोष विचार
-• दैनिक पंचांग — तिथि, नक्षत्र, योग, करण, सूर्योदय, सूर्यास्त और शुभ मुहूर्त
+• दैनिक पंचांग — तिथि, नक्षत्र, योग, करण, सूर्योदय, सूर्यास्त, राहुकाल और शुभ मुहूर्त
 • राशिफल — सभी 12 राशियों का दैनिक और साप्ताहिक राशिफल
 • अंक ज्योतिष — मूलांक, भाग्यांक और नामांक
 • वर्षफल — आपकी वार्षिक कुंडली
