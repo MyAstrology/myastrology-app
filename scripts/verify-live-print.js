@@ -101,6 +101,76 @@ function loadWebPrint() {
       } else console.log(`✓ ${tag} — সেতু raw ${msg.raw.length} · লাইভ ছাপার পাতা · PDF ${pages} পাতা · বাংলা ০`);
       await ctx.close();
     }
+    /* ⛔ ২০২৬-০৯-২৫ — বাকি তিন পেইড PDF (সহকর্মীর ৩ নম্বর: "হিন্দিতে বর্ষফলের
+       টাকা দিয়েও PDF নেই")। উপরের মিলন-পরীক্ষা কেবল একটা পাতা দেখত — একই
+       আকৃতির কোড চার পাতায়, তাই পরীক্ষাও চার পাতায় (CLAUDE.md নিয়ম ১১)।
+       ফর্ম না ভরে ফিক্সচার বসানো হয় window-এ (localStorage ফাঁকা — অ্যাপের
+       খারাপ দিকটা), আর পাতা যেভাবে ডাকে ঠিক সেভাবে window.open। মাপকাঠি:
+       একই তথ্যে ওয়েবসাইটের ছাপার পাতা সরাসরি — পাতার সংখ্যা ±১, আর অ্যাপে
+       বাংলা লাইন ওয়েবসাইটের চেয়ে বেশি নয় (তথ্যের ভিতরের নাম বাংলা থাকতেই পারে)। */
+    const OTHERS = [
+      ['varshaphala', 'varshaphala-print', '_vpPrintData', 'varshaphala_print_data', 'VarshaphalaScreen'],
+      ['namakaran',   'namakaran-print',   '_nkPrintData', 'namakaran_print_data',   'NamakaranScreen'],
+      ['numerology',  'numerology-print',  '_nuPrintData', 'numerology_print_data',  'NumerologyResultScreen'],
+    ];
+    /* capture-এর ন্যূনতম দৈর্ঘ্য পর্দার ফাইল থেকেই পড়া — প্রথম রূপে হাতে ২০,০০০
+       ধরে চারটে মিথ্যে লাল পেয়েছিলাম (পর্দাগুলো ৮,০০০ ব্যবহার করে) */
+    const minLenOf = scr => {
+      const m = /makeCaptureJS\(\s*'[^']+'\s*(?:,\s*(\d+))?\s*\)/.exec(fs.readFileSync(path.join(__dirname, '..', 'src', 'screens', scr + '.js'), 'utf8'));
+      if (!m) throw new Error(scr + '-এ makeCaptureJS পাওয়া গেল না');
+      return m[1] ? +m[1] : undefined;
+    };
+    const countPages = b => (b.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+    const bnOf = t => t.split('\n').filter(l => BN.test(l) && !/^\s*বাংলা\s*$/.test(l)).length;
+    for (const lang of ['en', 'hi']) for (const [calc, printPg, winKey, lsKey, screen] of OTHERS) {
+      const tag = `${lang} ${calc}`;
+      const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, '__fixtures__', 'print', calc + '.json'), 'utf8'));
+      const ctx = await br.newContext({ viewport: { width: 412, height: 900 } });
+      const pg = await ctx.newPage();
+      await pg.addInitScript(() => { window.__rnMsgs = []; window.ReactNativeWebView = { postMessage: m => window.__rnMsgs.push(m) }; });
+      await pg.goto(`${ORIGIN}/${lang}/${calc}.html`, { waitUntil: 'domcontentloaded' });
+      await pg.waitForTimeout(2500);
+      await pg.evaluate(W.OPEN_BRIDGE_JS);
+      await pg.evaluate(([k, ls, d, p, l]) => {
+        try { localStorage.removeItem(ls); } catch (e) {}
+        window[k] = d; window.open('/' + p + '.html?v=2&lang=' + l, '_blank');
+      }, [winKey, lsKey, fixture, printPg, lang]);
+      const msg = await pg.evaluate(() => (window.__rnMsgs || []).map(m => JSON.parse(m)).find(m => m.__rn === 'open'));
+      if (!msg || !msg.raw || msg.raw.length < 200) { bad++; console.log(`❌ ${tag} — সেতু: ${msg ? 'raw ফাঁকা' : 'বার্তা আসেনি'}`); await ctx.close(); continue; }
+      const src = W.printSource(printPg, '<html><head></head><body></body></html>', msg.raw, lang);
+      if (!src.uri) { bad++; console.log(`❌ ${tag} — printSource লাইভ পাতা দেয়নি`); await ctx.close(); continue; }
+      const pr = await ctx.newPage();
+      await pr.addInitScript(() => { window.__rnMsgs = []; window.ReactNativeWebView = { postMessage: m => window.__rnMsgs.push(m) }; });
+      await pr.addInitScript({ content: src.before });
+      await pr.goto(src.uri.replace(W.SITE_ORIGIN, ORIGIN), { waitUntil: 'domcontentloaded' });
+      await pr.evaluate(W.makeCaptureJS('xPdfChunk', minLenOf(screen)));
+      await pr.waitForFunction(() => {
+        const ms = (window.__rnMsgs || []).map(m => JSON.parse(m)).filter(m => m.__rn === 'xPdfChunk');
+        return ms.length && ms.length === ms[0].total;
+      }, null, { timeout: 45000 }).catch(() => {});
+      const html = await pr.evaluate(() => {
+        const ms = (window.__rnMsgs || []).map(m => JSON.parse(m)).filter(m => m.__rn === 'xPdfChunk');
+        return ms.length && ms.length === ms[0].total ? ms.sort((a, b) => a.i - b.i).map(m => m.chunk).join('') : '';
+      });
+      if (!html) { bad++; console.log(`❌ ${tag} — capture কিছু পাঠায়নি`); await ctx.close(); continue; }
+      const out = await ctx.newPage();
+      await out.setContent(html, { waitUntil: 'load' });
+      await out.emulateMedia({ media: 'print' });
+      const aBn = bnOf(await out.evaluate(() => document.body.innerText));
+      const aPages = countPages(await out.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }));
+      /* ওয়েবসাইট সরাসরি — একই তথ্য localStorage-এ */
+      const dp = await ctx.newPage();
+      await dp.addInitScript(([ls, r]) => { try { localStorage.setItem(ls, r); } catch (e) {} }, [lsKey, msg.raw]);
+      await dp.goto(`${ORIGIN}/${printPg}.html?v=2&lang=${lang}`, { waitUntil: 'domcontentloaded' });
+      await dp.waitForTimeout(7000);
+      await dp.emulateMedia({ media: 'print' });
+      const wBn = bnOf(await dp.evaluate(() => document.body.innerText));
+      const wPages = countPages(await dp.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }));
+      if (aPages < 2 || Math.abs(aPages - wPages) > 1 || aBn > wBn) {
+        bad++; console.log(`❌ ${tag} — অ্যাপে ${aPages} পাতা/বাংলা ${aBn} · ওয়েবসাইটে ${wPages} পাতা/বাংলা ${wBn}`);
+      } else console.log(`✓ ${tag} — সেতু → লাইভ ছাপার পাতা · অ্যাপে ${aPages} পাতা = ওয়েবসাইটে ${wPages} · বাংলা ${aBn}/${wBn}`);
+      await ctx.close();
+    }
     /* ⛔ ২০২৬-০৯-২৪ — "আমার রিপোর্ট" (WebPage পর্দা): /my-reports পাতা
        '/kundali-print.html?premium=1' খোলে; অ্যাপ সেটা livePrintSource দিয়ে
        লুকোনো WebView-এ আঁকে। আগে এই পর্দায় onPrint-ই ছিল না (৮ নম্বর)। */

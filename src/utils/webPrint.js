@@ -210,7 +210,13 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   else window.__myaStable=0;
   window.__myaLastLen=_len;
   var _settled=window.__myaStable>=3 || (Date.now()-window.__myaCapT0>40000);
-  if(root && _len > ${minLen} && _settled){
+  /* ⛔ ২০২৬-০৯-২৫ — বান্ডলে ছবি base64 হয়ে পাতার ভিতরেই থাকে (নামকরণ ~২ লাখ
+     অক্ষর), লাইভ en/hi পাতায় কেবল ঠিকানা (~৭ হাজার)। বান্ডল ধরে লেখা ৮,০০০-এর
+     সীমা তাই লাইভ নামকরণ ও সংখ্যা জ্যোতিষে **কখনো** পেরোত না — PDF আসতই না।
+     ফাঁকা পাতায় printRoot ০ (মাপা), আর "শেষ হয়েছে কি না" দেখে উপরের স্থিরতা-
+     পরীক্ষা; তাই লাইভে সীমাটা কেবল "কিছু একটা আঁকা হয়েছে"-র পাহারা। */
+  var _min=/^https?:/.test(location.protocol)?Math.min(${minLen},2000):${minLen};
+  if(root && _len > _min && _settled){
     [].slice.call(document.querySelectorAll('script')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
     /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — expo-print
        ওগুলো খুঁজে পায় কেবল <base> থাকলে। বান্ডলে (about:blank) দরকার নেই। */
