@@ -20,6 +20,7 @@ import { PAGE_PRINT_JS, collectPdfChunk, deliverPdf, OPEN_BRIDGE_JS } from '../u
 import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
 import { useLanguage } from '../context/LanguageContext';
+import { recoverProps } from '../utils/webRecover';
 
 // Links that should always hand off to the OS (WhatsApp app, dialer, mail
 // client) instead of loading inside the WebView. Without this, tapping one
@@ -509,6 +510,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   return (
     <View style={[s.wv, style]}>
       <WebView
+        {...recoverProps(webViewRef)}
         ref={webViewRef}
         /* queryString বদলালে WebView-কে নতুন করে বসানো হয় (key)। শুধু
            source.uri বদলে দিলে পাতাটা নির্ভরযোগ্যভাবে আবার লোড হয় না —

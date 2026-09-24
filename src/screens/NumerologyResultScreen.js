@@ -12,6 +12,7 @@ import { WEB_SHARE_JS } from '../utils/webShareBridge';
 import { makeCaptureJS, collectPdfChunk, deliverPdf, printSource } from '../utils/webPrint';
 import { useLanguage } from '../context/LanguageContext';
 import { useAlert, Text } from '../i18n/Text';
+import { recoverProps } from '../utils/webRecover';
 
 // numerology.html's "বিশ্লেষণ করুন" button navigates to result.html?q=... — this
 // screen renders that bundled page. The website itself ships a @media print
@@ -127,6 +128,7 @@ export function NumerologyResultScreen() {
       ) : null}
       {pdfHtml ? (
         <WebView
+        {...recoverProps(null)}
           source={pdfHtml.uri ? { uri: pdfHtml.uri } : { html: pdfHtml.html }}
           injectedJavaScriptBeforeContentLoaded={pdfHtml.before}
           style={s.hidden}

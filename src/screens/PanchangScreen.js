@@ -24,6 +24,7 @@ import { RASHI_SIGNS } from '../data/rashifalSigns';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { savePanjikaCity } from '../utils/panjikaCity';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
+import { recoverProps } from '../utils/webRecover';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -465,6 +466,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
   return (
     <View style={s.wv}>
       <WebView
+        {...recoverProps(ref)}
         ref={ref}
         source={{ uri }}
         style={s.wv}

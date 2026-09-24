@@ -263,6 +263,8 @@ npm run verify-hook-order    # React hook-এর ক্রম
 npm run check:startup        # চালু হওয়ার পথ
 npm run check:sync           # src/engine সাইটের সঙ্গে মেলে
 npm run check:engine-drift   # বান্ডলের ইনলাইন ইঞ্জিন কত পিছিয়ে (রেখাচিহ্ন ২)
+npm run verify-local-prices   # বিদেশি পাঠক: পাতা ও PDF-এ Play-র দাম (../services লাগে)
+npm run verify-webview-recover # প্রতিটি <WebView>-এ recoverProps — নতুন WebView বসালেও
 ```
 
 ⚠️ **`check:engine-drift`-এর রেখাচিহ্ন ২** — `result.js`-এর `js/main.js` ও

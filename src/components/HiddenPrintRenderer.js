@@ -15,6 +15,7 @@ import { StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { makeCaptureJS, collectPdfChunk, deliverPdf } from '../utils/webPrint';
 import { useAlert } from '../i18n/Text';
+import { recoverProps } from '../utils/webRecover';
 
 const TYPE = 'hpPdfChunk';
 const CAPTURE_JS = makeCaptureJS(TYPE);
@@ -56,6 +57,7 @@ export function HiddenPrintRenderer({ source, fileName, dialogTitle, onFinish })
 
   return (
     <WebView
+        {...recoverProps(ref)}
       ref={ref}
       style={s.hidden}
       javaScriptEnabled

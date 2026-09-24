@@ -30,7 +30,8 @@
     "check:imports": "node scripts/check-imports.js",
     "verify-print-data": "node scripts/verify-print-data.js",
     "verify-page-fill": "node scripts/verify-page-fill.js",
-    "verify-local-prices": "node scripts/verify-local-prices.js"
+    "verify-local-prices": "node scripts/verify-local-prices.js",
+    "verify-webview-recover": "node scripts/verify-webview-recover.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

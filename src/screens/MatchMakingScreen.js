@@ -18,6 +18,7 @@ import { colors } from '../theme/colors';
 import { haptics } from '../utils/haptics';
 import { buildBuyOnWebJS } from '../utils/buyOnWebBridge';
 import { makeCaptureJS, collectPdfChunk, printSource } from '../utils/webPrint';
+import { recoverProps } from '../utils/webRecover';
 
 
 const MM_CSS = `
@@ -448,6 +449,7 @@ export function MatchMakingScreen() {
       )}
       {pdfRenderHtml != null && (
         <WebView
+        {...recoverProps(pdfWebViewRef)}
           ref={pdfWebViewRef}
           style={s.pdfRenderer}
           javaScriptEnabled={true}

@@ -10,6 +10,7 @@ import PRINT_HTML from '../web-html/namakaran-print';
 import { makeCaptureJS, collectPdfChunk, deliverPdf, printSource } from '../utils/webPrint';
 import { useLanguage } from '../context/LanguageContext';
 import { useAlert, Text } from '../i18n/Text';
+import { recoverProps } from '../utils/webRecover';
 
 const APP_CSS = `
 /* ── Hide website chrome ── */
@@ -390,6 +391,7 @@ export function NamakaranScreen() {
       ) : null}
       {pdfHtml ? (
         <WebView
+        {...recoverProps(null)}
           source={pdfHtml.uri ? { uri: pdfHtml.uri } : { html: pdfHtml.html }}
           injectedJavaScriptBeforeContentLoaded={pdfHtml.before}
           style={s.hidden}

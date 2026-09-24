@@ -29,6 +29,7 @@ import { withPrintData } from '../utils/webPrint';
 import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { useAuth } from '../context/AuthContext';
 import { fetchWebViewAuthToken, buildBridgeSignInJS, BRIDGE_SIGNOUT_JS } from '../utils/webviewAuthBridge';
+import { recoverProps } from '../utils/webRecover';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -606,6 +607,7 @@ export function KundaliScreen() {
         ) : (
           <View style={s.wv}>
             <WebView
+        {...recoverProps(webViewRef)}
               ref={webViewRef}
               source={{ uri: sourceUri }}
               style={s.wv}
@@ -719,6 +721,7 @@ export function KundaliScreen() {
       ── */}
       {pdfRenderState && (
         <WebView
+        {...recoverProps(pdfWebViewRef)}
           ref={pdfWebViewRef}
           style={s.pdfRenderer}
           javaScriptEnabled={true}
