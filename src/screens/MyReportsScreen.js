@@ -39,6 +39,8 @@ const STATUS = {
   done:     { label: 'প্রস্তুত',        color: '#1E874B', icon: 'check-circle-outline' },
 };
 const READY = (st) => st === 'ready' || st === 'done';
+/* SettingsScreen-এর SUPPORT_PHONE-এর একই নম্বর (ড. আচার্য) */
+const REPORT_WA = '919333122768';
 const PID_LABEL = {
   premiumKundali:  'প্রিমিয়াম কুণ্ডলী রিপোর্ট',
   solutionKundali: 'VIP পরামর্শ ও সমাধান',
@@ -188,6 +190,19 @@ export function MyReportsScreen({ navigation }) {
               ) : item.deliveryUrl ? (
                 <Pressable style={s.cta} onPress={() => Linking.openURL(item.deliveryUrl).catch(() => {})}>
                   <Text style={s.ctaText}>রিপোর্ট দেখুন</Text>
+                </Pressable>
+              ) : null}
+
+              {/* ⛔ ২০২৬-০৯-২৫ — Google Play-র "AI-Generated Content" নীতি: ব্যবহারকারীর
+                  প্রশ্ন থেকে AI দিয়ে লেখা তৈরি করে এমন অ্যাপে **অ্যাপের ভিতরেই** আপত্তিকর
+                  লেখা জানানোর ব্যবস্থা থাকতে হয়। প্রিমিয়াম রিপোর্টের বিশ্লেষণ Gemini-র
+                  খসড়া (জ্যোতিষী দেখে পাঠান), তাই প্রতিটি প্রস্তুত রিপোর্টের নিচে — অর্ডার
+                  নম্বরসহ, যাতে কোন রিপোর্ট তা খুঁজতে না হয়। */}
+              {READY(item.status) ? (
+                <Pressable style={[s.cta, s.ctaGhost]} accessibilityRole="button"
+                  onPress={() => Linking.openURL('https://wa.me/' + REPORT_WA + '?text=' + encodeURIComponent(
+                    t('রিপোর্টে আপত্তিকর বা ভুল কিছু পেয়েছি। অর্ডার: {id}').replace('{id}', item.id) + '\n')).catch(() => {})}>
+                  <Text style={s.ctaGhostText}>রিপোর্টে আপত্তিকর বা ভুল কিছু পেলে জানান</Text>
                 </Pressable>
               ) : null}
             </View>

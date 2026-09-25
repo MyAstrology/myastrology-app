@@ -8,6 +8,14 @@
  *  "period of Rahu" লিখলে সেটা আর জ্যোতিষ থাকে না। (ওয়েবসাইটের একই নিয়ম।)
  */
 export const STRINGS = {
+  "রিপোর্টে আপত্তিকর বা ভুল কিছু পেলে জানান": {
+    "en": "Report anything objectionable or wrong in this report",
+    "hi": "रिपोर्ट में कुछ आपत्तिजनक या गलत मिले तो बताएँ"
+  },
+  "রিপোর্টে আপত্তিকর বা ভুল কিছু পেয়েছি। অর্ডার: {id}": {
+    "en": "I found something objectionable or wrong in my report. Order: {id}",
+    "hi": "मेरी रिपोर्ट में कुछ आपत्तिजनक या गलत मिला। ऑर्डर: {id}"
+  },
   "অ্যাপটা কেমন লাগছে?": {
     "en": "How are you finding the app?",
     "hi": "ऐप कैसा लग रहा है?"
