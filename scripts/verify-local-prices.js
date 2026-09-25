@@ -54,6 +54,15 @@ else ok('ভারতীয় পাঠক (INR): কোনো বদল নে
 const MAP = LP.buildMap(USD);
 if (!MAP || MAP['101'] !== '$1.99' || MAP['1501'] !== '$21.99') fail('USD মানচিত্র ভুল: ' + JSON.stringify(MAP));
 else ok('বিদেশি পাঠক: ' + JSON.stringify(MAP));
+/* একই ₹ অঙ্কের দুই পণ্যের বিদেশি দাম আলাদা হলে সেই অঙ্ক বদলানো চলবে না */
+{
+  const MIX = JSON.parse(JSON.stringify(USD));
+  MIX.mmPdf = { price: '$2.49', currency: 'USD' };
+  const m = LP.buildMap(MIX);
+  if (!m || m['101'] !== undefined || m['501'] !== '$7.49')
+    fail('কুণ্ডলী PDF $1.99 আর যোটক PDF $2.49 হলে ₹১০১ একটার দামে বসছে: ' + JSON.stringify(m));
+  else ok('একই ₹ অঙ্কে দুই পণ্যের দাম আলাদা হলে সেই অঙ্ক ছোঁয়া হয় না, বাকিগুলো বদলায়');
+}
 const JS = LP.priceJS(MAP);
 
 (async () => {

@@ -46,6 +46,7 @@ export function getPriceMap() { return _map; }
 export function buildMap(prices) {
   if (!prices) return null;
   const out = {};
+  const clash = {};
   let foreign = false;
   for (const key of Object.keys(PRODUCTS)) {
     const p = prices[key];
@@ -53,7 +54,13 @@ export function buildMap(prices) {
     if (p.currency && p.currency !== 'INR') foreign = true;
     const amt = String(PRODUCTS[key].inr);
     if (!out[amt]) out[amt] = p.price;
+    else if (out[amt] !== p.price) clash[amt] = 1;
   }
+  /* ⚠️ ২০২৬-০৯-২৫ — পাতার "₹১০১" থেকে পণ্য চেনা হয় অঙ্ক দিয়ে, আর ₹১০১ দুটো
+     পণ্যের (কুণ্ডলী PDF, যোটক PDF)। Console-এ বিদেশে দুটোর দাম আলাদা হলে
+     প্রথমটার দামই দুই পাতায় বসত — নীরবে ভুল দাম। সেই অঙ্ক তাই বদলানোই হয় না
+     (পাঠক ₹ রেফারেন্স দেখেন, Play-র পর্দায় আসল দাম) — ভুল দাবির চেয়ে ভালো। */
+  for (const amt of Object.keys(clash)) delete out[amt];
   return foreign && Object.keys(out).length ? out : null;
 }
 
