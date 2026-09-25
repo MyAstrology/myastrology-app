@@ -458,5 +458,65 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
   if (!calls) bad('handleBuyOnWeb()-এর কোনো ডাকই পাওয়া গেল না');
 }
 
-console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
-process.exit(fail ? 1 : 0);
+/* ⑫ Play "You already own this item" — আসলে চালিয়ে দেখা ────────────────
+   ২০২৬-০৯-২৫, সহকর্মীর বর্ষফল ₹৫১: টাকা কাটল, যাচাই হলো না, আর আবার
+   চাপলে Play "already own" বলে থামাল — অ্যাপ পুরনো ক্রয়টা তুলে আনার
+   চেষ্টাই করত না। এখানে playBuy() vm-এ চালানো হয় (লেখা খোঁজা নয়):
+   (ক) উদ্ধার সফল → PDF খোলে, নতুন টাকা নয় · (খ) উদ্ধারও ব্যর্থ → পর্দায়
+   যাচাইয়ের আসল কারণ · (গ) অন্য ত্রুটিতে উদ্ধার-চেষ্টাই হয় না। */
+{
+  console.log('\n⑫ "already own" এলে পুরনো ক্রয় উদ্ধার (চালিয়ে দেখা)');
+  const vm = require('vm');
+  const cut = (src, a, b) => { const i = src.indexOf(a); const j = b ? src.indexOf(b, i) : src.length; return src.slice(i, j); };
+  const ownFn = cut(bill, 'export function isAlreadyOwned', '\n}\n') + '\n}\n';
+  const code = [
+    ownFn.replace('export ', ''),
+    cut(bridge, 'function isCancel', '\n}\n') + '\n}\n',
+    cut(bridge, 'async function playBuy', '\n/* Play Billing এই বিল্ডে'),
+  ].join('\n');
+  const run = async (buyErr, recover) => {
+    const log = { inject: [], alerts: [], recovered: 0 };
+    let pend = [];
+    const ctx = {
+      String, Promise, Error,
+      t: x => x,
+      auth: { currentUser: { uid: 'u' } },
+      Alert: { alert: (a, b) => log.alerts.push(a + ' ' + b) },
+      unlockJS: (p, id) => 'UNLOCK:' + p + ':' + id,
+      openOnWeb: () => {},
+      addPending: async k => { pend.push(k); },
+      takePending: async k => { const i = pend.indexOf(k); if (i < 0) return false; pend.splice(i, 1); return true; },
+      billing: {
+        ensureReady: async () => {},
+        buy: async () => { throw buyErr; },
+        recoverOwned: async () => { log.recovered++; return recover(pend); },
+      },
+    };
+    vm.createContext(ctx);
+    vm.runInContext(code + '\nthis.isAlreadyOwned=isAlreadyOwned;this.playBuy=playBuy;', ctx);
+    ctx.billing.isAlreadyOwned = ctx.isAlreadyOwned;
+    await ctx.playBuy('varshaphalaPdf', js => log.inject.push(js), { page: 'varshaphala' });
+    return log;
+  };
+  (async () => {
+    const owned = Object.assign(new Error('already-owned · #7 · Item is already owned'), { code: 'already-owned', responseCode: 7 });
+    const a = await run(owned, pend => { pend.push('varshaphalaPdf'); return { done: ['varshaphalaPdf'], err: null }; });
+    if (a.recovered === 1 && a.inject.length === 1 && /UNLOCK:varshaphalaPdf:RECOVERED/.test(a.inject[0]) && !a.alerts.length)
+      ok('উদ্ধার সফল → PDF খোলে, নতুন টাকা নয়');
+    else bad('"already own"-এ PDF খুলল না: ' + JSON.stringify(a));
+
+    const why = Object.assign(new Error('ক্রয়টি সম্পূর্ণ হয়নি।'), { code: 'functions/failed-precondition' });
+    const b = await run(owned, () => ({ done: [], err: why }));
+    if (!b.inject.length && b.alerts.length === 1 && b.alerts[0].includes('failed-precondition'))
+      ok('উদ্ধারও ব্যর্থ → পর্দায় যাচাইয়ের আসল কারণ (failed-precondition)');
+    else bad('উদ্ধার ব্যর্থ হলে কারণ দেখা যায় না: ' + JSON.stringify(b));
+
+    const other = Object.assign(new Error('service-unavailable'), { code: 'service-unavailable', responseCode: 2 });
+    const c = await run(other, () => ({ done: [], err: null }));
+    if (c.recovered === 0 && c.alerts.length === 1) ok('অন্য ত্রুটিতে উদ্ধার-চেষ্টা হয় না, আগের মতোই বার্তা');
+    else bad('অন্য ত্রুটিতেও উদ্ধার চলল: ' + JSON.stringify(c));
+    console.log(`\n${fail ? '❌' : '✅'} ${checks}টি পরীক্ষা, ${fail}টি সমস্যা`);
+    process.exit(fail ? 1 : 0);
+  })();
+}
+

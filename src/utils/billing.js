@@ -252,10 +252,13 @@ export async function buy(key) {
  *  বাধ্যতামূলক (নইলে Google ৩ দিনে টাকা ফেরত দেয়), অর্থাৎ Play-র দিকে
  *  ক্রয়টা আর পড়ে থাকে না। তাই এখানেই "ডেলিভারি বাকি" চিহ্ন বসিয়ে
  *  রাখা হয় — পাঠক পরের বার ওই বোতামে চাপলে নতুন করে টাকা লাগে না। */
+let _lastFlushErr = null;   // শেষ উদ্ধার-চেষ্টায় যাচাই কেন ব্যর্থ — পর্দায় দেখানোর জন্য
+
 export async function flushPending() {
   const m = iap();
   if (!m) return [];
   const done = [];
+  _lastFlushErr = null;
   const pend = await m.getAvailablePurchases();
   for (const p of pend || []) {
     const key = KEY_BY_ID[p.productId];
@@ -267,7 +270,7 @@ export async function flushPending() {
         try { await m.finishTransaction({ purchase: p, isConsumable: true }); } catch (e) {}
         done.push(key);
       }
-    } catch (e) { /* পরে আবার চেষ্টা হবে — এখানে চুপ করে থাকা নিরাপদ */ }
+    } catch (e) { _lastFlushErr = e; /* পরে আবার চেষ্টা হবে — এখানে চুপ থাকা নিরাপদ, কারণটা রাখা হয় */ }
   }
   return done;
 }
@@ -281,4 +284,23 @@ export async function disconnect() {
     try { await m.endConnection(); } catch (e) {}
     _connected = false;
   }
+}
+
+/** Play "You already own this item" বললো কি না।
+ *
+ *  ⛔ ২০২৬-০৯-২৫ (সহকর্মীর বর্ষফল ₹৫১): টাকা কাটার পর যাচাই ব্যর্থ হলে
+ *  ক্রয়টা consume হয় না, আর flushPending() চলে কেবল connect()-এর প্রথম
+ *  বারে — অর্থাৎ একই সেশনে আবার চাপলে Play "already own" বলে থামিয়ে
+ *  দিত, অথচ অ্যাপ পুরনো ক্রয়টা তুলে আনার চেষ্টাই করত না। পাঠক টাকা
+ *  দিয়েছেন, PDF পাননি, আর আবার কিনতেও পারেন না। */
+export function isAlreadyOwned(e) {
+  const s = String((e && (e.code || '')) + ' ' + ((e && (e.message || e.debugMessage)) || ''));
+  return (e && e.responseCode === 7) || /already[-_ ]?own|ALREADY_OWNED|#7\b/i.test(s);
+}
+
+/** আটকে থাকা ক্রয় এখনই (আবার) যাচাই করে পাওনা বানানো। ফেরত:
+ *  {done:[চাবি…], err} — err থাকলে যাচাই কেন হলো না (পর্দায় দেখানোর জন্য)। */
+export async function recoverOwned() {
+  const done = await flushPending();
+  return { done, err: _lastFlushErr };
 }

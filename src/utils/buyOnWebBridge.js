@@ -246,6 +246,22 @@ async function playBuy(product, inject, msg) {
   } catch (e) {
     if (isCancel(e)) return;               // পাঠক নিজেই বাতিল করেছেন — চুপ
 
+    /* Play বলছে জিনিসটা আগেই কেনা, অথচ আমাদের কাছে পৌঁছয়নি — টাকা কাটা
+       হয়েছিল, যাচাই হয়নি। পুরনো ক্রয়টাই এখন যাচাই করে দিয়ে দেওয়া হয়;
+       নতুন টাকা লাগে না। না পারলে নিচের বার্তায় যাচাইয়ের আসল কারণ যায়। */
+    let recoverErr = null;
+    if (billing.isAlreadyOwned(e)) {
+      try {
+        const r = await billing.recoverOwned();
+        if (await takePending(product)) {
+          paid = true;
+          inject(unlockJS(product, 'RECOVERED'));
+          return;
+        }
+        recoverErr = r && r.err;
+      } catch (e2) { recoverErr = e2; }
+    }
+
     /* ⚠️ এই বার্তাটা সব ব্যর্থতায় একরকম দেখায়, তাই কোনটা আটকেছে
        (লাইসেন্স নাকি প্রোডাক্ট নাকি সার্ভার-যাচাই) সেটা জানার উপায় ছিল না।
        কোডটা শেষে ছোট করে জুড়ে দেওয়া হয় — একটা স্ক্রিনশটেই কারণটা বোঝা যায়।
@@ -255,8 +271,9 @@ async function playBuy(product, inject, msg) {
        ঠিক পাঠায় ("Play Console-এ অনুমতি নেই", "টোকেন পাওয়া যায়নি")
        সেটা কখনো দেখা যেত না। একটা স্ক্রিনশট থেকেই কারণটা পড়া যাওয়া
        দরকার, তাই দুটোই দেখানো হয়। */
-    const eCode = String((e && e.code) || '');
-    const eMsg  = String((e && e.message) || '');
+    const eShow = recoverErr || e;
+    const eCode = String((eShow && eShow.code) || '');
+    const eMsg  = String((eShow && eShow.message) || '');
     const code = (eCode && eMsg && eMsg !== eCode ? eCode + ' · ' + eMsg : (eCode || eMsg)).slice(0, 160);
     if (paid) {
       /* ⚠️ টাকা নেওয়া ও যাচাই হয়ে গেছে, আটকেছে কেবল ডেলিভারিতে। এখানে
