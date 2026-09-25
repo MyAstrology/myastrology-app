@@ -154,6 +154,7 @@ export const PAGE_PRINT_JS = `(function(){try{
   if(window.__myaPrintHooked) return; window.__myaPrintHooked=1;
   window.print=function(){
     try{
+      try{ window.dispatchEvent(new Event('beforeprint')); }catch(e){}
       var clone=document.documentElement.cloneNode(true);
       var sc=clone.querySelectorAll('script');
       for(var i=0;i<sc.length;i++){ sc[i].parentNode&&sc[i].parentNode.removeChild(sc[i]); }
@@ -226,6 +227,12 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
   var _min=/^https?:/.test(location.protocol)?Math.min(${minLen},2000):${minLen};
   if(root && _len > _min && _settled){
     if(window.__myaCapBusy) return; window.__myaCapBusy=1;
+    /* ⛔ ২০২৬-০৯-২৫ — ছাপার পাতাগুলো শেষ গোছানোটা করে beforeprint-এ (কুণ্ডলী:
+       ফাঁকা অধ্যায় লুকোনো, এক পাতার বেশি লম্বা অধ্যায়কে ভাঙতে দেওয়া, গণেশ-
+       ব্যানারের ইংরেজি লেখা মাপে আনা, ফুটার মার্জিনে)। ব্রাউজারে "প্রিন্ট"
+       চাপলে ঘটনাটা নিজেই আসে; অ্যাপ window.print() ডাকে না, তাই কখনো আসত না —
+       সহকর্মীর ৮৭ পাতার হিন্দি PDF-এ ফাঁকা পাতা, উপচে পড়া ব্যানার। */
+    try{ window.dispatchEvent(new Event('beforeprint')); }catch(e){}
     [].slice.call(document.querySelectorAll('script,noscript')).forEach(function(s){s.parentNode&&s.parentNode.removeChild(s);});
     var live=/^https?:/.test(location.protocol);
     /* লাইভ পাতার CSS/ফন্ট/ছবি মূল-থেকে-লেখা পথে (/css/print-a4.css) — <base>

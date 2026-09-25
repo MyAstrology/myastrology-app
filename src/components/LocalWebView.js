@@ -203,7 +203,13 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
      ইংরেজিতে লেখা "This page is still available in Bengali only"।
      ঠিকানায় আগে থেকেই /en/ বা /hi/ থাকলে লেখাটা আর দেখানো হয় না। */
   /* ?lang=en|hi — যে পাতা ঠিকানার প্রশ্ন দিয়ে ভাষা বদলায় (blog-list) */
-  const bnOnly = !!remoteUrl && lang !== 'bn' && !/\/(en|hi)\/|[?&]lang=(en|hi)\b/.test(remoteUrl);
+  /* ⚠️ ২০২৬-০৯-২৫ — ব্লগের একেকটা পোস্টের ঠিকানায় (/blog/<slug>) কখনো /en/
+     থাকে না, অথচ পোস্টটা নিজেই ইংরেজি বা হিন্দি হতে পারে (ভাইফোঁটার ইংরেজি
+     পোস্টের উপরে "Bengali only" ভেসে উঠেছিল)। পোস্টের ভাষা পোস্টেরই — আর
+     অ্যাপের তালিকা পাঠকের ভাষার পোস্টই আগে দেখায় — তাই এখানে নোটিশ নয়। */
+  const bnOnly = !!remoteUrl && lang !== 'bn'
+    && !/\/(en|hi)\/|[?&]lang=(en|hi)\b/.test(remoteUrl)
+    && !/\/blog\/[^/?#]+/.test(remoteUrl);
   const [showBnOnly, setShowBnOnly] = useState(false);
   useEffect(() => {
     if (!bnOnly) { setShowBnOnly(false); return; }
