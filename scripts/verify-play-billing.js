@@ -139,7 +139,8 @@ console.log('⑤ ক্লায়েন্ট — লাইব্রেরি 
 console.log('⑥ যাচাই ছাড়া কিছু খোলা হয় না');
 {
   const buyFn = bill.slice(bill.indexOf('export async function buy'), bill.indexOf('export async function flushPending'));
-  const vAt = buyFn.indexOf('await verify(');
+  /* verifyWithWait(verify, …) — UPI অপেক্ষমাণ হলে আবার যাচাই করে, তবু যাচাই আগেই */
+  const vAt = Math.max(buyFn.indexOf('await verify('), buyFn.indexOf('await verifyWithWait(verify,'));
   const rAt = buyFn.indexOf('return res.data');
   if (vAt > 0 && rAt > vAt) ok('সার্ভার-যাচাইয়ের পরেই কেবল সফল বলা হয়');
   else bad('যাচাইয়ের আগেই সফল ধরা হচ্ছে — নকল ক্রয়ে রিপোর্ট খুলে যেত');
@@ -510,6 +511,22 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
     if (!b.inject.length && b.alerts.length === 1 && b.alerts[0].includes('failed-precondition'))
       ok('উদ্ধারও ব্যর্থ → পর্দায় যাচাইয়ের আসল কারণ (failed-precondition)');
     else bad('উদ্ধার ব্যর্থ হলে কারণ দেখা যায় না: ' + JSON.stringify(b));
+
+    /* verifyWithWait — "সম্পূর্ণ হয়নি" (UPI অপেক্ষমাণ) হলে আবার, অন্য ত্রুটিতে সঙ্গে সঙ্গে থামে */
+    {
+      const vw = cut(bill, 'export async function verifyWithWait', '\n}\n') + '\n}\n';
+      const c2 = { String, Promise, setTimeout }; vm.createContext(c2);
+      vm.runInContext(vw.replace('export ', '') + '\nthis.vw=verifyWithWait;', c2);
+      let n = 0;
+      const pendThenOk = async () => { n++; if (n < 3) throw Object.assign(new Error('ক্রয়টি সম্পূর্ণ হয়নি।'), { code: 'functions/failed-precondition' }); return { data: { ok: true } }; };
+      const r1 = await c2.vw(pendThenOk, {}, { gapMs: 0 });
+      let m = 0, thrown = null;
+      const denied = async () => { m++; throw Object.assign(new Error('Play Console-এ অনুমতি নেই'), { code: 'functions/permission-denied' }); };
+      try { await c2.vw(denied, {}, { gapMs: 0 }); } catch (e) { thrown = e; }
+      if (r1 && r1.data.ok && n === 3 && m === 1 && thrown)
+        ok('UPI অপেক্ষমাণ → অপেক্ষা করে আবার যাচাই (৩য় বারে সফল); অনুমতির ত্রুটিতে ১ বারেই থামে');
+      else bad(`verifyWithWait ভুল: n=${n} m=${m} ok=${r1 && r1.data && r1.data.ok}`);
+    }
 
     const other = Object.assign(new Error('service-unavailable'), { code: 'service-unavailable', responseCode: 2 });
     const c = await run(other, () => ({ done: [], err: null }));

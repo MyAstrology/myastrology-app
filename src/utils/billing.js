@@ -170,6 +170,29 @@ export async function loadPrices() {
   return out;
 }
 
+/** যাচাই — "ক্রয়টি সম্পূর্ণ হয়নি" (failed-precondition) এলে অপেক্ষা করে আবার।
+ *
+ *  ⛔ ২০২৬-০৯-২৫ (সহকর্মীর বর্ষফল ₹৫১): UPI-তে Play-র ক্রয় প্রথমে
+ *  "অপেক্ষমাণ" (purchaseState 2) থাকে, পাকা হয় এক-দুই মিনিট পরে। আগে
+ *  টাকা কাটার সঙ্গে সঙ্গে একবারই যাচাই হত → সার্ভার "সম্পূর্ণ হয়নি" →
+ *  পাঠক টাকা দিয়েও PDF পেতেন না; অ্যাপ নতুন করে খোলার পরে তবে আসত
+ *  ("২ মিনিট পর pdf দিয়েছে")। এখন ১৫ সেকেন্ড পরপর, মোট ~৩ মিনিট।
+ *  অন্য ত্রুটিতে (অনুমতি নেই, টোকেন অচেনা) অপেক্ষা অর্থহীন — সঙ্গে সঙ্গে থামে। */
+export async function verifyWithWait(fn, args, opts) {
+  const tries = (opts && opts.tries) || 12;
+  const gap = (opts && opts.gapMs != null) ? opts.gapMs : 15000;
+  let last = null;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(args); }
+    catch (e) {
+      last = e;
+      if (!/failed-precondition/.test(String((e && (e.code || e.message)) || ''))) throw e;
+      if (i < tries - 1) await new Promise(r => setTimeout(r, gap));
+    }
+  }
+  throw last;
+}
+
 /**
  * একটা জিনিস কেনা।
  * @param key  PRODUCTS-এর চাবি ('kundaliPdf' ইত্যাদি) — ওয়েবসাইটের
@@ -235,7 +258,7 @@ export async function buy(key) {
 
   if (!p || !p.purchaseToken) throw new Error('no-token');
 
-  const res = await verify({ productId: item.id, purchaseToken: p.purchaseToken });
+  const res = await verifyWithWait(verify, { productId: item.id, purchaseToken: p.purchaseToken });
   if (!res || !res.data || !res.data.ok) throw new Error('verify-failed');
 
   /* সার্ভার Google-এর কাছে consume করেছে; ফোনের দিকের লেনদেনটাও শেষ
