@@ -233,7 +233,10 @@ tr:nth-child(even) td{background:#fdf8f3!important;}
 .ds-md-tbl th{background:#7a2e2e!important;color:#fff!important;padding:7px 8px!important;text-align:left!important;font-size:0.74rem!important;}
 .ds-md-tbl td{padding:6px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;}
 tr.ds-cur-md>td{background:#fff8ee!important;font-weight:700!important;}
-.ds-sec-hdr{font-weight:700!important;color:#5a1e1e!important;font-size:0.87rem!important;margin:14px 0 7px!important;padding-bottom:4px!important;border-bottom:2px solid #e0cdbc!important;}
+/* ⚠️ ২০২৬-০৯-২৫ — এই নিয়মগুলো লেখা হয়েছিল যখন বান্ডলে সাইটের CSS ছিল না; এখন আছে, আর
+   সাইট শিরোনামে গাঢ় লাল/বেগুনি পটভূমি দেয়। এখানে কেবল লেখা গাঢ় লাল করায় পড়া
+   যাচ্ছিল না (সহকর্মীর স্ক্রিনশট)। পটভূমি ও লেখা তাই দুটোই এখানে, সাইটের মতো। */
+.ds-sec-hdr{font-weight:700!important;color:#fff!important;background:linear-gradient(90deg,#800000,#AA5500)!important;text-align:center!important;font-size:0.87rem!important;margin:14px 0 8px!important;padding:7px 12px!important;border:none!important;border-radius:7px!important;}
 .ds-ad-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:6px!important;margin-bottom:10px!important;}
 .ds-ad-box{border:1px solid #e0cdbc!important;border-radius:8px!important;overflow:hidden!important;background:#fff!important;}
 .ds-ad-box-hdr{background:#7a2e2e!important;color:#fff!important;padding:5px 7px!important;font-weight:700!important;font-size:0.7rem!important;text-align:center!important;}
@@ -246,9 +249,9 @@ tr.ds-cur-md>td{background:#fff8ee!important;font-weight:700!important;}
 .ds-ad-row.ds-cur-ad{background:#fff3e0!important;}
 .ds-ad-row.ds-sel{background:#f5e6d3!important;}
 .ds-pd-panel{background:#fdf8f3!important;border:1.5px solid #e0cdbc!important;border-radius:8px!important;padding:10px!important;margin:6px 0!important;}
-.ds-pd-panel-hdr{display:flex!important;justify-content:space-between!important;align-items:center!important;margin-bottom:8px!important;}
-.ds-pd-panel-title{font-weight:700!important;color:#5a1e1e!important;font-size:0.81rem!important;}
-.ds-pd-back-btn{background:none!important;border:1px solid #c8a87a!important;border-radius:5px!important;padding:3px 8px!important;font-size:0.71rem!important;color:#7a2e2e!important;cursor:pointer!important;}
+.ds-pd-panel-hdr{display:flex!important;justify-content:space-between!important;align-items:center!important;margin-bottom:8px!important;background:#4a2d72!important;color:#fff!important;padding:7px 10px!important;border-radius:6px!important;}
+.ds-pd-panel-title{font-weight:700!important;color:#fff!important;font-size:0.81rem!important;}
+.ds-pd-back-btn{background:rgba(255,255,255,.18)!important;border:1px solid rgba(255,255,255,.5)!important;border-radius:5px!important;padding:3px 8px!important;font-size:0.71rem!important;color:#fff!important;cursor:pointer!important;}
 .ds-pd-tbl{width:100%!important;border-collapse:collapse!important;font-size:0.78rem!important;}
 .ds-pd-tbl th{background:#7a2e2e!important;color:#fff!important;padding:6px 8px!important;text-align:left!important;font-size:0.73rem!important;}
 .ds-pd-tbl td{padding:5px 8px!important;border-bottom:1px solid #f0e4d4!important;color:#2c1a0e!important;}
