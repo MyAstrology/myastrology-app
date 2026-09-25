@@ -19,7 +19,7 @@ import { recoverProps } from '../utils/webRecover';
 
 const TYPE = 'hpPdfChunk';
 const CAPTURE_JS = makeCaptureJS(TYPE);
-/* প্রিমিয়াম কুণ্ডলী ১০০+ পাতা, ধীর নেটে অভিধান ও ছবিও আসে — তবু দুই
+/* প্রিমিয়াম কুণ্ডলী ৯০+ পাতা, ধীর নেটে অভিধান ও ছবিও আসে — তবু দুই
    মিনিটে না হলে পাঠককে বলা হয়, চিরকাল ঘুরতে থাকা চাকা নয় */
 const GIVE_UP_MS = 120000;
 
