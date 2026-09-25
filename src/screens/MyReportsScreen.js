@@ -178,11 +178,11 @@ export function MyReportsScreen({ navigation }) {
               {/* ⛔ PDF-টা ওয়েবসাইটের /my-reports পাতায় তৈরি হয় — সেখানেই
                   premium-merge.js দিয়ে ইঞ্জিনের রিপোর্ট ও বিশ্লেষণ মেশানো
                   হয়। অ্যাপে দ্বিতীয় একটা মেশানোর কোড লিখলে একদিন দু'দিকের
-                  PDF আলাদা হয়ে যেত। WebView-এ সাইন-ইন সেতু দিয়ে যায়, তাই
-                  আবার লগইন করতে হয় না। */}
+                  PDF আলাদা হয়ে যেত। তথ্যটা অ্যাপ নিজেই পাঠায় (reportsFeed.js)
+                  — লগইন চাওয়া হয় না; ?open= থাকায় এই রিপোর্টের PDF সরাসরি শুরু হয়। */}
               {READY(item.status) ? (
                 <Pressable style={s.cta}
-                  onPress={() => navigation.navigate('WebPage', { path: 'my-reports' })}>
+                  onPress={() => navigation.navigate('WebPage', { path: 'my-reports?open=' + encodeURIComponent(item.id) })}>
                   <Text style={s.ctaText}>সম্পূর্ণ রিপোর্ট ডাউনলোড করুন</Text>
                 </Pressable>
               ) : item.deliveryUrl ? (

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
 import { HiddenPrintRenderer } from '../components/HiddenPrintRenderer';
@@ -6,6 +6,8 @@ import { AppHeader } from '../components/AppHeader';
 import { Text } from '../i18n/Text';
 import { useLanguage } from '../context/LanguageContext';
 import { livePrintSource } from '../utils/webPrint';
+import { useAuth } from '../context/AuthContext';
+import { loadReportsFeed, reportsFeedJS } from '../utils/reportsFeed';
 import { colors } from '../theme/colors';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -68,6 +70,19 @@ export function WebPageScreen({ route }) {
   const url = ORIGIN + '/' + path;
   const { lang } = useLanguage();
   const [printSrc, setPrintSrc] = useState(null);
+  /* "আমার রিপোর্ট" — টোকেন-সেতুর উপর নির্ভর না করে অ্যাপই অর্ডার পাঠায়
+     (utils/reportsFeed.js)। হুক early-return-এর উপরে (verify-hook-order)। */
+  const { user } = useAuth() || {};
+  const isReports = /^my-reports(\.html)?(\?|$)/.test(path);
+  const [feedJS, setFeedJS] = useState('');
+  useEffect(() => {
+    if (!isReports || !user?.uid) { setFeedJS(''); return; }
+    let alive = true;
+    loadReportsFeed(user.uid)
+      .then(list => { if (alive) setFeedJS(reportsFeedJS(list)); })
+      .catch(() => { /* ব্যর্থ হলে পাতার নিজের পথ (টোকেন-সেতু) তো আছেই */ });
+    return () => { alive = false; };
+  }, [isReports, user?.uid]);
   /* ⛔ ২০২৬-০৯-২৪ — /my-reports-এর "ডাউনলোড" পাতা থেকে ছাপার পাতা খুলতে
      চায় (kundali-print?premium=1 ইত্যাদি)। আগে এই পর্দায় onPrint-ই ছিল না,
      তাই কেনা প্রিমিয়াম রিপোর্ট অ্যাপ থেকে নামানোই যেত না (সহকর্মীর ৮ নম্বর)। */
@@ -80,7 +95,7 @@ export function WebPageScreen({ route }) {
     <View style={s.root}>
       <AppHeader />
       <LocalWebView key={url} name="webpage" remoteUrl={url} style={s.wv} injectedJS={INJECTED_JS}
-        onPrint={onPrint} />
+        lateJS={feedJS} onPrint={onPrint} />
       {printSrc ? (
         <View style={s.veil}>
           <View style={s.card}>

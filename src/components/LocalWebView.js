@@ -151,6 +151,8 @@ const PRINT_PAGES = new Set([
 //   style             — additional style for the WebView
 //   onPrint(rawJson)  — called when the page requests PDF generation
 //   injectedJS        — extra JS to run after page finishes loading
+//   lateJS            — পরে তৈরি হওয়া JS (যেমন নেটিভ Firestore থেকে আনা তথ্য):
+//                       এলেই একবার, আর প্রতিটি লোড-শেষে আবার
 //   queryString       — optional "a=1&b=2" appended to the file:// uri, so the
 //                       page's own location.search-based prefill logic (e.g.
 //                       result.html reading ?q=...) picks it up on load
@@ -173,7 +175,7 @@ const SITE = 'https://myastrology.in/';
 
 /* কোন লাইভ পাতা কোন ভাষায় আছে — src/navigation/langPages.js (একটাই উৎস) */
 
-export function LocalWebView({ name, html, style, onPrint, injectedJS, queryString, remoteUrl: remoteUrlRaw, webPath, hideResultsOnBack = true, pagePrint }) {
+export function LocalWebView({ name, html, style, onPrint, injectedJS, lateJS, queryString, remoteUrl: remoteUrlRaw, webPath, hideResultsOnBack = true, pagePrint }) {
   /* pagePrint = {fileName, dialogTitle} — যে পাতাগুলো নিজেরাই ছাপে
      (বর্ষফল, সংখ্যা-জ্যোতিষ)। WebView-এ window.print() কিছুই করে না,
      তাই ওটা ধরে expo-print দিয়ে আসল PDF বানানো হয়। */
@@ -450,6 +452,10 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
   const resultsTrackerJS = React.useMemo(() => makeResultsTrackerJS(t), [t]);
   /* বিদেশি পাঠকের জন্য পাতার ₹ → Play-র দাম (১০/১১ নম্বর; localPrices.js) */
   const priceJs = usePriceJS(webViewRef);
+  /* lateJS দেরিতে আসে (নেটিভ Firestore) — পাতা আগেই লোড হয়ে থাকলে এখানেই বসে */
+  useEffect(() => {
+    if (lateJS && webViewRef.current) webViewRef.current.injectJavaScript(lateJS);
+  }, [lateJS]);
 
   if (error) {
     return (
@@ -557,6 +563,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, queryStri
         onLoadStart={onWebLoadStart}
         onLoadEnd={() => {
           webViewRef.current?.injectJavaScript(fullInjectedJS);
+          if (lateJS) webViewRef.current?.injectJavaScript(lateJS);
           const tk = authTokenRef.current;
           if (uid && tk && Date.now() - tk.at < 50 * 60 * 1000 && /^https:\/\/myastrology\.in\//.test(uri || remoteUrl || langUrl || '')) {
             webViewRef.current?.injectJavaScript(buildBridgeSignInJS(tk.token));
