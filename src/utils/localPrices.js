@@ -65,8 +65,9 @@ export function priceJS(map) {
   var MAP=${JSON.stringify(map)};
   var BN='০১২৩৪৫৬৭৮৯';
   function num(s){return parseInt(String(s).replace(/[০-৯]/g,function(d){return BN.indexOf(d);}).replace(/[,\\s]/g,''),10);}
-  /* দুই আকৃতি: "₹১০১" আর ছাপার শেষ পাতার "দক্ষিণা: ৫০১/-" */
-  var RE=/₹\\s?([০-৯0-9][০-৯0-9,]*)|([০-৯0-9][০-৯0-9,]*)\\s?\\/-/g;
+  /* তিন আকৃতি: "₹১০১", ছাপার শেষ পাতার "দক্ষিণা: ৫০১/-", আর যোটকের "₹501/-"
+     (শেষেরটায় আগে কেবল ₹ বদলাত আর "$7.49/-" থেকে যেত — verify-local-prices) */
+  var RE=/₹\\s?([০-৯0-9][০-৯0-9,]*)(?:\\s?\\/-)?|([০-৯0-9][০-৯0-9,]*)\\s?\\/-/g;
   function fix(root){
     var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),n,list=[];
     while((n=w.nextNode())){

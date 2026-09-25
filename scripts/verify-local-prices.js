@@ -9,7 +9,7 @@
      ② ওয়েবসাইটের আসল পাতা (bn কুণ্ডলী, en মিলন, bn বর্ষফল) + priceJS:
         পণ্যের ₹ অঙ্ক আর দৃশ্যমান নয়, Play-দাম আছে, কেটে-দেওয়া ₹৯৯৯ লুকোনো,
         JSON-LD অক্ষত, আর পরে আঁকা পপআপও বদলায়
-     ③ ছাপার পাতার বান্ডল (kundali-print, numerology-print) — PDF-এর শেষ পাতা
+     ③ প্রতিটি ছাপার পাতার বান্ডল (src/web-html/*-print.js) — PDF-এর শেষ পাতা
 
    চালানো:  node scripts/verify-local-prices.js   (../services লাগে)            */
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -104,7 +104,13 @@ const JS = LP.priceJS(MAP);
       await ctx.close();
     }
     /* ③ ছাপার বান্ডল — PDF-এর শেষ পাতা */
-    for (const [b, fx] of [['numerology-print', 'numerology'], ['kundali-print', 'kundali']]) {
+    /* ⚠️ ২০২৬-০৯-২৫ — আগে এখানে হাতে লেখা দুটো বান্ডল ছিল; যোটক, বর্ষফল ও
+       নামকরণের PDF কখনো দেখা হয়নি। এখন src/web-html-এর প্রতিটি *-print.js। */
+    const FX = { 'match-making': 'match' };
+    const PRINTS = fs.readdirSync(path.join(__dirname, '..', 'src/web-html'))
+      .filter(f => /-print\.js$/.test(f)).map(f => f.replace(/\.js$/, '')).sort()
+      .map(b => [b, FX[b.replace(/-print$/, '')] || b.replace(/-print$/, '')]);
+    for (const [b, fx] of PRINTS) {
       const s = fs.readFileSync(path.join(__dirname, '..', 'src/web-html', b + '.js'), 'utf8');
       let html = JSON.parse(s.slice(s.indexOf('"'), s.lastIndexOf('"') + 1));
       const raw = fs.readFileSync(path.join(__dirname, '__fixtures__/print', fx + '.json'), 'utf8');
@@ -119,13 +125,16 @@ const JS = LP.priceJS(MAP);
           const num = s => parseInt(s.replace(/[০-৯]/g, d => '০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/[,\s]/g, ''), 10);
           const t = document.body.innerText;
           const hits = [...t.matchAll(/₹\s?([০-৯0-9][০-৯0-9,]*)|([০-৯0-9][০-৯0-9,]*)\s?\/-/g)].filter(m => map[String(num(m[1] || m[2]))]).map(m => m[0]);
-          return { hits, dollars: (t.match(/\$\d[\d.]*/g) || []) };
+          /* "₹৫০১/-" আকৃতিতে ₹ বদলে "/-" ঝুলে থাকত: "$7.49/-" */
+          const glued = t.match(/\$\d[\d.]*\s?\/-/g) || [];
+          return { hits, glued, dollars: (t.match(/\$\d[\d.]*/g) || []) };
         }, MAP);
         await ctx.close(); return r;
       };
       const pre = await count(false), post = await count(true);
       if (!pre.hits.length) fail(`${b} — পরীক্ষা অর্থহীন: JS ছাড়াও কোনো দাম দেখা গেল না`);
       else if (post.hits.length) fail(`${b} — PDF-এ পণ্যের দাম রয়ে গেল: ${post.hits.join(' · ')}`);
+      else if (post.glued.length) fail(`${b} — দামের পরে "/-" ঝুলে রইল: ${post.glued.join(' · ')}`);
       else ok(`${b} — আগে ${pre.hits.join(', ')} · এখন Play-দাম ${[...new Set(post.dollars)].join(', ')}`);
     }
   } finally { await br.close(); try { srv.kill(); } catch (e) {} }
