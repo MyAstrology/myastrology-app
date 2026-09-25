@@ -30,6 +30,8 @@ export function MenuIcon({ tab, icon, size = 20, color }) {
 // (২০২৬-০৯-২৫)। verify-app-i18n মেলায়: স্ক্রিনের remoteUrl = page।
 export const MENU_ITEMS = [
   { tab: 'Home',           icon: 'home-variant',            label: 'হোম'            },
+  /* কেনা রিপোর্ট নামানোর একমাত্র জায়গা — আগে ২০ নম্বরে ছিল, কেউ খুঁজে পেত না */
+  { tab: 'MyReports',      icon: 'file-document-multiple-outline', label: 'আমার রিপোর্ট'   },
   { tab: 'Panchang',       icon: 'calendar-month',          label: 'পঞ্জিকা'         },
   { tab: 'Rashifal',       icon: 'star-circle',             label: 'রাশিফল'          },
   { tab: 'Kundali',        icon: 'chart-donut',             label: 'জন্ম কুণ্ডলী'    },
@@ -48,7 +50,6 @@ export const MENU_ITEMS = [
   { tab: 'Video',          icon: 'youtube',                 label: 'ভিডিও'           , page: 'video' },
   { tab: 'Booking',        icon: 'phone-in-talk-outline',   label: 'পরামর্শ বুকিং'   , page: 'booking' },
   { tab: 'AboutAstrologer',icon: 'account-star-outline',    label: 'জ্যোতিষী সম্পর্কে'},
-  { tab: 'MyReports',      icon: 'file-document-multiple-outline', label: 'আমার রিপোর্ট'   },
   { tab: 'Settings',       icon: 'cog-outline',             label: 'সেটিংস'          },
   { tab: 'More',           icon: 'dots-horizontal-circle',  label: 'আরও'             },
 ];

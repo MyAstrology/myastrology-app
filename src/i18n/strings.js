@@ -1240,6 +1240,10 @@ export const STRINGS = {
     "en": "My reports",
     "hi": "मेरी रिपोर्ट"
   },
+  "কেনা রিপোর্ট": {
+    "en": "Purchased reports",
+    "hi": "खरीदी गई रिपोर्ट"
+  },
   "অপেক্ষমাণ": {
     "en": "Pending",
     "hi": "प्रतीक्षारत"

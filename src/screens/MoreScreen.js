@@ -14,7 +14,16 @@ import { shadows } from '../theme/shadows';
 import { typography } from '../theme/typography';
 import { haptics } from '../utils/haptics';
 
+/* ⚠️ ২০২৬-০৯-২৫ — "আমার রিপোর্ট" আগে এই পর্দায় ছিলই না, কেবল ☰ মেনুর
+   ২২টার মধ্যে ২০ নম্বরে। সহকর্মী নিজেই খুঁজে পাননি ("গ্রাহক কিভাবে খুঁজে
+   পাবেন?") — টাকা দিয়ে কেনা রিপোর্ট নামানোর একমাত্র জায়গা, তাই সবার উপরে। */
 const SECTIONS = [
+  {
+    title: 'কেনা রিপোর্ট',
+    items: [
+      { label: 'আমার রিপোর্ট', icon: 'file-document-multiple-outline', screen: 'MyReports' },
+    ],
+  },
   {
     title: 'জ্যোতিষ সেবা',
     items: [
