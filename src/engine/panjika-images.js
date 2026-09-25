@@ -23,6 +23,7 @@ const IMAGES = {
   'Jamai-sasthi':          require('../../assets/panjika/Jamai-sasthi.webp'),
   'Jhulan-Jatra':          require('../../assets/panjika/Jhulan-Jatra.webp'),
   'Kali-Puja':             require('../../assets/panjika/Kali-Puja.webp'),
+  'Kartik-Puja':           require('../../assets/panjika/Kartik-Puja.webp'),
   'Krishna-ekadashi':      require('../../assets/panjika/Krishna-ekadashi.webp'),
   'Krishnashtami':         require('../../assets/panjika/Krishnashtami.webp'),
   'Lokkhi-Puja':           require('../../assets/panjika/Lokkhi-Puja.webp'),
