@@ -409,17 +409,13 @@ export function HomeScreen() {
   const [rashiModal, setRashiModal] = useState(false);
   const [allPosts, setAllPosts]     = useState([]);
   /* ⛔ ২০২৬-০৯-২৫ — সহকর্মীর ১৩: বাংলায় বাংলা, হিন্দিতে হিন্দি, ইংরেজিতে ইংরেজি
-     পোস্ট। list.json-এ এখন `lang` আছে। হিন্দি পোস্ট এখনো একটা, তাই হিন্দিতে
-     তারপর ইংরেজি। মহাজাগতিক সংবাদ কেবল বাংলায় লেখা — en/hi-তে বাদ।
-     ভাষা **রেন্ডারের সময়** — আবার আনতে হয় না, ভাষা বদলালেই সারি বদলায়। */
+     পোস্ট — **কেবল** সেই ভাষার (আগে হিন্দিতে ইংরেজিও মেশানো হত, সহকর্মী
+     হিন্দি অ্যাপে ইংরেজি পোস্ট দেখে আপত্তি করলেন)। মহাজাগতিক সংবাদ কেবল
+     বাংলায় লেখা — en/hi-তে বাদ। ভাষা **রেন্ডারের সময়** — ভাষা বদলালেই সারি বদলায়। */
   const blogPosts = useMemo(() => {
     const L = p => p.lang || 'bn';
-    const ok = p => lang === 'hi' ? (p.type === 'blog' && (L(p) === 'hi' || L(p) === 'en'))
-                 : lang === 'en' ? (p.type === 'blog' && L(p) === 'en')
-                 : L(p) === 'bn';
-    const list = allPosts.filter(ok);
-    if (lang === 'hi') list.sort((a, b) => (L(a) === 'hi' ? 0 : 1) - (L(b) === 'hi' ? 0 : 1));
-    return list.slice(0, 6);
+    const ok = p => lang === 'bn' ? L(p) === 'bn' : (p.type === 'blog' && L(p) === lang);
+    return allPosts.filter(ok).slice(0, 6);
   }, [allPosts, lang]);
   const userRashi = user?.rashi ?? null;
 
