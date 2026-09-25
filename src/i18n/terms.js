@@ -447,6 +447,10 @@ export const TERMS = {
     "en": "Oṁ Vāhegurū.",
     "hi": "ॐ वाहेगुरु।"
   },
+  "ওঁ কার্তিকেয় মহাভাগ দৈত্যদর্পনিসূদন। প্রণতোহহং মহাবাহো নমস্তে শিখিবাহন॥": {
+    "en": "Oṁ Kārtikeya Mahābhāga Daityadarpa-niṣūdana. Praṇato'haṁ Mahābāho Namaste Śikhivāhana.",
+    "hi": "ॐ कार्तिकेय महाभाग दैत्यदर्पनिषूदन। प्रणतोऽहं महाबाहो नमस्ते शिखिवाहन॥"
+  },
   "ওঁ ক্রীং কালিকায়ৈ নমঃ। জয় মা কালী।": {
     "en": "Oṁ Krīṁ Kālikāyai Namaḥ. Jaya Mā Kālī.",
     "hi": "ॐ क्रीं कालिकायै नमः। जय माँ काली।"
@@ -707,6 +711,10 @@ export const TERMS = {
     "en": "Kartik",
     "hi": "कार्तिक"
   },
+  "কার্তিক পূজা": {
+    "en": "Kartik Puja",
+    "hi": "कार्तिक पूजा"
+  },
   "কার্তিক পূর্ণিমায় শ্রীকৃষ্ণের রাসলীলা। গুরু নানক জয়ন্তী।": {
     "en": "Shri Krishna's Raslila on Kartik Purnima. Guru Nanak Jayanti.",
     "hi": "कार्तिक पूर्णिमा को श्रीकृष्ण की रासलीला। गुरु नानक जयंती।"
@@ -738,6 +746,10 @@ export const TERMS = {
   "কার্তিক শুক্লা ষষ্ঠী। সূর্য দেবতার পূজা।": {
     "en": "Kartik Shukla Shashthi. Worship of the Sun God.",
     "hi": "कार्तिक शुक्ल षष्ठी। सूर्यदेव की पूजा।"
+  },
+  "কার্তিক সংক্রান্তির সন্ধ্যা ও রাত্রি": {
+    "en": "Evening and night of Kartik Sankranti",
+    "hi": "कार्तिक संक्रांति की संध्या और रात्रि"
   },
   "কার্তিকের প্রথম দিন": {
     "en": "First day of Kartik",
@@ -2858,6 +2870,10 @@ export const TERMS = {
   "ষষ্ঠী": {
     "en": "Shashthi",
     "hi": "षष्ठी"
+  },
+  "সংক্রান্তির সন্ধ্যায় ময়ূরবাহন কার্তিকের মূর্তি বা পটে ফুল, ধূপ-দীপ ও নৈবেদ্য দিয়ে পূজা করুন, তারপর প্রণাম-মন্ত্র পাঠ করুন।": {
+    "en": "On the evening of the Sankranti, worship an image or painting of peacock-borne Kartik with flowers, incense, a lamp and naivedya, then recite the pranam mantra.",
+    "hi": "संक्रांति की संध्या में मयूरवाहन कार्तिक की मूर्ति या चित्र की फूल, धूप-दीप और नैवेद्य से पूजा करें, फिर प्रणाम-मंत्र का पाठ करें।"
   },
   "সংখ্যা জ্যোতিষ PDF": {
     "en": "Numerology PDF",
