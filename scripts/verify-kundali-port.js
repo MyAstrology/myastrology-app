@@ -38,8 +38,9 @@ async function calc(pg) {
   });
   await pg.waitForFunction(() => window._kResult && window._kResult.planets && window._yvResult !== undefined, null, { timeout: 30000 }).catch(() => {});
   return pg.evaluate(() => { try { _preparePayload(false); } catch (e) {}
-    const gr = document.querySelector('#panchangDetail tr[data-pg="gulika"] td:last-child');
-    return { yv: window._yvResult, pl: (window._kundaliPrintData || {}).yv, gul: gr ? gr.textContent.trim() : null }; });
+    /* গুলিক, তার ফল, মান্দি ও প্রাণপদ — চারটিই (২০২৬-০৯-২৭) */
+    const gr = ['gulika', 'gulikaPhal', 'mandi', 'pranapada'].map(c => { const t = document.querySelector('#panchangDetail tr[data-pg="' + c + '"] td:last-child'); return t ? t.textContent.trim() : null; });
+    return { yv: window._yvResult, pl: (window._kundaliPrintData || {}).yv, gul: gr.every(Boolean) ? gr.join(' | ') : null }; });
 }
 
 (async () => {
