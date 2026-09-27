@@ -210,3 +210,60 @@ exports.verifyPlayPurchase = onCall(
     return { ok: true, key: PLAY_PRODUCTS[productId], orderId };
   }
 );
+
+/* ═══════════════════════════════════════════════════════════════
+   Razorpay পেমেন্ট যাচাই — কেবল অ্যাডমিন (২০২৬-০৯-২৯)
+   ⚠️ কেন: ওয়েবসাইটের orders-এ লগইন ছাড়াই লেখা যায়, আর pid আসে ক্রেতার
+   ব্রাউজার থেকে — ভুয়া নম্বরের অর্ডারও অ্যাডমিনে আসলের মতো দেখায়।
+   অ্যাডমিন পাতার "যাচাই" বোতাম (services/js/mya-rzp-verify.js) এটা ডাকে;
+   ফাংশন সরাসরি Razorpay-কে জিজ্ঞেস করে। **কেবল পড়ে, কিছু লেখে না** —
+   অর্ডারের পথ অপরিবর্তিত।
+   চাবি দুটো Firebase-এর সিক্রেটে (RZP_KEY_ID, RZP_KEY_SECRET) — পাতায় বা
+   git-এ কখনো নয়। না থাকলে **স্পষ্ট ত্রুটি**, নীরবে "যাচাই হয়েছে" নয়।
+   ═══════════════════════════════════════════════════════════════ */
+const RZP_KEY_ID = defineSecret('RZP_KEY_ID');
+const RZP_KEY_SECRET = defineSecret('RZP_KEY_SECRET');
+
+exports.adminVerifyRazorpayPayment = onCall(
+  { region: 'asia-south1', secrets: [RZP_KEY_ID, RZP_KEY_SECRET] },
+  async (request) => {
+    assertAdmin(request);
+    const pid = String((request.data && request.data.pid) || '');
+    if (!/^pay_[A-Za-z0-9]{6,40}$/.test(pid)) {
+      throw new HttpsError('invalid-argument', 'pay_ দিয়ে শুরু পেমেন্ট নম্বর দিন।');
+    }
+    let id = '', sec = '';
+    try { id = RZP_KEY_ID.value(); sec = RZP_KEY_SECRET.value(); } catch (e) { /* নিচে ধরা */ }
+    if (!id || !sec) {
+      throw new HttpsError('failed-precondition', 'RZP_KEY_ID / RZP_KEY_SECRET বসানো নেই — যাচাই করা যাচ্ছে না।');
+    }
+    let res;
+    try {
+      res = await fetch('https://api.razorpay.com/v1/payments/' + pid, {
+        headers: { Authorization: 'Basic ' + Buffer.from(id + ':' + sec).toString('base64') },
+      });
+    } catch (e) {
+      console.error('adminVerifyRazorpayPayment: network', e && e.message);
+      throw new HttpsError('unavailable', 'Razorpay-তে পৌঁছনো গেল না।');
+    }
+    /* অচেনা নম্বরে Razorpay ৪০০ (BAD_REQUEST_ERROR "id … does not exist") বা ৪০৪ দেয় */
+    if (res.status === 400 || res.status === 404) return { found: false };
+    if (res.status === 401) throw new HttpsError('permission-denied', 'Razorpay চাবি ভুল (401)।');
+    if (!res.ok) {
+      console.error('adminVerifyRazorpayPayment: status', res.status);
+      throw new HttpsError('unavailable', 'Razorpay উত্তর দিল না (' + res.status + ')।');
+    }
+    const p = await res.json();
+    return {
+      found: true,
+      status: p.status || null,              /* captured · authorized · failed · refunded */
+      captured: !!p.captured,
+      amount: typeof p.amount === 'number' ? p.amount / 100 : null,
+      currency: p.currency || null,
+      email: p.email || null,
+      contact: p.contact || null,
+      method: p.method || null,
+      createdAt: p.created_at || null,
+    };
+  }
+);

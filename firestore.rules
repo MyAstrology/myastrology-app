@@ -46,9 +46,20 @@ service cloud.firestore {
     // hasAll চেকটা ন্যূনতম ফর্ম-জাঙ্ক/স্প্যাম আটকানোর জন্য, নিরাপত্তার মূল
     // স্তর read-restriction-ই।
     match /orders/{orderId} {
+      // ⚠️ ২০২৬-০৯-২৯ — দুটো শর্ত যোগ (আসল তিন পথ — কুণ্ডলী, মিলন, বুকিং — এগুলো মেনেই লেখে):
+      //   · uid থাকলে সেটা লেখকের নিজের (বা null) — নইলে যে কেউ অন্যের "আমার রিপোর্ট"-এ
+      //     ভুয়া অর্ডার ঢোকাতে পারত।
+      //   · status থাকলে কেবল 'new' — "প্রস্তুত" (ready) অবস্থা দেয় কেবল অ্যাডমিন।
+      // পেমেন্ট সত্যি কি না তা নিয়ম জানতে পারে না — সেটা অ্যাডমিনের "যাচাই" বোতাম
+      // (functions: adminVerifyRazorpayPayment)। scripts/verify-firestore-rules.js দেখে।
       allow create: if request.resource.data.keys().hasAll(['pid', 'email', 'ts'])
                     && request.resource.data.email is string
-                    && request.resource.data.ts is number;
+                    && request.resource.data.ts is number
+                    && (!('uid' in request.resource.data)
+                        || request.resource.data.uid == null
+                        || (request.auth != null && request.resource.data.uid == request.auth.uid))
+                    && (!('status' in request.resource.data)
+                        || request.resource.data.status == 'new');
       // ── ক্রেতা নিজের অর্ডার দেখতে পারেন ──
       // আগে কেবল অ্যাডমিন পড়তে পারতেন, তাই কেউ ₹৫০১ দিয়ে কিনে ২৪ ঘণ্টা
       // অপেক্ষা করলেও অ্যাপে/সাইটে কিছুই দেখতে পেতেন না — টাকা গেল, কোথায়

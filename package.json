@@ -34,7 +34,8 @@
     "verify-webview-recover": "node scripts/verify-webview-recover.js",
     "verify-pdf-inline": "node scripts/verify-pdf-inline.js",
     "verify-kundali-port": "node scripts/verify-kundali-port.js",
-    "verify-vp-bundle-print": "node scripts/verify-vp-bundle-print.js"
+    "verify-vp-bundle-print": "node scripts/verify-vp-bundle-print.js",
+    "verify-rzp-fn": "node scripts/verify-rzp-fn.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
