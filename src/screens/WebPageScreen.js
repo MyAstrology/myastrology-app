@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Linking, Pressable } from 'react-native';
 import { LocalWebView } from '../components/LocalWebView';
 import { HiddenPrintRenderer } from '../components/HiddenPrintRenderer';
 import { AppHeader } from '../components/AppHeader';
-import { Text } from '../i18n/Text';
+import { Text, useAlert } from '../i18n/Text';
 import { useLanguage } from '../context/LanguageContext';
 import { livePrintSource } from '../utils/webPrint';
 import { useAuth } from '../context/AuthContext';
@@ -91,6 +91,27 @@ export function WebPageScreen({ route }) {
     const src = livePrintSource(openUrl, raw, lang);
     if (src) setPrintSrc(src);
   }, [printSrc, lang]);
+  /* ⛔ ২০২৬-০৯-২৭ — সহকর্মী: অ্যাপে "PDF তৈরি হচ্ছে…" চিরকাল ঘোরে, ব্রাউজারে
+     ঠিকই নামে। যে কারণেই আটকাক, ক্রেতা যেন কখনো আটকে না থাকেন: ২০ সেকেন্ড পরে
+     "ব্রাউজারে খুলুন" বোতাম, আর ব্যর্থ হলে সেই পথটাই প্রস্তাব। ব্রাউজারে একই
+     পাতা খোলে (লগইন Google-এ, তালিকা একই অ্যাকাউন্টের) — প্রমাণিত পথ। */
+  const alertT = useAlert();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!printSrc) { setSlow(false); return undefined; }
+    const t = setTimeout(() => setSlow(true), 20000);
+    return () => clearTimeout(t);
+  }, [printSrc]);
+  const openInBrowser = useCallback(() => {
+    setPrintSrc(null);
+    Linking.openURL(url).catch(() => {});
+  }, [url]);
+  const onPrintError = useCallback(() => {
+    alertT('PDF তৈরি করা যায়নি।', 'ব্রাউজারে খুললে একই রিপোর্ট সেখান থেকে নামানো যাবে।', [
+      { text: 'বাতিল', style: 'cancel' },
+      { text: 'ব্রাউজারে খুলুন', onPress: () => Linking.openURL(url).catch(() => {}) },
+    ]);
+  }, [alertT, url]);
   return (
     <View style={s.root}>
       <AppHeader />
@@ -101,11 +122,16 @@ export function WebPageScreen({ route }) {
           <View style={s.card}>
             <ActivityIndicator size="large" color={colors.gold} />
             <Text style={s.msg}>PDF তৈরি হচ্ছে…</Text>
+            {slow ? (
+              <Pressable onPress={openInBrowser} style={s.btn} accessibilityRole="button">
+                <Text style={s.btnTx}>ব্রাউজারে খুলুন</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ) : null}
       <HiddenPrintRenderer source={printSrc} fileName="MyAstrology_report.pdf"
-        onFinish={() => setPrintSrc(null)} />
+        onFinish={() => setPrintSrc(null)} onError={isReports ? onPrintError : undefined} />
     </View>
   );
 }
@@ -117,4 +143,7 @@ const s = StyleSheet.create({
           backgroundColor: 'rgba(250,248,243,0.97)', alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: '#fff', borderRadius: 14, paddingVertical: 22, paddingHorizontal: 28, alignItems: 'center' },
   msg:  { marginTop: 12, color: colors.text || '#333', fontSize: 15 },
+  btn:  { marginTop: 16, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 22,
+          borderWidth: 1.5, borderColor: colors.gold },
+  btnTx:{ color: colors.text || '#333', fontSize: 14, fontWeight: '600' },
 });

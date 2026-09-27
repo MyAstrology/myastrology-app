@@ -23,7 +23,7 @@ const CAPTURE_JS = makeCaptureJS(TYPE);
    মিনিটে না হলে পাঠককে বলা হয়, চিরকাল ঘুরতে থাকা চাকা নয় */
 const GIVE_UP_MS = 120000;
 
-export function HiddenPrintRenderer({ source, fileName, dialogTitle, onFinish }) {
+export function HiddenPrintRenderer({ source, fileName, dialogTitle, onFinish, onError }) {
   const alertT = useAlert();
   const ref = useRef(null);
   const store = useRef({ parts: [], total: 0 });
@@ -36,7 +36,8 @@ export function HiddenPrintRenderer({ source, fileName, dialogTitle, onFinish })
     const timer = setTimeout(() => {
       if (doneRef.current) return;
       doneRef.current = true;
-      alertT('ত্রুটি', 'PDF তৈরি করা যায়নি।');
+      if (onError) onError('');
+      else alertT('ত্রুটি', 'PDF তৈরি করা যায়নি।');
       if (onFinish) onFinish();
     }, GIVE_UP_MS);
     return () => clearTimeout(timer);
@@ -47,6 +48,17 @@ export function HiddenPrintRenderer({ source, fileName, dialogTitle, onFinish })
   const onMessage = (e) => {
     let m;
     try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
+    /* ⛔ ২০২৬-০৯-২৭ — ছাপার পাতা তথ্য না পেলে (❌) আগে দুই মিনিট চাকা ঘুরত।
+       এখন সঙ্গে সঙ্গে থামে; যে পর্দা ডেকেছে সে onError পেলে নিজের পথ দেখায়
+       (যেমন "ব্রাউজারে খুলুন"), নইলে সাধারণ বার্তা। */
+    if (m && m.type === TYPE + 'Err') {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      if (onError) onError(m.msg || '');
+      else alertT('ত্রুটি', 'PDF তৈরি করা যায়নি।');
+      if (onFinish) onFinish();
+      return;
+    }
     const html = collectPdfChunk(m, store.current, TYPE);
     if (!html || doneRef.current) return;
     doneRef.current = true;

@@ -82,13 +82,27 @@ export function livePrintSource(url, rawJson, lang) {
   if (!/[?&]lang=/.test(path)) path += (path.includes('?') ? '&' : '?') + 'lang=' + L;
   const raw = typeof rawJson === 'string' ? rawJson : JSON.stringify(rawJson);
   const safe = JSON.stringify(raw).replace(/</g, '\\u003c');
+  /* ⛔ ২০২৬-০৯-২৭ — "আমার রিপোর্ট" থেকে প্রিমিয়াম PDF অ্যাপে চিরকাল "তৈরি
+     হচ্ছে…"-তে ঘুরত, অথচ ব্রাউজারে ঠিকই নামত (সহকর্মী)। আসল অর্ডারের তথ্য
+     ~৯০০ KB, দুবার escape করে এই স্ক্রিপ্ট ~১ MB — Android-এ WebView-এ
+     স্ক্রিপ্ট বসানো প্রক্রিয়া-সীমার (Binder, ~১ MB) গায়ে গায়ে। অথচ তথ্যটা
+     এখানে পাঠানোর দরকারই নেই: ছাপার পাতা **প্রথমে localStorage পড়ে**, আর
+     যে পাতা window.open করল (একই myastrology.in) সে আগেই সেখানে লিখে
+     রেখেছে — একই অ্যাপের সব WebView একই ঠিকানার localStorage ভাগ করে।
+     তাই বড় তথ্য আর গোঁজা হয় না; ছোট হলে আগের মতোই (localStorage-লেখা
+     কোনোভাবে ব্যর্থ হলেও তখন চলে)। */
+  const big = safe.length > PRINT_INJECT_MAX;
   return {
     uri: SITE_ORIGIN + path,
-    before: `(function(){try{var r=${safe};`
-      + `try{localStorage.setItem(${JSON.stringify(PRINT_KEYS[m[1]])},r);}catch(e){}`
-      + `window.__myaPrintData=r;}catch(e){}})();` + priceJS(getPriceMap()) + `true;`,
+    before: (big ? `window.__myaPrintVia='ls';`
+                 : `(function(){try{var r=${safe};`
+                   + `try{localStorage.setItem(${JSON.stringify(PRINT_KEYS[m[1]])},r);}catch(e){}`
+                   + `window.__myaPrintData=r;}catch(e){}})();`)
+      + priceJS(getPriceMap()) + `true;`,
   };
 }
+/* স্ক্রিপ্টে গোঁজার ঊর্ধ্বসীমা (অক্ষর) — Binder-সীমার অনেক নিচে */
+export const PRINT_INJECT_MAX = 300000;
 
 /*  ⛔ ২০২৬-০৯-২৪ — লাইভ (en/hi) ক্যালকুলেটর পাতার window.open-সেতু।
  *  বান্ডলে এই সেতু bundle-web-assets.js বসায়; লাইভ পাতায় কেউ বসাত না।
@@ -213,6 +227,13 @@ export const makeCaptureJS = (type, minLen = 20000) => `(function poll(){
      যখন "লোড হচ্ছে" বার্তা লুকিয়েছে **এবং** আকার টানা তিনবার (১.২ সে.)
      একই থেকেছে; সর্বোচ্চ ~৪০ সেকেন্ড, তারপর যা আছে। */
   var _len=root?root.innerHTML.length:0, _lm=document.getElementById('loadMsg');
+  /* ⛔ ২০২৬-০৯-২৭ — ছাপার পাতা তথ্য না পেলে "❌ ডেটা পাওয়া যায়নি" দেখায় আর
+     থেমে থাকে; এই পোল তখন দুই মিনিট ঘুরত, পাঠক কেবল চাকা দেখতেন। এখন
+     তিন সেকেন্ড স্থির ❌ দেখলেই অ্যাপকে জানানো হয়। */
+  if(_lm && /❌/.test(_lm.textContent||'') && _lm.offsetParent!==null){
+    window.__myaErrN=(window.__myaErrN||0)+1;
+    if(window.__myaErrN>=8){ try{ window.ReactNativeWebView.postMessage(JSON.stringify({type:'${type}Err',msg:(_lm.textContent||'').slice(0,200)})); }catch(e){} return; }
+  }
   var _loading=!!(_lm && _lm.style.display!=='none' && _lm.offsetParent!==null);
   window.__myaCapT0=window.__myaCapT0||Date.now();
   if(_len===window.__myaLastLen && !_loading) window.__myaStable=(window.__myaStable||0)+1;

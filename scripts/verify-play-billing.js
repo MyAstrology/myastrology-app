@@ -419,9 +419,30 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
       /* ⛔ তুলে আনাটা একবারের হলে হবে না — initConnection() true বললেও Play-র
          ক্লায়েন্ট তখনো তৈরি না-ও থাকতে পারে ("Billing client not ready"),
          আর তখন পাহারাটাই কেনা আটকে দিত (মালিকের স্ক্রিনশট, ২০২৬-০৯-২২)। */
-      if (/function fetchSkus\([\s\S]{0,900}?for \(/.test(bill) && /not ready\|not prepared/.test(bill))
-        ok('প্রোডাক্ট তুলতে পুনঃচেষ্টা আছে, আর "তৈরি নয়" হলে সংযোগ আবার জোড়া হয়');
-      else bad('fetchSkus()-এ পুনঃচেষ্টা নেই — একবার "Billing client not ready" হলেই কেনা আটকে যাবে');
+      /* ⚠️ ২০২৬-০৯-২৭ — আগে এখানে উৎসে হুবহু "not ready|not prepared" খোঁজা হত;
+         নিয়মটা react-native-iap-এর কোড 'not-prepared'-ও চিনতে শেখায় সেটা
+         মিথ্যে-লাল হল। এখন isNotReady() **চালিয়ে** দেখা হয় (নীতি ১৯)। */
+      const nr = bill.match(/const isNotReady = (e => [\s\S]*?\);)\n/);
+      let fnNR = null; try { fnNR = nr && eval('(' + nr[1].replace(/;$/, '') + ')'); } catch (e) {}
+      const samples = [[{ code: 'not-prepared', message: 'Billing client not ready' }, true],
+                       [{ message: 'Billing client not ready' }, true], [{ code: 'not-prepared' }, true],
+                       [{ code: 'user-cancelled', message: 'User cancelled' }, false], [{ code: 'already-owned' }, false]];
+      if (!fnNR) bad('isNotReady() পাওয়া গেল না');
+      else if (samples.every(([e, want]) => fnNR(e) === want) && /function fetchSkus\([\s\S]{0,900}?for \(/.test(bill))
+        ok('প্রোডাক্ট তুলতে পুনঃচেষ্টা আছে, আর "তৈরি নয়" (বার্তা বা not-prepared কোড) চেনা যায়');
+      else bad('fetchSkus()-এ পুনঃচেষ্টা নেই, বা "তৈরি নয়" ঠিকমতো চেনা যায় না');
+      /* ⛔ ২০২৬-০৯-২৭ — সংযোগ নীরবে ছিঁড়লে requestPurchase-ই "not ready" দিত আর
+         কেনা থামত (সহকর্মীর স্ক্রিনশট)। buy() সেই ত্রুটিতে নতুন সংযোগে একবার
+         আবার চেষ্টা করে কি না, আর connect() initConnection-এ হার মানার আগে
+         কয়েকবার চেষ্টা করে কি না। */
+      const buyBody = bill.slice(bill.indexOf('export async function buy'), bill.indexOf('export async function buy') + 6000);
+      if (/isNotReady\(e\)[\s\S]{0,400}?connect\(\)[\s\S]{0,300}?fetchSkus\(m2[\s\S]{0,120}?launch\(m2\)/.test(buyBody))
+        ok('ছিঁড়ে যাওয়া সংযোগে buy() নতুন করে জুড়ে, প্রোডাক্ট তুলে একবার আবার চেষ্টা করে');
+      else bad('buy()-এ "Billing client not ready"-এর পরে আবার চেষ্টা নেই');
+      const conn = bill.slice(bill.indexOf('async function connect()'), bill.indexOf('async function connect()') + 1500);
+      if (/for \(let i = 0; i < \d+ && !ok; i\+\+\)[\s\S]{0,120}?initConnection\(\)/.test(conn))
+        ok('initConnection() সাময়িক false দিলে কয়েকবার চেষ্টা করে');
+      else bad('connect() initConnection()-এ একবারেই হার মানে');
     }
 
     if ((pkg.dependencies || {})['react-native-nitro-modules'])
@@ -526,6 +547,58 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
       if (r1 && r1.data.ok && n === 3 && m === 1 && thrown)
         ok('UPI অপেক্ষমাণ → অপেক্ষা করে আবার যাচাই (৩য় বারে সফল); অনুমতির ত্রুটিতে ১ বারেই থামে');
       else bad(`verifyWithWait ভুল: n=${n} m=${m} ok=${r1 && r1.data && r1.data.ok}`);
+    }
+
+    /* ⑬ ২০২৬-০৯-২৭ — ছিঁড়ে যাওয়া সংযোগ, **চালিয়ে দেখা**। billing.js-এর আসল
+       connect/fetchSkus/buy vm-এ চলে; নকল Play প্রথম requestPurchase-এ
+       "Billing client not ready" (not-prepared) দেয়, পুনঃসংযোগের পরে
+       সত্যিকারের ক্রয়-ঘটনা পাঠায়। আগে এটাই পাঠককে [not-prepared]-এ থামাত।
+       আর উল্টো দিকও: ব্যবহারকারী বাতিল করলে আবার চেষ্টা **হবে না**। */
+    {
+      const strip = src => src.replace(/^import .*$/mg, '').replace(/^export /mg, '');
+      const mkPlay = (firstErr) => {
+        const st = { init: 0, fetch: 0, req: 0, end: 0, upd: null };
+        const m = {
+          initConnection: async () => { st.init++; return true; },
+          endConnection: async () => { st.end++; },
+          fetchProducts: async ({ skus }) => { st.fetch++; return skus.map(id => ({ id })); },
+          purchaseUpdatedListener: fn => { st.upd = fn; return { remove() {} }; },
+          purchaseErrorListener: () => ({ remove() {} }),
+          getAvailablePurchases: async () => [],
+          finishTransaction: async () => {},
+          requestPurchase: async ({ request }) => {
+            st.req++;
+            if (st.req === 1 && firstErr) throw firstErr;
+            const id = request.google.skus[0];
+            setTimeout(() => st.upd && st.upd({ productId: id, purchaseToken: 'TOK' }), 5);
+          },
+        };
+        return { m, st };
+      };
+      const runBuy = async (firstErr) => {
+        const { m, st } = mkPlay(firstErr);
+        const c3 = { console: { log() {}, warn() {} }, Promise, Error, String, setTimeout, clearTimeout, JSON,
+          require: () => m, Platform: { OS: 'android' },
+          getFunctions: () => ({}), httpsCallable: () => async () => ({ data: { ok: true, pdf: 'x' } }),
+          app: {}, addPending: async () => {},
+          PRODUCTS: { kundaliPdf: { id: 'kundali_pdf' } }, PRODUCT_IDS: ['kundali_pdf'], KEY_BY_ID: { kundali_pdf: 'kundaliPdf' } };
+        vm.createContext(c3);
+        vm.runInContext(strip(bill) + '\nthis.__buy=buy; this.__warm=()=>_warm;', c3);
+        await c3.__buy('ensure-warm-probe').catch(() => {});      // অচেনা চাবি — কিছুই হয় না
+        /* আগে একবার সংযোগ ও তালিকা গরম (বাস্তবের মতো), তারপর কেনা */
+        let out = null, err = null;
+        try { out = await c3.__buy('kundaliPdf'); } catch (e) { err = e; }
+        return { out, err, st };
+      };
+      const notReady = Object.assign(new Error('Billing client not ready'), { code: 'not-prepared' });
+      const r1 = await runBuy(notReady);
+      if (r1.out && r1.out.ok && r1.st.req === 2 && r1.st.end >= 1 && r1.st.init >= 2)
+        ok('"Billing client not ready" → নতুন সংযোগ, প্রোডাক্ট আবার তোলা, দ্বিতীয় চেষ্টায় কেনা সফল');
+      else bad('ছিঁড়ে যাওয়া সংযোগে কেনা আটকে গেল: ' + JSON.stringify({ out: r1.out, err: r1.err && r1.err.message, st: r1.st }));
+      const cancel = Object.assign(new Error('User cancelled'), { code: 'user-cancelled' });
+      const r2 = await runBuy(cancel);
+      if (r2.err && r2.st.req === 1) ok('ব্যবহারকারী বাতিল করলে আবার চেষ্টা হয় না');
+      else bad('বাতিলের পরেও আবার কেনার চেষ্টা হল: ' + JSON.stringify({ req: r2.st.req, err: r2.err && r2.err.message }));
     }
 
     const other = Object.assign(new Error('service-unavailable'), { code: 'service-unavailable', responseCode: 2 });

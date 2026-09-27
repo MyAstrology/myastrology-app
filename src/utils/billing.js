@@ -98,9 +98,12 @@ let _warm = null;        // শেষ সফল fetchProducts-এর ফল (দ
  *  তাই এখন একবার নয়, ধৈর্য ধরে কয়েকবার — আর "তৈরি নয়" বললে সংযোগটা
  *  ভেঙে আবার জোড়া হয়। এক নিঃশ্বাসে হার মানা আর নিঃশব্দে এড়িয়ে যাওয়া,
  *  দুটোই এখানে ভুল হতো। */
+/* "Play-র ক্লায়েন্ট তৈরি নয়" — বার্তা বা কোড (react-native-iap ১৪: 'not-prepared') */
+const isNotReady = e => /not ready|not[ -]prepared|not initialized|not connected|disconnected/i.test(
+  String((e && ((e.code || '') + ' ' + (e.message || ''))) || ''));
+
 async function fetchSkus(m, skus) {
-  const notReady = e => /not ready|not prepared|not initialized|not connected/i.test(
-    String((e && (e.message || e.code)) || ''));
+  const notReady = isNotReady;
   let last = null;
   for (let i = 0; i < 4; i++) {
     try {
@@ -123,11 +126,18 @@ async function connect() {
   const m = iap();
   if (!m) throw new Error('billing-unavailable');
   if (!_connected) {
-    const ok = await m.initConnection();
+    let ok = false;
+    /* ⛔ ২০২৬-০৯-২৭ — Play-র পরিষেবা তখনো জেগে না উঠলেও (অ্যাপ সদ্য চালু, বা
+       পটভূমি থেকে ফেরা) সাময়িক false আসে। আগে একবারেই হার মানা হত —
+       সহকর্মী "মাঝে মাঝে" [not-prepared] দেখতেন। এখন ধৈর্য ধরে তিনবার। */
+    for (let i = 0; i < 3 && !ok; i++) {
+      try { ok = (await m.initConnection()) !== false; } catch (e) { ok = false; }
+      if (!ok) await new Promise(r => setTimeout(r, 700 * (i + 1)));
+    }
     /* ⚠️ initConnection() এখন true/false ফেরত দেয়। false মানে Play-র
        সঙ্গে কথা বলাই গেল না — প্রায় সবসময় অ্যাপটা Play থেকে ইনস্টল
        করা হয়নি (সাইডলোড), বা রিলিজটা এখনো প্রকাশিত নয়। */
-    if (ok === false) throw new Error('not-prepared');
+    if (!ok) throw new Error('not-prepared');
     _connected = true;
     listen(m);
     /* ⚠️ তালিকাটা এখানেই একবার তুলে রাখা হয় — পাঠক বোতাম চাপার আগেই,
@@ -246,9 +256,27 @@ export async function buy(key) {
         if (err) reject(err); else resolve(purchase);
       },
     };
-    Promise.resolve()
-      .then(() => m.requestPurchase({ request: { google: { skus: [item.id] } }, type: 'in-app' }))
-      .catch((e) => {
+    /* ⛔ ২০২৬-০৯-২৭ — অ্যাপ অনেকক্ষণ খোলা থাকলে বা পটভূমি থেকে ফিরলে Play-র
+       বিলিং-সংযোগ নীরবে ছিঁড়ে যায়, অথচ _connected তখনো true আর _warm-এ আগের
+       তালিকা — তাই সোজা requestPurchase আর "Billing client not ready"
+       (সহকর্মীর স্ক্রিনশট: [not-prepared · not-prepared · …])। এখন ঠিক এই
+       ত্রুটিতে একবার: সংযোগ ভেঙে নতুন করে জোড়া, ProductDetails আবার তোলা
+       (launchBillingFlow ওটা ছাড়া চলে না), তারপর আবার চেষ্টা। টাকার লেনদেন
+       তখনো শুরুই হয়নি, তাই আবার চেষ্টা নিরাপদ। */
+    const launch = mm => mm.requestPurchase({ request: { google: { skus: [item.id] } }, type: 'in-app' });
+    (async () => {
+      try { await launch(m); }
+      catch (e) {
+        if (over) return;
+        if (!isNotReady(e)) throw e;
+        _connected = false; _warm = null;
+        try { await m.endConnection(); } catch (e2) {}
+        const m2 = await connect();
+        if (!(_warm || []).some(x => (x && (x.id || x.productId)) === item.id)) await fetchSkus(m2, [item.id]);
+        if (over) return;
+        await launch(m2);
+      }
+    })().catch((e) => {
         /* dispatch-ই হলো না (অচেনা প্রোডাক্ট, লাইসেন্স নেই, Play বন্ধ) */
         if (over) return;
         over = true; clearTimeout(timer); _waiter = null;

@@ -8,6 +8,14 @@
  *  "period of Rahu" লিখলে সেটা আর জ্যোতিষ থাকে না। (ওয়েবসাইটের একই নিয়ম।)
  */
 export const STRINGS = {
+  "ব্রাউজারে খুলুন": {
+    "en": "Open in browser",
+    "hi": "ब्राउज़र में खोलें"
+  },
+  "ব্রাউজারে খুললে একই রিপোর্ট সেখান থেকে নামানো যাবে।": {
+    "en": "Open it in your browser and you can download the same report there.",
+    "hi": "ब्राउज़र में खोलने पर वही रिपोर्ट वहाँ से डाउनलोड की जा सकती है।"
+  },
   "রিপোর্টে আপত্তিকর বা ভুল কিছু পেলে জানান": {
     "en": "Report anything objectionable or wrong in this report",
     "hi": "रिपोर्ट में कुछ आपत्तिजनक या गलत मिले तो बताएँ"
