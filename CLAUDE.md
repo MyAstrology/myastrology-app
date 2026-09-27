@@ -267,7 +267,7 @@ npm run check:engine-drift   # বান্ডলের ইনলাইন ই�
 npm run verify-local-prices   # বিদেশি পাঠক: পাতা ও PDF-এ Play-র দাম (../services লাগে)
 npm run verify-webview-recover # প্রতিটি <WebView>-এ recoverProps — নতুন WebView বসালেও
 npm run verify-pdf-inline      # PDF-এর আগে ছবি/CSS ভিতরে বসে — expo-print নেট থেকে কিছু নামায় না
-npm run verify-kundali-port    # বাংলা কুণ্ডলী বান্ডল: প্রতিকার, গুলিক, যোগবল (৫০০ ছক) = সাইট · গণনা ছাড়া কেনা নয় · ₹১৫০১-এ তাৎক্ষণিক বোতাম নেই
+npm run verify-kundali-port    # বাংলা কুণ্ডলী বান্ডল: প্রতিকার, গুলিক, যোগবল (৫০০ ছক), পঞ্চধা চক্র = সাইট · গণনা ছাড়া কেনা নয় · ₹১৫০১-এ তাৎক্ষণিক বোতাম নেই
 npm run verify-vp-bundle-print # বাংলা বর্ষফল PDF ছাপার পাতা থেকে, পর্দা থেকে নয়
 ```
 

@@ -40,7 +40,10 @@ async function calc(pg) {
   return pg.evaluate(() => { try { _preparePayload(false); } catch (e) {}
     /* গুলিক, তার ফল, মান্দি ও প্রাণপদ — চারটিই (২০২৬-০৯-২৭) */
     const gr = ['gulika', 'gulikaPhal', 'mandi', 'pranapada'].map(c => { const t = document.querySelector('#panchangDetail tr[data-pg="' + c + '"] td:last-child'); return t ? t.textContent.trim() : null; });
-    return { yv: window._yvResult, pl: (window._kundaliPrintData || {}).yv, gul: gr.every(Boolean) ? gr.join(' | ') : null }; });
+    /* পঞ্চধা মৈত্রী চক্র (২০২৬-০৯-২৯) — পর্দায় আঁকা ছকটাই */
+    const pd = document.querySelector('#panchadhaDiv table');
+    return { yv: window._yvResult, pl: (window._kundaliPrintData || {}).yv, gul: gr.every(Boolean) ? gr.join(' | ') : null,
+             pd: pd ? [...pd.querySelectorAll('tbody tr')].map(r => r.textContent.trim()).join(' / ') : null }; });
 }
 
 (async () => {
@@ -111,8 +114,11 @@ async function calc(pg) {
     const manglik = sw.filter(v => /মাঙ্গলিক/.test(v)).length;
     if (sw.some(v => /^ERR/.test(v)) || manglik < 50) fail('⑥ ওয়েবসাইটের ঝাড়ু চলেনি বা মাঙ্গলিক খুব কম (' + manglik + ') — পরীক্ষাটাই ভাঙা');
     else if (diff.length) fail(`⑥ যোগের গ্রহবল ${diff.length}/৫০০ ছকে আলাদা — প্রথম: অ্যাপ "${aw[diff[0]].slice(0, 160)}" · সাইট "${sw[diff[0]].slice(0, 160)}"`);
+    /* ⑦ পঞ্চধা মৈত্রী চক্র — পর্দার ৭×৭ ছক ওয়েবসাইটের সঙ্গে হুবহু */
+    if (!site.pd || (site.pd.match(/ \/ /g) || []).length !== 6) fail('⑦ ওয়েবসাইটে পঞ্চধা চক্র নেই — পরীক্ষাটাই ভাঙা');
+    else if (site.pd !== app.pd) fail(`⑦ পঞ্চধা চক্র: অ্যাপ "${String(app.pd).slice(0, 90)}", ওয়েবসাইট "${site.pd.slice(0, 90)}"`);
     if (errs.length) fail('বান্ডলে ত্রুটি: ' + errs[0]);
-    if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো · ④ গুলিক "${app.gul}" = ওয়েবসাইট · ⑤ ₹১৫০১-এর সাফল্য-পর্দায় তাৎক্ষণিক বোতাম নেই · ⑥ ৫০০ ছকে যোগের গ্রহবল = ওয়েবসাইট`);
+    if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো · ④ গুলিক "${app.gul}" = ওয়েবসাইট · ⑤ ₹১৫০১-এর সাফল্য-পর্দায় তাৎক্ষণিক বোতাম নেই · ⑥ ৫০০ ছকে যোগের গ্রহবল = ওয়েবসাইট · ⑦ পঞ্চধা চক্র = ওয়েবসাইট`);
   } finally { await br.close(); try { srv.kill(); } catch (e) {} }
   if (bad) { console.log(`\n✗ ${bad}টি সমস্যা`); process.exit(1); }
 })();
