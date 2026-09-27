@@ -244,6 +244,7 @@ TypeScript-এর পার্সার (`/opt/node22/lib/node_modules/typescrip
   (`plugins/__fixtures__/sdk54-app-build.gradle`, npm থেকে নেওয়া)।
   ⚠️ **Expo-র SDK বাড়ালে ফিক্সচারটাও নতুন করে নামান।**
 - ⚠️ `shrinkResources` ছোঁয়া হয় না — ওটাই ২০২৬-০৮-০৯-এ বিল্ড ভেঙেছিল।
+- ⚠️ **keep-নিয়ম `withR8.js`-ই বসায়** (WebView সেতু, Nitro) — react-native-webview নিজে কোনো নিয়ম আনে না। নতুন নেটিভ লাইব্রেরি যোগ করলে তার AAR/`consumer-rules.pro` খুলে দেখুন।
 - ⚠️ `app.json`-এর `versionCode` হলো **ভিত্তি**; `autoIncrement` বিল্ডের
   সময় +১ করে। প্রকাশিত নম্বরের চেয়ে ভিত্তি ছোট হলে Play আপলোড **ত্রিশ
   মিনিটের বিল্ডের শেষে** ফিরিয়ে দেয়। এখন ভিত্তি **২৭**, সংস্করণ **১.২.৫** (২৭ — 1.2.4 ইন্টারনাল টেস্টিং-এ; পরের বিল্ড ২৮)।

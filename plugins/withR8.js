@@ -1,5 +1,7 @@
-const { withAppBuildGradle, withGradleProperties } = require('@expo/config-plugins');
-const { applyR8 } = require('./r8-transform');
+const { withAppBuildGradle, withGradleProperties, withDangerousMod } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
+const { applyR8, applyKeepRules } = require('./r8-transform');
 
 // Play Console-এর "DEX code optimisation" সুপারিশ — রিলিজ বিল্ডে R8 চালু
 // করা। R8 জাভা/কোটলিন কোড ছেঁটে ছোট করে এবং ক্লাসের নাম বদলে দেয়
@@ -52,6 +54,14 @@ module.exports = function withR8(config) {
     }
     return config;
   });
+  // proguard-rules.pro-র জন্য Expo-র কোনো typed mod নেই, তাই dangerous mod।
+  // ফাইল না থাকলে applyKeepRules থেমে যায় — নিয়ম ছাড়া R8 নয়।
+  config = withDangerousMod(config, ['android', async (config) => {
+    const f = path.join(config.modRequest.platformProjectRoot, 'app', 'proguard-rules.pro');
+    const src = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : undefined;
+    fs.writeFileSync(f, applyKeepRules(src));
+    return config;
+  }]);
   return withAppBuildGradle(config, (config) => {
     config.modResults.contents = applyR8(config.modResults.contents);
     return config;

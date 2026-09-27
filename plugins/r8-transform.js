@@ -39,4 +39,34 @@ function applyR8(src) {
   return out;
 }
 
-module.exports = { applyR8, MINIFY_LINE };
+// ── বাড়তি keep-নিয়ম (২০২৬-০৯-২৯) ────────────────────────────────────
+// R8 প্রথমবার সত্যিই চলবে বিল্ড ২৮-এ। npm থেকে প্যাকেজ খুলে মেলানো হয়েছে
+// কোন লাইব্রেরি নিজের নিয়ম আনে: OneSignal (AAR-এ proguard.txt),
+// react-native-iap (`com.margelo.nitro.iap.**`) — আনে। আনে না:
+//  • react-native-webview — কোনো consumer-rules নেই, অথচ পাতা→অ্যাপ সেতু
+//    (`postMessage`, কেনাকাটা, PDF) `@JavascriptInterface` পদ্ধতির নাম ধরে
+//    চলে। নাম বদলালে সব ক্যালকুলেটর নীরবে বোবা — বিল্ড সফল, কিছু লাল নয়।
+//  • react-native-nitro-modules — মূল শ্রেণিতে @Keep আছে, কিন্তু iap-এর
+//    নিজের ফাইলেই লেখা "com.margelo.nitro.modules.** — Uncomment if needed"।
+// keep-নিয়ম কেবল ছাঁটাই কমায়, কিছু ভাঙে না — তাই সন্দেহে বেশি রাখাই সস্তা।
+const KEEP_MARK = '# ── MyAstrology withR8 (keep-নিয়ম) ──';
+const KEEP_RULES = [
+  KEEP_MARK,
+  '-keepattributes JavascriptInterface',
+  '-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }',
+  '-keep class com.reactnativecommunity.webview.** { *; }',
+  '-keep class com.margelo.nitro.** { *; }',
+].join('\n');
+
+function applyKeepRules(src) {
+  if (typeof src !== 'string') {
+    const e = new Error('[withR8] proguard-rules.pro পড়া গেল না — keep-নিয়ম ছাড়া R8 চালানো হবে না।');
+    e.r8 = true;
+    throw e;
+  }
+  // আবার prebuild হলে দু'বার বসবে না
+  const base = src.includes(KEEP_MARK) ? src.slice(0, src.indexOf(KEEP_MARK)).replace(/\n+$/, '\n') : src;
+  return base.replace(/\n*$/, '\n\n') + KEEP_RULES + '\n';
+}
+
+module.exports = { applyR8, MINIFY_LINE, applyKeepRules, KEEP_RULES, KEEP_MARK };

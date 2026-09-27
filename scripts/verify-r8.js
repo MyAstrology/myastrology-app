@@ -77,6 +77,53 @@ const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'app.json'), '
 if ((app.expo.plugins || []).some(p => (Array.isArray(p) ? p[0] : p) === './plugins/withR8.js')) ok('app.json-এ প্লাগিনটা বসানো আছে');
 else fail('app.json-এর plugins তালিকায় withR8 নেই — তাহলে কিছুই হবে না');
 
+// ⑤ keep-নিয়ম — আসল withR8.js চালিয়ে, সোর্স grep করে নয়।
+// @expo/config-plugins এখানে নেই, তাই require-এর মুখে একটা নকল বসিয়ে
+// প্লাগিন যে mod-গুলো নথিভুক্ত করে সেগুলো ধরে নিজেরা চালাই।
+{
+  const Module = require('module');
+  const os = require('os');
+  const mods = [];
+  const stub = {
+    withGradleProperties: (c) => c,
+    withAppBuildGradle: (c) => c,
+    withDangerousMod: (c, [plat, fn]) => { mods.push([plat, fn]); return c; },
+  };
+  const orig = Module._load;
+  Module._load = function (req, ...rest) { return req === '@expo/config-plugins' ? stub : orig.call(this, req, ...rest); };
+  try { require('../plugins/withR8.js')({}); } finally { Module._load = orig; }
+  n++;
+  const dm = mods.find(([p]) => p === 'android');
+  if (!dm) fail('withR8.js কোনো android dangerous mod নথিভুক্ত করেনি — keep-নিয়ম বসবে না');
+  else {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'r8-'));
+    fs.mkdirSync(path.join(tmp, 'app'));
+    const pf = path.join(tmp, 'app', 'proguard-rules.pro');
+    const orig = fs.readFileSync(path.join(__dirname, '..', 'plugins', '__fixtures__', 'sdk54-proguard-rules.pro'), 'utf8');
+    fs.writeFileSync(pf, orig);
+    const run = () => dm[1]({ modRequest: { platformProjectRoot: tmp } });
+    Promise.resolve(run()).then(async () => {
+      const once = fs.readFileSync(pf, 'utf8');
+      await run();
+      const twice = fs.readFileSync(pf, 'utf8');
+      const need = ['@android.webkit.JavascriptInterface <methods>', 'com.reactnativecommunity.webview.**', 'com.margelo.nitro.**'];
+      const miss = need.filter(r => !once.includes(r));
+      n += 3;
+      if (miss.length) fail('keep-নিয়ম নেই: ' + miss.join(', ')); else ok('keep-নিয়ম বসেছে (WebView সেতু, WebView, Nitro)');
+      if (!once.startsWith(orig.replace(/\n*$/, ''))) fail('টেমপ্লেটের নিজের নিয়ম বদলে গেছে'); else ok('টেমপ্লেটের নিজের নিয়ম অক্ষত');
+      if (once !== twice) fail('দ্বিতীয় prebuild-এ নিয়ম দু\'বার বসল'); else ok('দু\'বার prebuild করলেও একবারই');
+      fs.unlinkSync(pf);
+      n++;
+      try { await run(); fail('proguard-rules.pro না থাকলেও থামল না'); }
+      catch (e) { if (e.r8) ok('proguard-rules.pro না থাকলে থামে'); else fail('অন্য ত্রুটি — ' + e.message); }
+      finish();
+    }).catch(e => { fail('dangerous mod চালাতে ত্রুটি — ' + e.message); finish(); });
+  }
+  if (!dm) finish();
+}
+
+function finish() {
 console.log('');
 if (bad) { console.log('✗ ' + bad + '/' + n + 'টি সমস্যা'); process.exit(1); }
 console.log('✓ ' + n + 'টি পরীক্ষাই ঠিক — আসল SDK 54 টেমপ্লেটে R8 চালু হয়, আর না মিললে বিল্ড থামে');
+}
