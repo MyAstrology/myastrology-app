@@ -13,6 +13,7 @@
  *     (পঞ্জিকার পর্দায় মাপা আচরণ)।
  */
 import * as FileSystem from 'expo-file-system/legacy';
+import { savePdfToFolder } from './savePdf';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { getPriceMap, priceJS } from './localPrices';
@@ -435,15 +436,7 @@ export async function deliverPdf(html, { alertT, fileName, dialogTitle }) {
       text: 'সংরক্ষণ করুন',
       onPress: async () => {
         try {
-          const { StorageAccessFramework } = FileSystem;
-          const perm = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-          if (perm.granted) {
-            const dest = await StorageAccessFramework.createFileAsync(
-              perm.directoryUri, fileName, 'application/pdf');
-            const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-            await FileSystem.writeAsStringAsync(dest, b64, { encoding: FileSystem.EncodingType.Base64 });
-            alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
-          }
+          if ((await savePdfToFolder(uri, fileName)) === 'saved') alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
         } catch (_) {
           await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
         }

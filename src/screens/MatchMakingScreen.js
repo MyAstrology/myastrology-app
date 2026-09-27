@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { savePdfToFolder } from '../utils/savePdf';
 import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 /* Text এখানে react-native-এর নয় — ভাষা-সচেতন মোড়ক (src/i18n/Text.js)।
    import লাইনটাই একমাত্র বদল, তাই এই ফাইলের সব লেখা (ভবিষ্যতেরগুলোও)
@@ -396,16 +397,7 @@ export function MatchMakingScreen() {
             text: 'সংরক্ষণ করুন',
             onPress: async () => {
               try {
-                const { StorageAccessFramework } = FileSystem;
-                const perm = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-                if (perm.granted) {
-                  const destUri = await StorageAccessFramework.createFileAsync(
-                    perm.directoryUri, 'MyAstrology_match_making.pdf', 'application/pdf'
-                  );
-                  const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-                  await FileSystem.writeAsStringAsync(destUri, b64, { encoding: FileSystem.EncodingType.Base64 });
-                  alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
-                }
+                if ((await savePdfToFolder(uri, 'MyAstrology_match_making.pdf')) === 'saved') alertT('সংরক্ষিত!', 'PDF ফোল্ডারে সেভ হয়েছে।');
               } catch (_) {
                 await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
               }
