@@ -212,58 +212,99 @@ exports.verifyPlayPurchase = onCall(
 );
 
 /* ═══════════════════════════════════════════════════════════════
-   Razorpay পেমেন্ট যাচাই — কেবল অ্যাডমিন (২০২৬-০৯-২৯)
-   ⚠️ কেন: ওয়েবসাইটের orders-এ লগইন ছাড়াই লেখা যায়, আর pid আসে ক্রেতার
-   ব্রাউজার থেকে — ভুয়া নম্বরের অর্ডারও অ্যাডমিনে আসলের মতো দেখায়।
-   অ্যাডমিন পাতার "যাচাই" বোতাম (services/js/mya-rzp-verify.js) এটা ডাকে;
-   ফাংশন সরাসরি Razorpay-কে জিজ্ঞেস করে। **কেবল পড়ে, কিছু লেখে না** —
-   অর্ডারের পথ অপরিবর্তিত।
-   চাবি দুটো Firebase-এর সিক্রেটে (RZP_KEY_ID, RZP_KEY_SECRET) — পাতায় বা
-   git-এ কখনো নয়। না থাকলে **স্পষ্ট ত্রুটি**, নীরবে "যাচাই হয়েছে" নয়।
-   ═══════════════════════════════════════════════════════════════ */
-const RZP_KEY_ID = defineSecret('RZP_KEY_ID');
-const RZP_KEY_SECRET = defineSecret('RZP_KEY_SECRET');
+   Razorpay পেমেন্ট যাচাই — webhook দিয়ে (২০২৬-০৯-২৯)
+   ⚠️ কেন: ওয়েবসাইটের orders-এ pid আসে ক্রেতার ব্রাউজার থেকে — ভুয়া নম্বরের
+   অর্ডারও অ্যাডমিনে আসলের মতো দেখায়।
+   ⚠️ কেন API-চাবি দিয়ে নয়: Razorpay-র Key Secret কেবল তৈরির দিন একবার দেখায়,
+   আর সহকর্মীর কাছে সেটা নেই। "Regenerate" করলে key_id বদলায় আর সাইটের ~১০টি
+   পাতার চেকআউট একসঙ্গে ভাঙে। webhook-এর গোপন শব্দ আমরা নিজেরাই বানাই —
+   API-চাবির সঙ্গে সম্পর্কহীন।
 
-exports.adminVerifyRazorpayPayment = onCall(
-  { region: 'asia-south1', secrets: [RZP_KEY_ID, RZP_KEY_SECRET] },
-  async (request) => {
-    assertAdmin(request);
-    const pid = String((request.data && request.data.pid) || '');
-    if (!/^pay_[A-Za-z0-9]{6,40}$/.test(pid)) {
-      throw new HttpsError('invalid-argument', 'pay_ দিয়ে শুরু পেমেন্ট নম্বর দিন।');
+   ১. razorpayWebhook — Razorpay প্রতিটি পেমেন্টে সই-করা বার্তা পাঠায়; সই
+      (HMAC-SHA256, কাঁচা body-র উপর) মিললে payments/{payment_id}-এ লেখা হয়।
+      সই না মিললে কিছুই লেখা হয় না। payments-এ কোনো ক্লায়েন্ট লিখতে/পড়তে
+      পারে না (firestore.rules-এ নিয়ম নেই = নিষেধ) — লেখে কেবল এই ফাংশন।
+   ২. adminVerifyRazorpayPayment — অ্যাডমিনের "যাচাই" বোতাম; payments থেকে পড়ে।
+      webhook চালুর **আগের** পেমেন্ট এখানে থাকে না — তখন "অজানা" বলা হয়,
+      "ভুয়া" নয় (webhookSince দেখে), আর ড্যাশবোর্ড-লিংকে মেলাতে বলা হয়।
+   ═══════════════════════════════════════════════════════════════ */
+const crypto = require('crypto');
+const { onRequest } = require('firebase-functions/v2/https');
+const RZP_WEBHOOK_SECRET = defineSecret('RZP_WEBHOOK_SECRET');
+
+function sigOk(raw, sig, secret) {
+  if (!raw || !sig || !secret) return false;
+  const want = crypto.createHmac('sha256', secret).update(raw).digest('hex');
+  const a = Buffer.from(want), b = Buffer.from(String(sig));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+exports.razorpayWebhook = onRequest(
+  { region: 'asia-south1', secrets: [RZP_WEBHOOK_SECRET] },
+  async (req, res) => {
+    if (req.method !== 'POST') { res.status(405).send('POST only'); return; }
+    if (!sigOk(req.rawBody, req.get('x-razorpay-signature'), RZP_WEBHOOK_SECRET.value())) {
+      console.warn('razorpayWebhook: সই মেলেনি');
+      res.status(400).send('bad signature'); return;
     }
-    let id = '', sec = '';
-    try { id = RZP_KEY_ID.value(); sec = RZP_KEY_SECRET.value(); } catch (e) { /* নিচে ধরা */ }
-    if (!id || !sec) {
-      throw new HttpsError('failed-precondition', 'RZP_KEY_ID / RZP_KEY_SECRET বসানো নেই — যাচাই করা যাচ্ছে না।');
-    }
-    let res;
+    const ev = req.body || {};
+    const db = admin.firestore();
+    const now = admin.firestore.FieldValue.serverTimestamp();
     try {
-      res = await fetch('https://api.razorpay.com/v1/payments/' + pid, {
-        headers: { Authorization: 'Basic ' + Buffer.from(id + ':' + sec).toString('base64') },
-      });
+      /* প্রথম বার্তার সময় — এর আগের পেমেন্ট "অজানা", "ভুয়া" নয় */
+      const meta = db.collection('payments').doc('_meta');
+      if (!(await meta.get()).exists) await meta.set({ webhookSince: Date.now() });
+
+      const pay = ev.payload && ev.payload.payment && ev.payload.payment.entity;
+      const ref = ev.payload && ev.payload.refund && ev.payload.refund.entity;
+      if (pay && pay.id && /^pay_/.test(pay.id)) {
+        await db.collection('payments').doc(pay.id).set({
+          status: pay.status || null,
+          captured: !!pay.captured,
+          amount: typeof pay.amount === 'number' ? pay.amount / 100 : null,
+          currency: pay.currency || null,
+          email: pay.email || null,
+          contact: pay.contact || null,
+          method: pay.method || null,
+          createdAt: pay.created_at || null,
+          lastEvent: ev.event || null,
+          updatedAt: now,
+        }, { merge: true });
+      } else if (ref && ref.payment_id && /^pay_/.test(ref.payment_id)) {
+        await db.collection('payments').doc(ref.payment_id).set({
+          refunded: true, refundAmount: typeof ref.amount === 'number' ? ref.amount / 100 : null,
+          lastEvent: ev.event || null, updatedAt: now,
+        }, { merge: true });
+      }
     } catch (e) {
-      console.error('adminVerifyRazorpayPayment: network', e && e.message);
-      throw new HttpsError('unavailable', 'Razorpay-তে পৌঁছনো গেল না।');
+      /* ৫০০ দিলে Razorpay পরে আবার পাঠায় — তাই ত্রুটি লুকোনো হয় না */
+      console.error('razorpayWebhook: লেখা ব্যর্থ', e && e.message);
+      res.status(500).send('write failed'); return;
     }
-    /* অচেনা নম্বরে Razorpay ৪০০ (BAD_REQUEST_ERROR "id … does not exist") বা ৪০৪ দেয় */
-    if (res.status === 400 || res.status === 404) return { found: false };
-    if (res.status === 401) throw new HttpsError('permission-denied', 'Razorpay চাবি ভুল (401)।');
-    if (!res.ok) {
-      console.error('adminVerifyRazorpayPayment: status', res.status);
-      throw new HttpsError('unavailable', 'Razorpay উত্তর দিল না (' + res.status + ')।');
-    }
-    const p = await res.json();
-    return {
-      found: true,
-      status: p.status || null,              /* captured · authorized · failed · refunded */
-      captured: !!p.captured,
-      amount: typeof p.amount === 'number' ? p.amount / 100 : null,
-      currency: p.currency || null,
-      email: p.email || null,
-      contact: p.contact || null,
-      method: p.method || null,
-      createdAt: p.created_at || null,
-    };
+    res.status(200).send('ok');
   }
 );
+
+exports.adminVerifyRazorpayPayment = onCall({ region: 'asia-south1' }, async (request) => {
+  assertAdmin(request);
+  const pid = String((request.data && request.data.pid) || '');
+  if (!/^pay_[A-Za-z0-9]{6,40}$/.test(pid)) {
+    throw new HttpsError('invalid-argument', 'pay_ দিয়ে শুরু পেমেন্ট নম্বর দিন।');
+  }
+  const orderTs = Number((request.data && request.data.ts) || 0);
+  const db = admin.firestore();
+  const snap = await db.collection('payments').doc(pid).get();
+  if (snap.exists) {
+    const p = snap.data();
+    return { found: true, status: p.status || null, captured: !!p.captured, amount: p.amount,
+             currency: p.currency || null, email: p.email || null, contact: p.contact || null,
+             method: p.method || null, refunded: !!p.refunded };
+  }
+  const meta = await db.collection('payments').doc('_meta').get();
+  const since = meta.exists ? Number(meta.data().webhookSince || 0) : 0;
+  /* webhook চালু না থাকলে, বা অর্ডারটা চালুর আগের হলে — জানা নেই */
+  if (!since || !orderTs || orderTs < since) return { found: null, webhookSince: since || null };
+  /* বার্তা সাধারণত সেকেন্ডে আসে, তবু একদম নতুন অর্ডারকে "ভুয়া" বলা হয় না */
+  if (Date.now() - orderTs < 10 * 60 * 1000) return { found: null, recent: true, webhookSince: since };
+  return { found: false, webhookSince: since };
+});

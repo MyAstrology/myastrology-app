@@ -1,57 +1,59 @@
 #!/usr/bin/env node
-/* adminVerifyRazorpayPayment — আসল functions/index.js চালিয়ে, নকল Razorpay দিয়ে (২০২৬-০৯-২৯)
-   firebase-functions/admin এখানে ইনস্টল নেই, তাই require-এর মুখে ছোট নকল বসানো হয়;
-   ফাংশনের নিজের কোড অপরিবর্তিত চলে। প্রতিটি পথ: অ্যাডমিন নয় · ভুল নম্বর · চাবি নেই ·
-   Razorpay-তে নেই · টাকা এসেছে · শুধু authorized · ভুল চাবি। */
-const Module = require('module'), path = require('path');
+/* Razorpay webhook ও অ্যাডমিন-যাচাই — আসল functions/index.js চালিয়ে (২০২৬-০৯-২৯)
+   firebase-functions/admin এখানে নেই, তাই require-এর মুখে ছোট নকল (Firestore = মেমরির Map)।
+   webhook: সই মিললে লেখা · না মিললে ৪০০ ও কিছুই লেখা নয় · GET ৪০৫ · ফেরত (refund) ·
+   অ্যাডমিন: অ্যাডমিন নয় · ভুল নম্বর · পাওয়া গেছে · চালুর আগের অর্ডার = অজানা · নতুন অর্ডার = অজানা ·
+   চালুর পরের অর্ডার, পাওয়া যায়নি = ভুয়া-সন্দেহ। */
+const Module = require('module'), path = require('path'), crypto = require('crypto');
 class HttpsError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
-const secrets = {};
+const SECRET = 'whsec_test_123';
+const store = new Map();
+const docRef = (c, id) => ({
+  get: async () => ({ exists: store.has(c + '/' + id), data: () => store.get(c + '/' + id) }),
+  set: async (v, o) => { store.set(c + '/' + id, o && o.merge ? { ...(store.get(c + '/' + id) || {}), ...v } : v); },
+});
+const fsStub = Object.assign(() => ({ collection: c => ({ doc: id => docRef(c, id) }) }), { FieldValue: { serverTimestamp: () => 'TS' } });
 const stubs = {
-  'firebase-functions/v2/https': { onCall: (opt, fn) => (typeof opt === 'function' ? opt : fn), HttpsError },
-  'firebase-functions/params': { defineSecret: n => ({ value: () => secrets[n] || '' }) },
-  'firebase-admin': { initializeApp() {}, auth: () => ({}), firestore: Object.assign(() => ({}), { FieldValue: {} }) },
+  'firebase-functions/v2/https': { onCall: (o, f) => (typeof o === 'function' ? o : f), onRequest: (o, f) => (typeof o === 'function' ? o : f), HttpsError },
+  'firebase-functions/params': { defineSecret: n => ({ value: () => (n === 'RZP_WEBHOOK_SECRET' ? SECRET : '') }) },
+  'firebase-admin': { initializeApp() {}, auth: () => ({}), firestore: fsStub },
 };
 const orig = Module._load;
 Module._load = function (r, ...a) { return stubs[r] || orig.call(this, r, ...a); };
-const fns = require(path.join(__dirname, '..', 'functions', 'index.js'));
+const F = require(path.join(__dirname, '..', 'functions', 'index.js'));
 Module._load = orig;
-const fn = fns.adminVerifyRazorpayPayment;
 
-const ADMIN = { uid: 'a', token: { email: 'prodyutacharya7@gmail.com', email_verified: true } };
 let bad = 0, n = 0;
-async function expect(name, req, fetchImpl, check) {
-  n++; global.fetch = fetchImpl || (async () => { throw new Error('fetch ডাকা উচিত ছিল না'); });
-  let out, err; try { out = await fn(req); } catch (e) { err = e; }
-  const m = check(out, err);
-  if (m) { bad++; console.log('  ✗ ' + name + ' — ' + m + ' | ' + JSON.stringify(out || (err && [err.code, err.message]))); }
-  else console.log('  ✓ ' + name);
+const ok = (c, m) => { n++; if (c) console.log('  ✓ ' + m); else { bad++; console.log('  ✗ ' + m); } };
+function hook(body, sig, method = 'POST') {
+  const raw = Buffer.from(JSON.stringify(body));
+  const r = { code: 0 };
+  const res = { status(c) { r.code = c; return this; }, send() { return this; } };
+  const req = { method, rawBody: raw, body, get: h => (h === 'x-razorpay-signature' ? (sig === undefined ? crypto.createHmac('sha256', SECRET).update(raw).digest('hex') : sig) : '') };
+  return F.razorpayWebhook(req, res).then(() => r.code);
 }
-const resp = (status, body) => async (url, opt) => {
-  if (!/^https:\/\/api\.razorpay\.com\/v1\/payments\/pay_/.test(url)) throw new Error('ভুল URL ' + url);
-  if (!/^Basic /.test(opt.headers.Authorization)) throw new Error('Basic auth নেই');
-  return { status, ok: status >= 200 && status < 300, json: async () => body };
-};
+const ADMIN = { uid: 'a', token: { email: 'prodyutacharya7@gmail.com', email_verified: true } };
+const verify = async (data, auth = ADMIN) => { try { return await F.adminVerifyRazorpayPayment({ auth, data }); } catch (e) { return { err: e.code }; } };
+const cap = { event: 'payment.captured', payload: { payment: { entity: { id: 'pay_GOOD123456', status: 'captured', captured: true, amount: 50100, currency: 'INR', email: 'a@b.c' } } } };
+
 (async () => {
-  console.log('Razorpay যাচাই-ফাংশন');
-  await expect('অ্যাডমিন নয় → permission-denied', { auth: { uid: 'x', token: { email: 'x@y.z', email_verified: true } }, data: { pid: 'pay_ABCDEF123' } }, null,
-    (o, e) => e && e.code === 'permission-denied' ? '' : 'অ্যাডমিন-পাহারা নেই');
-  await expect('ইমেইল যাচাই-না-করা অ্যাডমিন → permission-denied', { auth: { uid: 'x', token: { email: 'prodyutacharya7@gmail.com', email_verified: false } }, data: { pid: 'pay_ABCDEF123' } }, null,
-    (o, e) => e && e.code === 'permission-denied' ? '' : 'email_verified দেখা হয় না');
-  await expect('ভুল নম্বর → invalid-argument', { auth: ADMIN, data: { pid: 'pay_x/../orders' } }, null,
-    (o, e) => e && e.code === 'invalid-argument' ? '' : 'নম্বর যাচাই নেই');
-  await expect('চাবি নেই → failed-precondition (নীরব সফল নয়)', { auth: ADMIN, data: { pid: 'pay_ABCDEF123' } }, null,
-    (o, e) => e && e.code === 'failed-precondition' ? '' : 'চাবি ছাড়াও চলল');
-  secrets.RZP_KEY_ID = 'rzp_live_x'; secrets.RZP_KEY_SECRET = 's';
-  await expect('Razorpay-তে নেই (400) → found:false', { auth: ADMIN, data: { pid: 'pay_ABCDEF123' } }, resp(400, { error: {} }),
-    o => o && o.found === false ? '' : 'found:false নয়');
-  await expect('টাকা এসেছে → captured, ₹৫০১', { auth: ADMIN, data: { pid: 'pay_ABCDEF123' } },
-    resp(200, { status: 'captured', captured: true, amount: 50100, currency: 'INR', email: 'a@b.c', method: 'upi' }),
-    o => o && o.found && o.captured === true && o.amount === 501 && o.status === 'captured' ? '' : 'মান ভুল');
-  await expect('কেবল authorized → captured:false', { auth: ADMIN, data: { pid: 'pay_ABCDEF123' } },
-    resp(200, { status: 'authorized', captured: false, amount: 10100, currency: 'INR' }),
-    o => o && o.found && o.captured === false && o.amount === 101 ? '' : 'authorized-কে এসেছে ধরল');
-  await expect('ভুল চাবি (401) → permission-denied', { auth: ADMIN, data: { pid: 'pay_ABCDEF123' } }, resp(401, {}),
-    (o, e) => e && e.code === 'permission-denied' ? '' : '401 ধরা পড়ল না');
+  console.log('Razorpay webhook');
+  ok(await hook(cap, 'deadbeef') === 400 && !store.has('payments/pay_GOOD123456'), 'ভুল সই → ৪০০, কিছুই লেখা হয়নি');
+  ok(await hook(cap, undefined, 'GET') === 405, 'GET → ৪০৫');
+  ok(await hook(cap) === 200 && store.get('payments/pay_GOOD123456').amount === 501, 'সই মিলল → ₹৫০১ লেখা হলো');
+  ok(!!store.get('payments/_meta').webhookSince, 'প্রথম বার্তায় webhookSince বসল');
+  const since = store.get('payments/_meta').webhookSince;
+  await hook({ event: 'refund.processed', payload: { refund: { entity: { payment_id: 'pay_GOOD123456', amount: 50100 } } } });
+  ok(store.get('payments/pay_GOOD123456').refunded === true && store.get('payments/pay_GOOD123456').captured === true, 'ফেরত → refunded, আগের তথ্য অক্ষত');
+  console.log('অ্যাডমিন-যাচাই');
+  ok((await verify({ pid: 'pay_GOOD123456' }, { uid: 'x', token: { email: 'x@y.z', email_verified: true } })).err === 'permission-denied', 'অ্যাডমিন নয় → permission-denied');
+  ok((await verify({ pid: 'pay_x/../y' })).err === 'invalid-argument', 'ভুল নম্বর → invalid-argument');
+  const g = await verify({ pid: 'pay_GOOD123456', ts: since + 1 });
+  ok(g.found === true && g.captured === true && g.amount === 501 && g.refunded === true, 'পাওয়া গেছে → ₹৫০১, ফেরত-চিহ্ন সহ');
+  ok((await verify({ pid: 'pay_OLD1234567', ts: since - 86400000 })).found === null, 'webhook চালুর আগের অর্ডার → অজানা (ভুয়া নয়)');
+  ok((await verify({ pid: 'pay_NEW1234567', ts: Date.now() })).found === null, 'একদম নতুন অর্ডার → অজানা (বার্তা পথে থাকতে পারে)');
+  store.set('payments/_meta', { webhookSince: Date.now() - 2 * 3600000 });   /* চালু দু'ঘণ্টা আগে */
+  ok((await verify({ pid: 'pay_FAKE123456', ts: Date.now() - 3600000 })).found === false, 'চালুর পরের পুরনো অর্ডার, পাওয়া যায়নি → ভুয়া-সন্দেহ');
   console.log('');
   if (bad) { console.log(`❌ ${n}টি পরীক্ষা, ${bad}টি সমস্যা`); process.exit(1); }
   console.log(`✅ ${n}টি পরীক্ষা, 0টি সমস্যা`);

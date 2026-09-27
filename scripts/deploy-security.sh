@@ -5,13 +5,12 @@
 #
 #  যা করে (প্রতিটি ধাপের আগে বাংলায় বলে, ব্যর্থ হলে থেমে যায়):
 #   ১. Firestore নিয়ম — ভুয়া অর্ডার (অন্যের নামে / "প্রস্তুত" অবস্থায়) আটকানো
-#   ২. Razorpay যাচাই-ফাংশন — অ্যাডমিন পাতার "যাচাই" বোতাম
+#   ২. Razorpay webhook + যাচাই-ফাংশন — অ্যাডমিন পাতার "যাচাই" বোতাম (Key Secret লাগে না)
 #  আগে পরীক্ষা: scripts/verify-firestore-rules.js (emulator), scripts/verify-rzp-fn.js
-#  Key Secret কোথাও লেখা হয় না — কেবল Firebase-এর সুরক্ষিত ভাণ্ডারে যায়।
+#  webhook-এর গোপন শব্দ কেবল Firebase-এর সুরক্ষিত ভাণ্ডারে থাকে; পর্দায় একবার দেখায় (Razorpay-তে বসাতে)।
 # ═══════════════════════════════════════════════════════════════
 set -u
 PROJECT=myastrology-addd3
-KEY_ID=rzp_live_SN8p6DJxPYFVL1      # সাইটের পাতায় যে নম্বর আছে, সেটাই (গোপন নয়)
 cd "$(dirname "$0")/.." || exit 1
 
 say()  { printf '\n\033[1m%s\033[0m\n' "$1"; }
@@ -34,27 +33,34 @@ say "③ Firestore নিয়ম চালু করছি (ভুয়া �
 firebase deploy --only firestore:rules --project "$PROJECT" || fail "নিয়ম চালু হলো না — স্ক্রিনশট পাঠান।"
 echo "✅ নিয়ম চালু। ওয়েবসাইটের আসল অর্ডার আগের মতোই চলবে।"
 
-say "④ Razorpay যাচাই-বোতাম"
-echo "এর জন্য Razorpay-র Key Secret লাগে (Razorpay ড্যাশবোর্ড → Account & Settings → API Keys-এর সঙ্গে"
-echo "যেদিন চাবি বানিয়েছিলেন সেদিন একবার দেখানো হয়েছিল)।"
-echo "⚠️ কোথাও লেখা না থাকলে 'Regenerate' চাপবেন না — এখানে 'না' লিখে আমাকে জানান।"
-printf 'Key Secret হাতে আছে? (হ্যাঁ/না): '
-read -r ans
-case "$ans" in
-  হ্যাঁ|হ্যা|haa|ha|y|Y|yes|Yes) ;;
-  *) echo "ঠিক আছে — ধাপ ④ বাদ। নিয়ম (③) চালু হয়ে গেছে।"; exit 0 ;;
-esac
-printf 'Key Secret বসান (লেখা দেখা যাবে না, বসিয়ে Enter): '
-read -rs SECRET; echo
-[ -n "$SECRET" ] || fail "কিছু বসানো হয়নি।"
-printf '%s' "$KEY_ID" | firebase functions:secrets:set RZP_KEY_ID --data-file - --project "$PROJECT" --force \
-  || fail "RZP_KEY_ID রাখা গেল না।"
-printf '%s' "$SECRET" | firebase functions:secrets:set RZP_KEY_SECRET --data-file - --project "$PROJECT" --force \
-  || fail "RZP_KEY_SECRET রাখা গেল না।"
-unset SECRET
+say "④ Razorpay যাচাই — webhook"
+echo "Razorpay-র Key Secret লাগবে না। webhook-এর নিজস্ব গোপন শব্দ এই স্ক্রিপ্টই বানাবে"
+echo "(আগের বার বানানো থাকলে সেটাই আবার ব্যবহার করবে — Razorpay-র সঙ্গে মিল থাকে)।"
+if SECRET=$(firebase functions:secrets:access RZP_WEBHOOK_SECRET --project "$PROJECT" 2>/dev/null) && [ -n "$SECRET" ]; then
+  echo "আগের গোপন শব্দই রইল।"
+else
+  SECRET=$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))") || fail "গোপন শব্দ বানানো গেল না।"
+  printf '%s' "$SECRET" | firebase functions:secrets:set RZP_WEBHOOK_SECRET --data-file - --project "$PROJECT" --force \
+    || fail "গোপন শব্দ Firebase-এ রাখা গেল না।"
+fi
 echo "ফাংশনের সহায়ক প্যাকেজ বসাচ্ছি (প্রথমবার কয়েক মিনিট)…"
 ( cd functions && npm install --no-audit --no-fund ) || fail "functions-এর প্যাকেজ বসানো গেল না।"
-firebase deploy --only functions:adminVerifyRazorpayPayment --project "$PROJECT" \
-  || fail "যাচাই-ফাংশন চালু হলো না — স্ক্রিনশট পাঠান।"
+LOG=$(mktemp)
+firebase deploy --only functions:razorpayWebhook,functions:adminVerifyRazorpayPayment --project "$PROJECT" 2>&1 | tee "$LOG"
+[ "${PIPESTATUS[0]}" -eq 0 ] || fail "ফাংশন চালু হলো না — স্ক্রিনশট পাঠান।"
+URL=$(grep -o 'https://[^ ]*razorpaywebhook[^ ]*' "$LOG" | head -1)
+[ -n "$URL" ] || URL="https://asia-south1-${PROJECT}.cloudfunctions.net/razorpayWebhook"
+rm -f "$LOG"
 
-say "✅ সব চালু। অ্যাডমিন পাতায় কোনো পুরনো আসল অর্ডারে 'যাচাই' চেপে দেখুন — '✅ … এসেছে' দেখানো উচিত।"
+say "⑤ শেষ কাজ — Razorpay-তে webhook বসানো (একবারই)"
+echo "Razorpay ড্যাশবোর্ড → Account & Settings → Webhooks → + Add New Webhook"
+echo ""
+echo "  Webhook URL :  $URL"
+echo "  Secret      :  $SECRET"
+echo "  Alert Email :  আপনার ইমেইল"
+echo "  Active Events-এ টিক দিন:  payment.captured · payment.failed · refund.processed"
+echo ""
+echo "⚠️ উপরের Secret লাইনটা কাউকে পাঠাবেন না, স্ক্রিনশটেও নয় — কপি করে সোজা Razorpay-তে বসান।"
+echo "   (হারালেও চিন্তা নেই — এই স্ক্রিপ্ট আবার চালালে আবার দেখাবে।)"
+unset SECRET
+say "✅ হয়ে গেল। এরপর যত পেমেন্ট আসবে, অ্যাডমিন পাতার 'যাচাই' বোতাম সেটা মিলিয়ে দেখাবে।"
