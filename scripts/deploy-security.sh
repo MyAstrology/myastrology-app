@@ -25,7 +25,7 @@ fi
 
 say "② আপনার Google অ্যাকাউন্টে Firebase-এ ঢোকা আছে কি না…"
 if ! firebase projects:list >/dev/null 2>&1; then
-  echo "ঢোকা নেই। একটা লিংক আসবে — ফোনের ব্রাউজারে খুলে prodyutacharya7@gmail.com দিয়ে অনুমতি দিন,"
+  echo "ঢোকা নেই। একটা লিংক আসবে — ফোনের ব্রাউজারে খুলে যে Gmail-এ Firebase প্রজেক্টটা খোলা সেটা দিয়ে অনুমতি দিন,"
   echo "তারপর যে কোড দেখাবে সেটা এখানে বসান।"
   firebase login --no-localhost || fail "লগইন হলো না। আবার চালান।"
 fi
