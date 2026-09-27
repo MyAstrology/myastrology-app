@@ -37,7 +37,9 @@ async function calc(pg) {
     calculateFullKundali();
   });
   await pg.waitForFunction(() => window._kResult && window._kResult.planets && window._yvResult !== undefined, null, { timeout: 30000 }).catch(() => {});
-  return pg.evaluate(() => { try { _preparePayload(false); } catch (e) {} return { yv: window._yvResult, pl: (window._kundaliPrintData || {}).yv }; });
+  return pg.evaluate(() => { try { _preparePayload(false); } catch (e) {}
+    const gr = document.querySelector('#panchangDetail tr[data-pg="gulika"] td:last-child');
+    return { yv: window._yvResult, pl: (window._kundaliPrintData || {}).yv, gul: gr ? gr.textContent.trim() : null }; });
 }
 
 (async () => {
@@ -76,8 +78,11 @@ async function calc(pg) {
     else if (JSON.stringify(site.yv) !== JSON.stringify(app.yv)) fail('① অ্যাপের প্রতিকার ওয়েবসাইটের সঙ্গে মেলে না');
     if (!app.pl || !app.pl.items) fail('① PDF-এর তথ্যে (payload.yv) প্রতিকার নেই');
     if (!/yv:\(window\._yvResult\|\|null\)[\s\S]*yv:\(window\._yvResult\|\|null\)/.test(html)) fail('① প্রিমিয়াম PDF-এর দুই snapshot-এ yv নেই');
+    /* ④ গুলিক লগ্ন (২০২৬-০৯-২৭) — বান্ডলে src/gulika.js ইনলাইন ও পাতার সারি, মান ওয়েবসাইটের সঙ্গে এক */
+    if (!site.gul) fail('④ ওয়েবসাইটে গুলিকের সারি নেই — পরীক্ষাটাই ভাঙা');
+    else if (site.gul !== app.gul) fail(`④ গুলিক: অ্যাপ "${app.gul}", ওয়েবসাইট "${site.gul}"`);
     if (errs.length) fail('বান্ডলে ত্রুটি: ' + errs[0]);
-    if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো`);
+    if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো · ④ গুলিক "${app.gul}" = ওয়েবসাইট`);
   } finally { await br.close(); try { srv.kill(); } catch (e) {} }
   if (bad) { console.log(`\n✗ ${bad}টি সমস্যা`); process.exit(1); }
 })();
