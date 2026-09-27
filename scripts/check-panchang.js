@@ -17,19 +17,30 @@
  * চালান: node scripts/check-panchang.js
  */
 
-const babel  = require('@babel/core');
 const Module = require('module');
+const fs = require('fs');
 
-// src/engine/*.js ও vsop87-planets ES module — Node-এ চালাতে রূপান্তর দরকার
+/* src/engine/*.js ও vsop87-planets ES module — Node-এ চালাতে রূপান্তর দরকার।
+   ⚠️ ২০২৬-০৯-৩০ — babel না থাকলে (এই স্যান্ডবক্স, CI) পরীক্ষাটা "Cannot find
+   module" দিয়ে মরে যেত, অর্থাৎ কখনো চলতই না। check:parse-এর মতোই তখন গ্লোবাল
+   TypeScript-এর transpileModule — কেবল import/export → require, যুক্তি অপরিবর্তিত। */
+let toCjs;
+try {
+  const babel = require('@babel/core');
+  toCjs = f => babel.transformFileSync(f, { presets: ['babel-preset-expo'], babelrc: false, configFile: false }).code;
+} catch (e) {
+  let ts = null;
+  for (const p of ['/opt/node22/lib/node_modules/typescript/lib/typescript.js', 'typescript']) {
+    try { ts = require(p); break; } catch (_) {}
+  }
+  if (!ts) { console.error('✗ babel বা typescript কোনোটাই নেই — পরীক্ষা চালানো গেল না'); process.exit(1); }
+  toCjs = f => ts.transpileModule(fs.readFileSync(f, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2019, esModuleInterop: true, allowJs: true },
+    fileName: f }).outputText;
+}
 const origJs = Module._extensions['.js'];
 Module._extensions['.js'] = function (m, f) {
-  if (f.includes('/src/engine/') || f.includes('vsop87')) {
-    m._compile(
-      babel.transformFileSync(f, {
-        presets: ['babel-preset-expo'], babelrc: false, configFile: false,
-      }).code, f);
-    return;
-  }
+  if (f.includes('/src/engine/') || f.includes('vsop87')) { m._compile(toCjs(f), f); return; }
   return origJs(m, f);
 };
 
