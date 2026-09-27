@@ -122,7 +122,7 @@ service cloud.firestore {
     match /purchases/{id} {
       allow create: if request.resource.data.keys().hasOnly(
                          ['product', 'state', 'label', 'pid', 'amount', 'lang', 'uid', 'ts'])
-                    && request.resource.data.product in ['kundali', 'match', 'numerology', 'varshaphala', 'panjika']
+                    && request.resource.data.product in ['kundali', 'match', 'numerology', 'varshaphala', 'panjika', 'namakaran']
                     && request.resource.data.state is map
                     && request.resource.data.state.size() <= 20
                     && request.resource.data.label is string && request.resource.data.label.size() <= 200

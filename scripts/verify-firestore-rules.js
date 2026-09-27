@@ -55,6 +55,7 @@ async function chk(name, p, want) {
   await chk('লগইন করে কেনা (নিজের uid)', A.collection('purchases').doc('p2').set(pb({ uid: 'userA', product: 'match' })), true);
   await chk('প্রোমো (pid:promo, ₹০)', anon.collection('purchases').doc('p3').set(pb({ pid: 'promo', amount: 0, product: 'panjika', state: { by: '1433' } })), true);
   await chk('অন্যের uid বসানো', B.collection('purchases').doc('pf1').set(pb({ uid: 'userA' })), false);
+  await chk('নামকরণ (₹৫১)', anon.collection('purchases').doc('p4').set(pb({ product: 'namakaran' })), true);
   await chk('অজানা পণ্য (premium)', anon.collection('purchases').doc('pf2').set(pb({ product: 'premium' })), false);
   await chk('বাড়তি ঘর (status)', anon.collection('purchases').doc('pf3').set(pb({ status: 'ready' })), false);
   await chk('ts ক্লায়েন্টের ঘড়ি', anon.collection('purchases').doc('pf4').set(pb({ ts: 1759100000000 })), false);
