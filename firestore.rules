@@ -110,5 +110,33 @@ service cloud.firestore {
       allow read, list: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
     }
+
+    // ── কেনা সাধারণ PDF-এর খাতা (ওয়েবসাইটের js/mya-purchases.js, ২০২৬-০৯-২৭) ──
+    // কুণ্ডলী/মিলন ₹১০১, সংখ্যা/বর্ষফল ₹৫১, পঞ্জিকা ₹২১ — PDF নয়, কেবল জন্মতথ্য,
+    // যাতে "আমার রিপোর্ট" থেকে যেকোনো ডিভাইসে আবার গণনা করে নামানো যায়।
+    // · লগইন ছাড়াও কেনা যায় বলে create-এ auth লাগে না (uid:null) — orders-এর মতোই।
+    // · uid থাকলে কেবল নিজের; পড়া কেবল নিজের বা অ্যাডমিনের।
+    // · update কেবল একটাই: uid-বিহীন এন্ট্রি লগইনের পর নিজের নামে তোলা (claim)।
+    //   ডকুমেন্টের id ২০ অক্ষরের এলোমেলো, থাকে কেবল ক্রেতার ব্রাউজারে।
+    // ⚠️ এটা টাকার প্রমাণ নয় — pid যাচাই অ্যাডমিনের "যাচাই" বোতামে (payments/{pid})।
+    match /purchases/{id} {
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['product', 'state', 'label', 'pid', 'amount', 'lang', 'uid', 'ts'])
+                    && request.resource.data.product in ['kundali', 'match', 'numerology', 'varshaphala', 'panjika']
+                    && request.resource.data.state is map
+                    && request.resource.data.state.size() <= 20
+                    && request.resource.data.label is string && request.resource.data.label.size() <= 200
+                    && request.resource.data.pid is string && request.resource.data.pid.size() <= 64
+                    && request.resource.data.ts == request.time
+                    && (request.resource.data.uid == null
+                        || (request.auth != null && request.resource.data.uid == request.auth.uid));
+      allow read: if isAdmin()
+                  || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if request.auth != null
+                    && resource.data.uid == null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid']);
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -254,6 +254,7 @@ TypeScript-এর পার্সার (`/opt/node22/lib/node_modules/typescrip
 - সহকর্মীর ভাগে কেবল একটা কমান্ড: `bash scripts/deploy-security.sh` (নিয়ম + Razorpay webhook ও যাচাই-ফাংশন,
   প্রতিটি ধাপ বাংলায়, ব্যর্থ হলে থামে)। নতুন নিরাপত্তা-কাজও এই স্ক্রিপ্টেই যোগ করুন, ধাপ বাড়িয়ে নয়।
 - `firestore.rules` বদলালে `scripts/verify-firestore-rules.js` **emulator-এ** চালান (পুরনো নিয়মে লাল দেখে)।
+- `purchases` (সাইটের কেনা সাধারণ PDF-এর খাতা) — create-এ uid নিজের/null, update কেবল null→নিজের uid (claim)। PDF নয়, জন্মতথ্য; টাকার প্রমাণও নয়।
 - অ্যাডমিন-ফাংশনে সবসময় `assertAdmin` (email_verified সহ); গোপন চাবি কেবল `defineSecret`-এ।
 - ⛔ **Razorpay-র Key Secret সহকর্মীর কাছে নেই — "Regenerate" নয়** (key_id বদলে ~১০টি পাতার চেকআউট ভাঙে)।
   পেমেন্ট-যাচাই তাই webhook দিয়ে (`razorpayWebhook` → `payments/{pid}`); webhook-এর আগের পেমেন্ট = "অজানা", ভুয়া নয়।

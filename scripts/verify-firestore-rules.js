@@ -43,6 +43,29 @@ async function chk(name, p, want) {
   await chk('ক্রেতা কেবল booking বদলান', A.collection('orders').doc('k2').update({ booking: { at: 1 } }), true);
   await chk('ক্রেতা status বদলাতে পারেন না', A.collection('orders').doc('k2').update({ status: 'ready' }), false);
   await chk("অ্যাডমিন 'ready' করেন", ADM.collection('orders').doc('k2').update({ status: 'ready' }), true);
+
+  /* কেনা সাধারণ PDF-এর খাতা — ওয়েবসাইটের js/mya-purchases.js যা লেখে হুবহু সেই আকৃতি */
+  console.log('firestore.rules — purchases');
+  /* rules-unit-testing-এর firestore() compat, তাই sentinel-ও compat থেকে */
+  const fbc = require('firebase/compat/app'); require('firebase/compat/firestore');
+  const ts = fbc.firestore.FieldValue.serverTimestamp();
+  const pb = (o) => ({ product: 'kundali', state: { name: 'ক', dob: '1990-01-01' }, label: 'ক — কুণ্ডলী PDF',
+                       pid: 'pay_X1', amount: 101, lang: 'bn', uid: null, ts, ...o });
+  await chk('লগইন ছাড়া কেনা (uid:null)', anon.collection('purchases').doc('p1').set(pb()), true);
+  await chk('লগইন করে কেনা (নিজের uid)', A.collection('purchases').doc('p2').set(pb({ uid: 'userA', product: 'match' })), true);
+  await chk('প্রোমো (pid:promo, ₹০)', anon.collection('purchases').doc('p3').set(pb({ pid: 'promo', amount: 0, product: 'panjika', state: { by: '1433' } })), true);
+  await chk('অন্যের uid বসানো', B.collection('purchases').doc('pf1').set(pb({ uid: 'userA' })), false);
+  await chk('অজানা পণ্য (premium)', anon.collection('purchases').doc('pf2').set(pb({ product: 'premium' })), false);
+  await chk('বাড়তি ঘর (status)', anon.collection('purchases').doc('pf3').set(pb({ status: 'ready' })), false);
+  await chk('ts ক্লায়েন্টের ঘড়ি', anon.collection('purchases').doc('pf4').set(pb({ ts: 1759100000000 })), false);
+  await chk('লগইন ছাড়া পড়া যায় না', anon.collection('purchases').doc('p1').get(), false);
+  await chk('নিজের কেনা পড়া', A.collection('purchases').doc('p2').get(), true);
+  await chk('অন্যের কেনা পড়া যায় না', B.collection('purchases').doc('p2').get(), false);
+  await chk("নিজের তালিকা (where uid)", A.collection('purchases').where('uid', '==', 'userA').get(), true);
+  await chk('uid-বিহীন কেনা নিজের নামে তোলা (claim)', A.collection('purchases').doc('p1').update({ uid: 'userA' }), true);
+  await chk('তোলা কেনা আরেকজন কেড়ে নিতে পারেন না', B.collection('purchases').doc('p1').update({ uid: 'userB' }), false);
+  await chk('claim-এর সঙ্গে পণ্য বদলানো যায় না', B.collection('purchases').doc('p3').update({ uid: 'userB', product: 'kundali' }), false);
+  await chk('অ্যাডমিন সব পড়েন', ADM.collection('purchases').doc('p2').get(), true);
   await env.cleanup();
   console.log('');
   if (bad) { console.log(`❌ ${n}টি পরীক্ষা, ${bad}টি সমস্যা`); process.exit(1); }
