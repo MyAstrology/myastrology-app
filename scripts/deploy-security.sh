@@ -19,7 +19,8 @@ fail() { printf '\n❌ %s\n' "$1"; exit 1; }
 say "① Firebase-এর যন্ত্র আছে কি না দেখছি…"
 if ! command -v firebase >/dev/null 2>&1; then
   echo "নেই — বসাচ্ছি (একবারই লাগে, কয়েক মিনিট)…"
-  npm i -g firebase-tools || fail "firebase-tools বসানো গেল না। নেট দেখে আবার চালান।"
+  # Cloud Shell-এ -g বসাতে অনুমতি নাও থাকতে পারে — তখন npx দিয়ে চালানো
+  npm i -g firebase-tools >/dev/null 2>&1 || firebase() { npx -y firebase-tools@latest "$@"; }
 fi
 
 say "② আপনার Google অ্যাকাউন্টে Firebase-এ ঢোকা আছে কি না…"
@@ -47,7 +48,12 @@ echo "ফাংশনের সহায়ক প্যাকেজ বসা�
 ( cd functions && npm install --no-audit --no-fund ) || fail "functions-এর প্যাকেজ বসানো গেল না।"
 LOG=$(mktemp)
 firebase deploy --only functions:razorpayWebhook,functions:adminVerifyRazorpayPayment --project "$PROJECT" 2>&1 | tee "$LOG"
-[ "${PIPESTATUS[0]}" -eq 0 ] || fail "ফাংশন চালু হলো না — স্ক্রিনশট পাঠান।"
+# ⛔ ২০২৬-০৯-৩০ — Termux-এ "env: 'node': Permission denied"-এর পরেও firebase ০ ফেরত দিল, আর
+# স্ক্রিপ্ট সাফল্যের ধাপ দেখিয়ে দিল। তাই এখন প্রস্থান-সংকেত নয়, "Deploy complete!" লেখা দেখা হয়।
+if [ "${PIPESTATUS[0]}" -ne 0 ] || ! grep -q "Deploy complete" "$LOG"; then
+  rm -f "$LOG"
+  fail "ফাংশন চালু হলো না — Razorpay-তে এখন কিছু বসাবেন না। স্ক্রিনশট পাঠান।"
+fi
 URL=$(grep -o 'https://[^ ]*razorpaywebhook[^ ]*' "$LOG" | head -1)
 [ -n "$URL" ] || URL="https://asia-south1-${PROJECT}.cloudfunctions.net/razorpayWebhook"
 rm -f "$LOG"
