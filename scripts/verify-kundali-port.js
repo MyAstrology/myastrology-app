@@ -82,8 +82,37 @@ async function calc(pg) {
     /* ④ গুলিক লগ্ন (২০২৬-০৯-২৭) — বান্ডলে src/gulika.js ইনলাইন ও পাতার সারি, মান ওয়েবসাইটের সঙ্গে এক */
     if (!site.gul) fail('④ ওয়েবসাইটে গুলিকের সারি নেই — পরীক্ষাটাই ভাঙা');
     else if (site.gul !== app.gul) fail(`④ গুলিক: অ্যাপ "${app.gul}", ওয়েবসাইট "${site.gul}"`);
+    /* ⑤ সাফল্যের পর্দা (২০২৬-০৯-২৯) — সহকর্মীর রায় ২০২৬-০৯-২০: ₹১৫০১-এ সফটওয়্যার-রিপোর্টের
+       তাৎক্ষণিক বোতাম নয়, ₹৫০১-এ আছে। দুই দিকেই আসল ফাংশন চালিয়ে মেলানো হয়। */
+    const succ = p => p.evaluate(() => {
+      const r = {}; for (const [k, fn, id] of [['prm', '_prmShowSuccess', '_prmBody'], ['csp', '_cspShowSuccess', '_cspBody']]) {
+        let el = document.getElementById(id); if (!el) { el = document.createElement('div'); el.id = id; document.body.appendChild(el); }
+        try { window[fn]('t@example.com', 'https://wa.me/0'); r[k] = /_doPrint\(/.test(el.innerHTML); } catch (e) { r[k] = 'ERR ' + e.message; }
+      } return r; });
+    const ss = await succ(sp), as = await succ(ap);
+    if (ss.prm !== true || ss.csp !== false) fail('⑤ ওয়েবসাইটের সাফল্য-পর্দা প্রত্যাশামতো নয় — পরীক্ষাটাই ভাঙা: ' + JSON.stringify(ss));
+    else if (JSON.stringify(as) !== JSON.stringify(ss)) fail('⑤ সাফল্য-পর্দার বোতাম: অ্যাপ ' + JSON.stringify(as) + ', ওয়েবসাইট ' + JSON.stringify(ss) + ' (₹১৫০১-এ বোতাম থাকার কথা নয়)');
+    /* ⑥ যোগের গ্রহবল (২০২৬-০৯-২৯) — সহকর্মীর রায় ২০২৬-০৮-১৭: "মাঙ্গলিক যোগের কারক মঙ্গল একাই"।
+       বান্ডল বিবরণের লেখা ঘেঁটে গ্রহ খুঁজত, তাই মাঙ্গলিকে মঙ্গল+চন্দ্রের গড় হত। এখন যোগ নিজেই
+       pls দেয়। ৫০০টি বীজ-বাঁধা এলোমেলো ছক ও ষড়বল, দুই পাতার নিজের ফাংশনে — নাম ও গ্রেড হুবহু এক। */
+    const sweep = p => p.evaluate(() => {
+      let x = 20260929; const rnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+      const N = ['সূর্য', 'চন্দ্র', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি', 'রাহু', 'কেতু'];
+      const out = [];
+      for (let t = 0; t < 500; t++) {
+        const pl = N.map(n => ({ name: n, lon: rnd() * 360, speed: rnd() - 0.2 }));
+        pl[8].lon = (pl[7].lon + 180) % 360;
+        const sb = {}; N.slice(0, 7).forEach(n => { sb[n] = { totalRupa: (1 + rnd() * 3).toFixed(2) }; });
+        try { out.push(detectAllYogas(pl, Math.floor(rnd() * 12)).map(y => { const g = _gradeYogaByShadbala(y, sb); return y.name + ':' + (g ? g.t + g.avg.toFixed(3) : '—'); }).join('|')); }
+        catch (e) { out.push('ERR ' + e.message); }
+      } return out; });
+    const sw = await sweep(sp), aw = await sweep(ap);
+    const diff = sw.map((v, i) => v === aw[i] ? -1 : i).filter(i => i >= 0);
+    const manglik = sw.filter(v => /মাঙ্গলিক/.test(v)).length;
+    if (sw.some(v => /^ERR/.test(v)) || manglik < 50) fail('⑥ ওয়েবসাইটের ঝাড়ু চলেনি বা মাঙ্গলিক খুব কম (' + manglik + ') — পরীক্ষাটাই ভাঙা');
+    else if (diff.length) fail(`⑥ যোগের গ্রহবল ${diff.length}/৫০০ ছকে আলাদা — প্রথম: অ্যাপ "${aw[diff[0]].slice(0, 160)}" · সাইট "${sw[diff[0]].slice(0, 160)}"`);
     if (errs.length) fail('বান্ডলে ত্রুটি: ' + errs[0]);
-    if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো · ④ গুলিক "${app.gul}" = ওয়েবসাইট`);
+    if (!bad) console.log(`✓ ① প্রতিকার অ্যাপ = ওয়েবসাইট (${app.yv.items.length}টি), PDF-এ যায় · ② গণনা ছাড়া কেনা আটকায় · ③ _tzNearCity বসানো · ④ গুলিক "${app.gul}" = ওয়েবসাইট · ⑤ ₹১৫০১-এর সাফল্য-পর্দায় তাৎক্ষণিক বোতাম নেই · ⑥ ৫০০ ছকে যোগের গ্রহবল = ওয়েবসাইট`);
   } finally { await br.close(); try { srv.kill(); } catch (e) {} }
   if (bad) { console.log(`\n✗ ${bad}টি সমস্যা`); process.exit(1); }
 })();
