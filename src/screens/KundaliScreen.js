@@ -288,18 +288,10 @@ tr.ds-cur-pd>td{background:#fff3e0!important;font-weight:700!important;}
    হয়ে যায়, আর বার্তা গিয়ে বসে ফর্মের ঘরগুলোর ঠিক উপরে। অ্যাপে বার্তা
    নিচে থাকাই ভালো — ফর্ম ঢাকে না, আর কিবোর্ডের উপরেই দেখা যায়। */
 #toastStack{position:fixed!important;top:auto!important;bottom:90px!important;left:12px!important;right:12px!important;z-index:10001!important;pointer-events:none!important;}
-.toast{display:flex!important;align-items:flex-start!important;gap:8px!important;background:#fff!important;border:1.5px solid #e0cdbc!important;border-radius:10px!important;padding:10px 12px!important;margin-bottom:8px!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;font-size:.88rem!important;pointer-events:all!important;opacity:0!important;transition:opacity .25s!important;}
-.toast.show{opacity:1!important;}
-/* ⚠️ লেখার রং এখানেই ঠিক করতে হয়। উপরের নিয়ম বাক্সটাকে সাদা করে দেয়,
-   অথচ ওয়েবসাইটের নিজের সাজে বাক্স গাঢ় নীল আর লেখা ক্রিম — সেই ক্রিম
-   লেখাটাই সাদা বাক্সে এসে পড়ত, অর্থাৎ বার্তা থাকত কিন্তু পড়া যেত না।
-   পটভূমি যেখানে বদলানো হচ্ছে, লেখার রংও সেখানেই বদলানো বাধ্যতামূলক। */
-.toast,.toast-msg,.toast-close{color:#2c1a0e!important;}
-.toast-error .toast-icon{stroke:#c62828!important;}
-.toast-success .toast-icon{stroke:#2e7d32!important;}
-.toast .toast-icon{stroke:#8a6d52!important;}
-.toast-error{border-color:#e0a0a0!important;background:#fff9f9!important;}
-.toast-success{border-color:#a0c8a0!important;}
+/* ২০২৬-০৯-২৮ — নোটিশের নিজের নকশা এখন সাইটেই হালকা কার্ড (সহকর্মী: "নোটিশ দেখতে একটু সুন্দর করা উচিৎ"); আগে সাইটের
+   গাঢ় নীল বাক্স ঢাকতে এখানে সাদা পট, কিনারা ও লেখার রং !important দিয়ে চাপানো হত — সেটাই নতুন নকশা মুছে দিত।
+   এখন কেবল জায়গা ও স্পর্শ; রূপ সাইটের (বাংলা বান্ডলেও একই CSS বসানো)। */
+.toast{margin-bottom:8px!important;pointer-events:all!important;}
 `;
 
 /*  ⚠️ `tr` = পাঠকের ভাষার অনুবাদক। এই স্ক্রিপ্টটা WebView-এর **ভিতরে**
