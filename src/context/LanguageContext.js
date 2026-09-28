@@ -7,6 +7,7 @@
  */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setUserProp, logEvent } from '../utils/analytics';
 import { translate, numText, hasTranslation, setCurrentLang, LANGS, LANG_LABEL } from '../i18n';
 import { deviceLang } from '../utils/deviceLang';
 
@@ -44,13 +45,18 @@ export function LanguageProvider({ children }) {
 
   const setLang = useCallback(async (next) => {
     if (LANGS.indexOf(next) < 0) return;
-    setLangState(next);
+    /* কে কোন ভাষা থেকে কোন ভাষায় গেলেন — "প্রথমে ফোনের ভাষা, পরে বদলালেন" মাপা যায় */
+    setLangState(prev => { if (prev !== next) logEvent('language_change', { from: prev, to: next }); return next; });
     setChosen(true);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, next);
       await AsyncStorage.setItem(CHOSEN_KEY, '1');
     } catch (e) {}
   }, []);
+
+  /* সংরক্ষিত পছন্দ পড়া শেষ হলে (ready) আর প্রতিবার বদলালে — Analytics-এ app_lang।
+     ready-র আগে পাঠালে প্রথম রেন্ডারের 'bn' সবার নামে গোনা হত। */
+  useEffect(() => { if (ready) setUserProp('app_lang', lang); }, [lang, ready]);
 
   /* হুকের বাইরের কোড (buyOnWebBridge, tGlobal, numText …) যেন একই ভাষা পায়।
      ⚠️ এটা আগে useEffect-এ ছিল, আর effect চলে **রেন্ডারের পরে** — তাই

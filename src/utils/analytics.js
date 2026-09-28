@@ -19,3 +19,11 @@ export function logEvent(eventName, params) {
   if (!_analytics) return;
   _analytics().logEvent(eventName, params).catch(() => {});
 }
+
+/* ব্যবহারকারীর স্থায়ী বৈশিষ্ট্য — যেমন অ্যাপের বাছা ভাষা (app_lang)।
+   ⚠️ Firebase নিজে কেবল **ফোনের** ভাষা জানে; বাংলাভাষী পাঠকের ফোন ইংরেজিতে
+   থাকলে তিনি "ইংরেজি" গোনা হতেন। তাই অ্যাপের নিজের ভাষাটা আলাদা করে পাঠানো। */
+export function setUserProp(name, value) {
+  if (!_analytics) return;
+  _analytics().setUserProperty(name, value == null ? null : String(value)).catch(() => {});
+}
