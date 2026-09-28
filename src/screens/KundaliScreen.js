@@ -24,7 +24,7 @@ import { MENU_ITEMS, MenuIcon } from '../navigation/menuItems';
 import { haptics } from '../utils/haptics';
 import { useWebViewError, WebViewErrorOverlay } from '../components/WebViewErrorOverlay';
 import { buildBuyOnWebJS, handleBuyOnWeb } from '../utils/buyOnWebBridge';
-import { pullProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
+import { profilesForWebView, onProfilesMessage, clearDeviceProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { resolveWebNav, isExternalHandoffUrl } from '../utils/webNav';
 import { withPrintData, inlineRemote } from '../utils/webPrint';
 import { HIDE_LANG_SWITCH_JS, makeHideResultsJS } from '../utils/hideWebChrome';
@@ -506,6 +506,11 @@ export function KundaliScreen() {
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(webViewRef);
   const { user, loading: authLoading } = useAuth() || {};
   const uid = user?.uid || null;
+  const prevUidRef = useRef(uid);
+  const syncProfilesIntoPage = (isCancelled) => profilesForWebView(uid).then((list) => {
+    if ((isCancelled && isCancelled()) || !webViewRef.current) return;
+    webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
+  });
 
   // অ্যাপ ↔ ওয়েবসাইট লগইন ব্রিজ। বাকি ক্যালকুলেটর স্ক্রিন LocalWebView ব্যবহার
   // করে, সেখানে এই ব্রিজটা ভিতরেই আছে — কিন্তু কুণ্ডলী স্ক্রিন নিজের WebView
@@ -526,14 +531,16 @@ export function KundaliScreen() {
          ওয়েবসাইটে সেভ করা নাম কুণ্ডলী পাতায় দেখা যেত না — পাতা
          বলত "কোনো প্রোফাইল সেভ করা নেই"। নেটিভ Firebase দিয়ে সরাসরি
          আনা হয়, তাই টোকেন-সেতু ব্যর্থ হলেও এটা কাজ করে। */
-      pullProfiles(uid).then((list) => {
-        if (cancelled || list === null || !webViewRef.current) return;
-        webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
-      });
     } else {
       webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
-      webViewRef.current.injectJavaScript(PROFILE_CLEAR_JS);
     }
+    /* সেভ করা নাম — ফোনের খাতা + ক্লাউড, লগইন থাকুক বা না থাকুক (profileBridge-এর নোট)। মোছা কেবল লগআউটের মুহূর্তে। */
+    if (prevUidRef.current && !uid) {
+      clearDeviceProfiles().then(() => { if (!cancelled) webViewRef.current?.injectJavaScript(PROFILE_CLEAR_JS); });
+    } else {
+      syncProfilesIntoPage(() => cancelled);
+    }
+    prevUidRef.current = uid;
     return () => { cancelled = true; };
   }, [uid, sourceUri, authLoading]);
 
@@ -666,6 +673,7 @@ export function KundaliScreen() {
                 return false;
               }}
               onLoadStart={onLoadStart}
+              onLoadEnd={() => { if (!authLoading) syncProfilesIntoPage(); }}
               onError={(e) => {
                 /* ইংরেজি/হিন্দিতে লাইভ পাতা না এলে বাংলা বান্ডলে ফেরা —
                    নীরবে নয়, নিচে এক লাইনে বলা হয়। */
@@ -677,6 +685,11 @@ export function KundaliScreen() {
               onMessage={(event) => {
                 try {
                   const msg = JSON.parse(event.nativeEvent.data);
+                  if (msg.__rn === 'profiles') {
+                    /* ⛔ আগে এখানে ছিলই না — কুণ্ডলীতে সেভ করা নাম ক্লাউডেও যেত না, অন্য ভাষার পাতাতেও না */
+                    onProfilesMessage(uid, msg.list);
+                    return;
+                  }
                   if (msg.__rn === 'buyOnWeb') {
                     /* Play Billing-এ কেনা হলে ডেলিভারিটা এই WebView-এর ভিতরেই
                     হয় — তাই ইনজেক্টরটা সঙ্গে দেওয়া হয়। না দিলে অ্যাপ চুপচাপ

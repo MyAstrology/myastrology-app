@@ -19,6 +19,7 @@
    একই id ধরে merge করে, নতুনতর savedAt জেতে)।
    ═══════════════════════════════════════════════════════════════ */
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from '../config/firebase';
 
 const MAX_PROFILES = 20;   // js/mya-profiles.js-এর MAX_PROFILES-এর সাথে মিল
@@ -36,6 +37,55 @@ export async function pullProfiles(uid) {
   } catch (_) {
     return null;   // নেটওয়ার্ক/অনুমতি — নীরবে বাদ, স্থানীয় তালিকা অক্ষত থাকে
   }
+}
+
+/* ── ফোনের নিজের খাতা (২০২৬-০৯-২৮) ──
+   সহকর্মী: বাংলায় সেভ করা নাম হিন্দি/ইংরেজি কুণ্ডলীতে আসে না। কারণ বাংলা চলে অ্যাপের বান্ডল থেকে, en/hi
+   চলে myastrology.in থেকে — WebView-এ দুটোর localStorage আলাদা। আর কুণ্ডলী পর্দা (নিজের WebView) পাতার
+   বদল শুনতই না, তাই লগইন করেও ক্লাউডে যেত না; লগইন ছাড়া প্রতিবার পাতা খুললেই তালিকা মুছে যেত।
+   এখন অ্যাপ নিজের কাছে তালিকা রাখে (লগইন থাকুক বা না থাকুক) আর প্রতিটি পাতায় বসায়; মোছে কেবল লগআউটে। */
+const DEVICE_KEY = 'mya_profiles_device';
+
+/* id ধরে মেলানো, নতুনতর savedAt জেতে — buildProfileSyncJS-এর ভিতরের নিয়মের হুবহু */
+export function mergeProfiles(...lists) {
+  const map = {};
+  lists.flat().forEach((p) => {
+    if (!p || !p.id) return;
+    const ex = map[p.id];
+    if (!ex || String(p.savedAt || '') > String(ex.savedAt || '')) map[p.id] = p;
+  });
+  return Object.values(map)
+    .sort((a, b) => (String(a.savedAt || '') < String(b.savedAt || '') ? 1 : -1))
+    .slice(0, MAX_PROFILES);
+}
+
+export async function loadDeviceProfiles() {
+  try {
+    const a = JSON.parse((await AsyncStorage.getItem(DEVICE_KEY)) || '[]');
+    return Array.isArray(a) ? a : [];
+  } catch (_) { return []; }
+}
+
+export async function saveDeviceProfiles(list) {
+  try { await AsyncStorage.setItem(DEVICE_KEY, JSON.stringify((list || []).slice(0, MAX_PROFILES))); } catch (_) {}
+}
+
+export async function clearDeviceProfiles() {
+  try { await AsyncStorage.removeItem(DEVICE_KEY); } catch (_) {}
+}
+
+/* পাতায় বসানোর তালিকা: ফোনের খাতা + (লগইন থাকলে) ক্লাউড */
+export async function profilesForWebView(uid) {
+  const device = await loadDeviceProfiles();
+  const cloud = uid ? await pullProfiles(uid) : null;
+  return mergeProfiles(cloud || [], device);
+}
+
+/* পাতা থেকে {__rn:'profiles'} এলে — ফোনের খাতায়, আর লগইন থাকলে ক্লাউডেও */
+export function onProfilesMessage(uid, list) {
+  if (!Array.isArray(list)) return;
+  saveDeviceProfiles(list);
+  if (uid) pushProfiles(uid, list);
 }
 
 export async function pushProfiles(uid, list) {
@@ -95,8 +145,8 @@ const POST_BACK_JS = `
     }
   }catch(e){}`;
 
-/* লগইন ছাড়া অবস্থাতেও পাতার বদল শোনা দরকার নয় — তখন ক্লাউডে লেখার কিছু
-   নেই। কিন্তু লগআউট করলে অ্যাপে আগের ইউজারের তালিকা রয়ে যাওয়া উচিত নয়। */
+/* লগআউট করলে আগের ইউজারের তালিকা রয়ে যাওয়া উচিত নয় — ⚠️ কেবল লগআউটের মুহূর্তে (uid ছিল → নেই)।
+   আগে লগইন-ছাড়া প্রতিটি পাতা-খোলাতেই চলত, ফলে লগইন না করা পাঠকের সেভ করা নাম টিকতই না। */
 export const PROFILE_CLEAR_JS = `(function(){
   try{ localStorage.removeItem('mya_profiles');
        if(window._myaProfilesSetAll) window._myaProfilesSetAll([]);

@@ -568,9 +568,17 @@ console.log('⑪ কুণ্ডলী পাতার ট্যাব অ্য
   /* দুই WebView, দুটোতেই প্রোফাইল-সেতু লাগে — কুণ্ডলী নিজেরটা চালায় */
   for (const f of ["src/components/LocalWebView.js", "src/screens/KundaliScreen.js"]) {
     const src = fs.readFileSync(path.join(APP, f), "utf8");
-    if (/pullProfiles\s*\(/.test(src) && /buildProfileSyncJS\s*\(/.test(src))
-      ok(path.basename(f) + " — সেভ করা প্রোফাইল টেনে আনে");
-    else bad(f + " — লগইন করেও সেভ করা নাম দেখা যাবে না");
+    if (/profilesForWebView\s*\(/.test(src) && /buildProfileSyncJS\s*\(/.test(src))
+      ok(path.basename(f) + " — সেভ করা প্রোফাইল (ফোনের খাতা + ক্লাউড) টেনে আনে");
+    else bad(f + " — সেভ করা নাম দেখা যাবে না");
+    /* ২০২৬-০৯-২৮ — কুণ্ডলী পর্দা পাতার বদল শুনতই না: বাংলায় সেভ করা নাম হিন্দি/ইংরেজিতে আসত না */
+    if (/__rn\s*===\s*'profiles'[\s\S]{0,200}onProfilesMessage\s*\(/.test(src))
+      ok(path.basename(f) + " — পাতায় সেভ করা নাম ফোনের খাতায়/ক্লাউডে যায়");
+    else bad(f + " — পাতায় সেভ করা নাম কোথাও যায় না (অন্য ভাষার পাতায় আসবে না)");
+    /* লগইন ছাড়া প্রতিটি পাতা-খোলায় তালিকা মুছত — এখন কেবল লগআউটের মুহূর্তে */
+    const clearGuarded = [...src.matchAll(/injectJavaScript\(PROFILE_CLEAR_JS\)/g)].every(m => /prevUidRef\.current\s*&&\s*!uid[\s\S]{0,160}$/.test(src.slice(Math.max(0, m.index - 200), m.index)));
+    if (clearGuarded) ok(path.basename(f) + " — তালিকা মোছে কেবল লগআউটের মুহূর্তে");
+    else bad(f + " — লগইন-ছাড়া পাঠকের সেভ করা নাম প্রতিবার মুছে যাবে");
   }
 }
 

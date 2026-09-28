@@ -18,7 +18,7 @@ import { handleBuyOnWeb } from '../utils/buyOnWebBridge';
 import { HIDE_LANG_SWITCH_JS, RESULTS_CONTAINER_IDS, FORM_CONTAINER_IDS, makeHideResultsJS } from '../utils/hideWebChrome';
 import { handleShareText } from '../utils/webShareBridge';
 import { PAGE_PRINT_JS, collectPdfChunk, deliverPdf, OPEN_BRIDGE_JS } from '../utils/webPrint';
-import { pullProfiles, pushProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
+import { profilesForWebView, onProfilesMessage, clearDeviceProfiles, buildProfileSyncJS, PROFILE_CLEAR_JS } from '../utils/profileBridge';
 import { ensureWebFile } from '../utils/webAssetFile';
 import { useLanguage } from '../context/LanguageContext';
 import { recoverProps } from '../utils/webRecover';
@@ -244,6 +244,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, lateJS, q
   const resultsVisibleRef = useRef(false);
   const { user, loading: authLoading } = useAuth() || {};
   const uid = user?.uid || null;
+  const prevUidRef = useRef(uid);
 
   useEffect(() => {
     backDepthRef.current = 0; goingBackRef.current = false;
@@ -287,15 +288,20 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, lateJS, q
       /* সেভ করা প্রোফাইল — নেটিভ Firebase দিয়ে সরাসরি (profileBridge.js-এর
          নোট দ্রষ্টব্য)। টোকেন-সেতু ব্যর্থ হলেও এটা কাজ করে, তাই ওয়েবসাইটে
          সেভ করা প্রোফাইল অ্যাপে দেখা যাবেই। */
-      pullProfiles(uid).then((list) => {
-        if (cancelled || list === null || !webViewRef.current) return;
-        webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
-      });
     } else {
       authTokenRef.current = null;
       webViewRef.current.injectJavaScript(BRIDGE_SIGNOUT_JS);
-      webViewRef.current.injectJavaScript(PROFILE_CLEAR_JS);
     }
+    /* সেভ করা নাম — ফোনের খাতা + ক্লাউড, লগইন থাকুক বা না থাকুক; মোছা কেবল লগআউটের মুহূর্তে (profileBridge) */
+    if (prevUidRef.current && !uid) {
+      clearDeviceProfiles().then(() => { if (!cancelled) webViewRef.current?.injectJavaScript(PROFILE_CLEAR_JS); });
+    } else {
+      profilesForWebView(uid).then((list) => {
+        if (cancelled || !webViewRef.current) return;
+        webViewRef.current.injectJavaScript(buildProfileSyncJS(list));
+      });
+    }
+    prevUidRef.current = uid;
     return () => { cancelled = true; };
   }, [uid, uri, remoteUrl, authLoading]);
 
@@ -362,8 +368,8 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, lateJS, q
       return;
     }
     if (msg.__rn === 'profiles') {
-      /* পাতায় প্রোফাইল যোগ/মুছলে সেটাই ক্লাউডে — লগইন না থাকলে কিছু নয় */
-      if (uid && Array.isArray(msg.list)) pushProfiles(uid, msg.list);
+      /* পাতায় প্রোফাইল যোগ/মুছলে — ফোনের খাতায়, আর লগইন থাকলে ক্লাউডেও */
+      onProfilesMessage(uid, msg.list);
       return;
     }
     if (msg.__rn !== 'open') return;
@@ -563,6 +569,10 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, lateJS, q
         onLoadStart={onWebLoadStart}
         onLoadEnd={() => {
           webViewRef.current?.injectJavaScript(fullInjectedJS);
+          /* নেভিগেশনের পর নতুন পাতাতেও সেভ করা নাম (নিজের সাইট/বান্ডল হলে) */
+          if (!authLoading && (!remoteUrl || /^https:\/\/myastrology\.in\//.test(remoteUrl))) {
+            profilesForWebView(uid).then((l) => webViewRef.current?.injectJavaScript(buildProfileSyncJS(l)));
+          }
           if (lateJS) webViewRef.current?.injectJavaScript(lateJS);
           const tk = authTokenRef.current;
           if (uid && tk && Date.now() - tk.at < 50 * 60 * 1000 && /^https:\/\/myastrology\.in\//.test(uri || remoteUrl || langUrl || '')) {
