@@ -451,7 +451,7 @@ export function LocalWebView({ name, html, style, onPrint, injectedJS, lateJS, q
       হুক সবসময় শর্তের **উপরে** — কোনো ব্যতিক্রম নেই।                    */
   const resultsTrackerJS = React.useMemo(() => makeResultsTrackerJS(t), [t]);
   /* বিদেশি পাঠকের জন্য পাতার ₹ → Play-র দাম (১০/১১ নম্বর; localPrices.js) */
-  const priceJs = usePriceJS(webViewRef);
+  const priceJs = usePriceJS(webViewRef, name);
   /* lateJS দেরিতে আসে (নেটিভ Firestore) — পাতা আগেই লোড হয়ে থাকলে এখানেই বসে */
   useEffect(() => {
     if (lateJS && webViewRef.current) webViewRef.current.injectJavaScript(lateJS);

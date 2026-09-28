@@ -21,7 +21,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { PRODUCTS } from '../config/products';
 
 let _map = null;          // {"101":"$1.99", …} — কেবল বিদেশি মুদ্রায়
+let _prices = null;       // Play-র কাঁচা তালিকা — পাতা ধরে মানচিত্র বানাতে
 let _loading = null;
+
+/* ⚠️ ২০২৬-০৯-২৮ — নামকরণ PDF (₹৫১, বিদেশে ₹৯৯) আসার পর ₹৫১ অঙ্কটা তিনটে পণ্যের
+   (সংখ্যা, বর্ষফল ₹৫৯; নামকরণ ₹৯৯) — সারা-অ্যাপের মানচিত্রে সংঘাত হয়ে তিন পাতাতেই
+   দাম বদলানো বন্ধ হয়ে যেত। প্রতিটি পাতায় কেবল সেই পাতার পণ্যগুলো ধরা হয়। */
+export const PAGE_KEYS = {
+  kundali:        ['kundaliPdf', 'premiumKundali', 'solutionKundali'],
+  'match-making': ['mmPdf', 'premiumMatch', 'specialMatch'],
+  varshaphala:    ['varshaphalaPdf'],
+  numerology:     ['numerologyPdf'],
+  result:         ['numerologyPdf'],
+  namakaran:      ['namakaranPdf'],
+  panjika:        ['panjikaPdf'],
+};
 
 /** একবারই Play থেকে আনা; ব্যর্থ বা INR হলে null। */
 export function loadPriceMap() {
@@ -30,6 +44,7 @@ export function loadPriceMap() {
     try {
       const billing = require('./billing');
       const prices = await billing.loadPrices();
+      _prices = prices;
       _map = buildMap(prices);
     } catch (e) {
       /* Play-র সঙ্গে কথা হয়নি (নেট নেই, সাইডলোড) — পরের পর্দায় আবার চেষ্টা */
@@ -40,16 +55,20 @@ export function loadPriceMap() {
   return _loading;
 }
 
-export function getPriceMap() { return _map; }
+export function getPriceMap(page) {
+  if (page && PAGE_KEYS[page] && _prices) return buildMap(_prices, PAGE_KEYS[page]);
+  return _map;
+}
 
 /** Play-র তালিকা → অঙ্ক-ভিত্তিক মানচিত্র (পরীক্ষার জন্য আলাদা করে রাখা) */
-export function buildMap(prices) {
+export function buildMap(prices, keys) {
   if (!prices) return null;
   const out = {};
   const clash = {};
   let foreign = false;
-  for (const key of Object.keys(PRODUCTS)) {
+  for (const key of (keys || Object.keys(PRODUCTS))) {
     const p = prices[key];
+    if (!PRODUCTS[key]) continue;
     if (!p || !p.price) continue;
     if (p.currency && p.currency !== 'INR') foreign = true;
     const amt = String(PRODUCTS[key].inr);
@@ -107,11 +126,11 @@ export function priceJS(map) {
 /** WebView-ওয়ালা কম্পোনেন্টের জন্য — দাম এলে নতুন JS; আগে থেকে পাতা খোলা
  *  থাকলে ডাকা জায়গাটা injectJavaScript দিয়ে বসায় (নিচে ref দিলে নিজেই)।
  *  ⚠️ হুক — early-return-এর **উপরে** ডাকতে হবে (verify-hook-order)। */
-export function usePriceJS(webViewRef) {
-  const [map, setMap] = useState(getPriceMap());
+export function usePriceJS(webViewRef, page) {
+  const [map, setMap] = useState(getPriceMap(page));
   useEffect(() => {
     let alive = true;
-    loadPriceMap().then(m => { if (alive) setMap(m); });
+    loadPriceMap().then(() => { if (alive) setMap(getPriceMap(page)); });
     return () => { alive = false; };
   }, []);
   const js = useMemo(() => priceJS(map), [map]);

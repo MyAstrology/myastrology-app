@@ -159,6 +159,9 @@ export function buildBuyOnWebJS(page) {
     }
     replace('vpPayAndPrint','varshaphalaPdf');
     replace('nuPayAndPrint','numerologyPdf');
+    /* নামকরণ (ইংরেজি/হিন্দি লাইভ পাতা) — পাতা nkPayAndPrint.__myaReplaced দেখে বোঝে
+       অ্যাপ Play দিয়ে বেচতে পারে; পুরনো অ্যাপে ওটা নেই, তাই সেখানে PDF বিনামূল্যেই থাকে */
+    replace('nkPayAndPrint','namakaranPdf');
 
     /* আসল আটকে যাওয়ার জায়গাটা openRzp নয়। কুণ্ডলী/যোটক পাতা নিজেই ভিতরে
        _inApp() পরীক্ষা করে, এবং অ্যাপ হলে showToast/alert/_mmShowFormError

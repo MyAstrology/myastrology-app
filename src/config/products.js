@@ -20,6 +20,8 @@ export const PRODUCTS = {
   mmPdf:          { id: 'basic_matching_report',        inr: 101,  intl: 149,  label: 'কোষ্ঠী মিলন PDF' },
   numerologyPdf:  { id: 'basic_numerology_report',      inr: 51,   intl: 59,   label: 'সংখ্যা জ্যোতিষ PDF' },
   varshaphalaPdf: { id: 'basic_varsh_kundli',           inr: 51,   intl: 59,   label: 'বর্ষফল PDF' },
+  /* নামকরণ ₹৫১, বিদেশে ₹৯৯ — সহকর্মীর সিদ্ধান্ত (২০২৬-০৯-২৮) */
+  namakaranPdf:   { id: 'basic_namakaran_report',       inr: 51,   intl: 99,   label: 'নামকরণ PDF' },
   panjikaPdf:     { id: 'panchang_donate',              inr: 21,   intl: 25,   label: 'বার্ষিক পঞ্জিকা PDF' },
   premiumKundali: { id: 'premium_kundli',               inr: 501,  intl: 599,  label: 'প্রিমিয়াম কুণ্ডলী রিপোর্ট' },
   solutionKundali:{ id: 'ultimate_astro_combo',         inr: 1501, intl: 1799, label: 'VIP পরামর্শ ও সমাধান' },

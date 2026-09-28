@@ -16,6 +16,7 @@
  *    varshaphalaPdf  varshaphala.html
  *    numerologyPdf   result.html
  *    panjikaPdf      panjika.html
+ *    namakaranPdf    namakaran.html (বাংলা বান্ডলে ছাপা window.print()-এ — NamakaranScreen)
  *    premiumKundali  kundali.html  (_prmOv ওভারলে)
  *    solutionKundali kundali.html  (_cspOv ওভারলে)
  */
@@ -52,6 +53,17 @@ export const UNLOCK_JS = {
   numerologyPdf: `(function(){
     if(typeof nuClosePdfPay==='function')nuClosePdfPay();
     if(typeof _nuPrint==='function')_nuPrint();
+  })();true;`,
+
+  /* বাংলা বান্ডলে (পুরনো কপি) _nkPrint নেই — সেখানে ছাপা window.print(), যেটা
+     LocalWebView ধরে PDF বানায়। চিহ্নটা থাকলে ওই সেশনে আবার টাকা চাওয়া হয় না। */
+  namakaranPdf: `(function(){
+    window.__nkPaid=1;
+    try{sessionStorage.setItem('myastro_nk_paid','1');}catch(e){}
+    if(typeof nkClosePdfPay==='function')nkClosePdfPay();
+    ${PID}
+    if(typeof _nkRecordPurchase==='function')_nkRecordPurchase(_pid,0);
+    if(typeof _nkPrint==='function')_nkPrint(); else window.print();
   })();true;`,
 
   panjikaPdf: `(function(){

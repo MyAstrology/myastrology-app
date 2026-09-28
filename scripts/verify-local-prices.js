@@ -31,7 +31,7 @@ P.__tail = '';
 const LP = (() => {
   let src = fs.readFileSync(path.join(__dirname, '..', 'src/utils/localPrices.js'), 'utf8');
   src = src.replace(/^import [\s\S]*?;$/mg, '').replace(/^export (const|function|async function|let) /mg, '$1 ');
-  src += '\nmodule.exports={buildMap,priceJS};';
+  src += '\nmodule.exports={buildMap,priceJS,PAGE_KEYS};';
   const ctx = { module: { exports: {} }, JSON, Object, String, PRODUCTS: vm.runInNewContext(
     fs.readFileSync(path.join(__dirname, '..', 'src/config/products.js'), 'utf8').replace(/^export (const) /mg, '$1 ') + ';PRODUCTS') };
   vm.runInNewContext(src, ctx);
@@ -62,6 +62,19 @@ else ok('বিদেশি পাঠক: ' + JSON.stringify(MAP));
   if (!m || m['101'] !== undefined || m['501'] !== '$7.49')
     fail('কুণ্ডলী PDF $1.99 আর যোটক PDF $2.49 হলে ₹১০১ একটার দামে বসছে: ' + JSON.stringify(m));
   else ok('একই ₹ অঙ্কে দুই পণ্যের দাম আলাদা হলে সেই অঙ্ক ছোঁয়া হয় না, বাকিগুলো বদলায়');
+}
+/* ২০২৬-০৯-২৮ — ₹৫১ এখন তিন পণ্যের (সংখ্যা, বর্ষফল, নামকরণ), আর নামকরণ বিদেশে দামি।
+   সারা-অ্যাপের মানচিত্রে সংঘাত থাকলেও প্রতিটি পাতা নিজের পণ্যের দামটাই পায় */
+{
+  const MIX = JSON.parse(JSON.stringify(USD));
+  MIX.namakaranPdf = { price: '$1.19', currency: 'USD' };
+  const all = LP.buildMap(MIX), nk = LP.buildMap(MIX, LP.PAGE_KEYS.namakaran), vp = LP.buildMap(MIX, LP.PAGE_KEYS.varshaphala);
+  if (!LP.PAGE_KEYS.namakaran) fail('PAGE_KEYS-এ নামকরণ নেই');
+  else if (all['51'] !== undefined || !nk || nk['51'] !== '$1.19' || !vp || vp['51'] !== '$0.79')
+    fail('পাতা-ধরা দাম ভুল — সব ' + JSON.stringify(all) + ' · নামকরণ ' + JSON.stringify(nk) + ' · বর্ষফল ' + JSON.stringify(vp));
+  else ok('₹৫১: নামকরণ পাতায় $1.19, বর্ষফল পাতায় $0.79 — সংঘাত থাকলেও প্রতিটি পাতা নিজের দাম পায়');
+  for (const [pg, arr] of Object.entries(LP.PAGE_KEYS))
+    for (const k of arr) if (!USD[k]) fail('PAGE_KEYS.' + pg + '-এ অচেনা পণ্য ' + k);
 }
 const JS = LP.priceJS(MAP);
 

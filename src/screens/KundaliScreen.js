@@ -496,7 +496,7 @@ export function KundaliScreen() {
   /* ভাষা বদলালেই নতুন করে তৈরি — ইনজেক্ট হওয়া লেখাও তখন পাঠকের ভাষায় */
   const injectedJS = React.useMemo(() => makeInjectedJS(t), [t]);
   /* বিদেশি পাঠকের জন্য পাতার ₹ → Play-র দাম (localPrices.js) */
-  const priceJs = usePriceJS(webViewRef);
+  const priceJs = usePriceJS(webViewRef, 'kundali');
   const [langFellBack, setLangFellBack] = useState(false);
   const langBase = ((lang === 'en' || lang === 'hi') && !langFellBack)
     ? 'https://myastrology.in/' + lang + '/kundali'

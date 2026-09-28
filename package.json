@@ -36,7 +36,8 @@
     "verify-kundali-port": "node scripts/verify-kundali-port.js",
     "verify-vp-bundle-print": "node scripts/verify-vp-bundle-print.js",
     "verify-rzp-fn": "node scripts/verify-rzp-fn.js",
-    "verify-pdf-save": "node scripts/verify-pdf-save.js"
+    "verify-pdf-save": "node scripts/verify-pdf-save.js",
+    "verify-nk-play": "node scripts/verify-nk-play.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

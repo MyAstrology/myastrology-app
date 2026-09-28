@@ -234,7 +234,7 @@ console.log('⑦ কেনার পরে ডেলিভারি');
      থেকেই **বের করে** নেওয়া হয়, হাতে লেখা হয় না। */
   const UNLOCK_PAGE = {
     kundaliPdf: 'kundali', mmPdf: 'match-making', varshaphalaPdf: 'varshaphala',
-    numerologyPdf: 'result', panjikaPdf: 'panjika',
+    numerologyPdf: 'result', panjikaPdf: 'panjika', namakaranPdf: 'namakaran',
     premiumKundali: 'kundali', solutionKundali: 'kundali',
     premiumMatch: 'match-making', specialMatch: 'match-making',
   };
@@ -269,7 +269,7 @@ console.log('⑦ কেনার পরে ডেলিভারি');
   /* ⛔ বর্ষফল ও সংখ্যা-জ্যোতিষের ₹৫১ বোতাম openRzp ছোঁয় না — নিজেরাই
      new Razorpay(...) বানায়। ধরা না হলে অ্যাপের ভিতরেই Razorpay-র পর্দা
      খুলে যেত (Play-র নিয়মে চলে না), আর সহকর্মীর স্ক্রিনশটে ঠিক সেটাই ছিল। */
-  for (const [fn, prod] of [['vpPayAndPrint', 'varshaphalaPdf'], ['nuPayAndPrint', 'numerologyPdf']]) {
+  for (const [fn, prod] of [['vpPayAndPrint', 'varshaphalaPdf'], ['nuPayAndPrint', 'numerologyPdf'], ['nkPayAndPrint', 'namakaranPdf']]) {
     const re = new RegExp("replace\\('" + fn + "'\\s*,\\s*'" + prod + "'\\)");
     if (re.test(bridge)) ok(fn + ' → ' + prod + ' — অ্যাপে Razorpay খোলে না');
     else bad(fn + ' ধরা হয়নি — অ্যাপের ভিতরেই Razorpay-র পর্দা খুলবে');
@@ -356,8 +356,11 @@ console.log('⑧ টাকা কাটার পরে ডেলিভারি
 
   /* ⚠️ ওয়েবসাইটের দিকটাও দেখা: প্রোমো-যাচাইয়ের আগে _inApp() ফিরে গেলে
      অ্যাপে কোড লেখার ঘরটাই খোলে না। */
-  for (const [f, promoMark] of [['kundali.html', 'promoOk(code,_PROMO)){_preparePayload()'],
-                                ['match-making.html', 'promoOk(code,_MM_PROMO)){_doMatchPrint()']]) {
+  /* ⚠️ ২০২৬-০৯-২৮ — প্রোমো-লাইনে কেনার খাতা (_kRecordPurchase) জোড়ার পর হুবহু
+     "promoOk(…)){_preparePayload()" আর মিলত না, আর এটা মিথ্যে-লাল দিচ্ছিল।
+     এখন কেবল প্রোমো-যাচাইয়ের শুরুটা খোঁজা হয় — ক্রমটাই আসল প্রশ্ন। */
+  for (const [f, promoMark] of [['kundali.html', 'promoOk(code,_PROMO)){'],
+                                ['match-making.html', 'promoOk(code,_MM_PROMO)){']]) {
     const src = fs.readFileSync(path.join(SITE, f), 'utf8');
     const pAt = src.indexOf(promoMark);
     const gAt = src.indexOf('_inApp()){showToast(') >= 0

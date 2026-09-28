@@ -339,7 +339,30 @@ function buildInjectedJS(css) {
 })();true;`;
 }
 
-const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('namakaran');
+/* নামকরণ PDF ₹৫১ (Play: basic_namakaran_report, সহকর্মীর সিদ্ধান্ত ২০২৬-০৯-২৮)।
+   বাংলা বান্ডলটা ওয়েবসাইটের পুরনো কপি — সেখানে টাকার পর্দা নেই, "প্রিন্ট" বোতাম
+   সরাসরি window.print() ডাকে। তাই বোতামের ক্লিকটা আগেই (capture) ধরে Play-র
+   কেনা তোলা হয়; কেনা হলে UNLOCK_JS.namakaranPdf চিহ্ন বসিয়ে window.print() চালায়।
+   ইংরেজি/হিন্দি লাইভ পাতায় nkOpenPdfPay আছে — সেখানে পাতার নিজের পর্দাই চলে।
+   গণনা না থাকলে ধরা হয় না — পুরনো পথই "আগে বিশ্লেষণ করুন" বলে, টাকা নেওয়ার আগে। */
+const NK_GATE_JS = `(function(){
+  if(window.__nkGate) return; window.__nkGate=1;
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest&&e.target.closest('.btn-share.prt');
+    if(!b||typeof window.nkOpenPdfPay==='function') return;
+    var rs=document.getElementById('resultSection');
+    if(!rs||rs.offsetParent===null) return;
+    /* sessionStorage কোনো WebView-এ আটকে থাকলে চিহ্ন হারাত আর আবার টাকা চাইত —
+       তাই পাতার নিজের চিহ্নও (window.__nkPaid) দেখা হয় */
+    var paid=!!window.__nkPaid; try{paid=paid||sessionStorage.getItem('myastro_nk_paid')==='1';}catch(x){}
+    if(paid) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    window.__myaProduct='namakaranPdf';
+    if(typeof window.openRzp==='function') window.openRzp();
+  },true);
+})();true;`;
+
+const INJECTED_JS = buildInjectedJS(APP_CSS) + buildBuyOnWebJS('namakaran') + NK_GATE_JS;
 
 
 /*  A4 ছাপার পাতা — /namakaran-print.html-এর বান্ডল।

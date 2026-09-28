@@ -119,6 +119,7 @@ const PLAY_PRODUCTS = {
   basic_matching_report:       'mmPdf',
   basic_numerology_report:     'numerologyPdf',
   basic_varsh_kundli:          'varshaphalaPdf',
+  basic_namakaran_report:      'namakaranPdf',
   panchang_donate:             'panjikaPdf',
   premium_kundli:              'premiumKundali',
   ultimate_astro_combo:        'solutionKundali',

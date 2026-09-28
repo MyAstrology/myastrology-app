@@ -1232,6 +1232,10 @@ export const STRINGS = {
     "en": "Varshaphala PDF",
     "hi": "वर्षफल PDF"
   },
+  "নামকরণ PDF": {
+    "en": "Naming PDF",
+    "hi": "नामकरण PDF"
+  },
   "বার্ষিক পঞ্জিকা PDF": {
     "en": "Yearly Panjika PDF",
     "hi": "वार्षिक पंजिका PDF"

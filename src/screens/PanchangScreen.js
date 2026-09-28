@@ -432,7 +432,7 @@ const PjWebView = forwardRef(function PjWebView({ uri, injectedJavaScript, onMes
   const navigation = useNavigation();
   const { webError, onLoadStart, onError, onHttpError, retry, renderError } = useWebViewError(ref);
   /* ₹২১-এর পঞ্জিকা PDF ও ₹৫০১-এর প্রচার — বিদেশি পাঠকের জন্য Play-র দাম */
-  const priceJs = usePriceJS(ref);
+  const priceJs = usePriceJS(ref, 'panjika');
 
   const handleNavRequest = (request) => {
     const url = request.url || '';

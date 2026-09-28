@@ -281,6 +281,7 @@ npm run verify-webview-recover # প্রতিটি <WebView>-এ recoverProp
 npm run verify-pdf-inline      # PDF-এর আগে ছবি/CSS ভিতরে বসে — expo-print নেট থেকে কিছু নামায় না
 npm run verify-kundali-port    # বাংলা কুণ্ডলী বান্ডল: প্রতিকার, গুলিক, যোগবল (৫০০ ছক), পঞ্চধা চক্র = সাইট · গণনা ছাড়া কেনা নয় · ₹১৫০১-এ তাৎক্ষণিক বোতাম নেই
 npm run verify-vp-bundle-print # বাংলা বর্ষফল PDF ছাপার পাতা থেকে, পর্দা থেকে নয়
+npm run verify-nk-play         # নামকরণ ₹৫১: বাংলা বান্ডলে প্রিন্ট → Play, কেনার পরে ছাপা, সেশনে আবার টাকা নয় · লাইভ পাতায় পুরনো অ্যাপে বিনামূল্যে
 npm run verify-pdf-save        # PDF সেভ বাইট সরাসরি (src/utils/savePdf.js) — base64-এ পড়লে কম-RAM ফোনে অ্যাপ বন্ধ হয়
 ```
 

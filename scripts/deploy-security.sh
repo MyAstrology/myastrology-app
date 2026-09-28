@@ -52,7 +52,9 @@ fi
 echo "ফাংশনের সহায়ক প্যাকেজ বসাচ্ছি (প্রথমবার কয়েক মিনিট)…"
 ( cd functions && npm install --no-audit --no-fund ) || fail "functions-এর প্যাকেজ বসানো গেল না।"
 LOG=$(mktemp)
-firebase deploy --only functions:razorpayWebhook,functions:adminVerifyRazorpayPayment --project "$PROJECT" 2>&1 | tee "$LOG"
+# verifyPlayPurchase-ও এখানে (২০২৬-০৯-২৮): নতুন Play-পণ্য (যেমন basic_namakaran_report) যোগ হলে
+# ফাংশনটা নতুন করে না তুললে সার্ভার "অচেনা প্রোডাক্ট" বলে ক্রয় ফিরিয়ে দেয় — টাকা কেটে PDF নয়।
+firebase deploy --only functions:razorpayWebhook,functions:adminVerifyRazorpayPayment,functions:verifyPlayPurchase --project "$PROJECT" 2>&1 | tee "$LOG"
 # ⛔ ২০২৬-০৯-৩০ — Termux-এ "env: 'node': Permission denied"-এর পরেও firebase ০ ফেরত দিল, আর
 # স্ক্রিপ্ট সাফল্যের ধাপ দেখিয়ে দিল। তাই এখন প্রস্থান-সংকেত নয়, "Deploy complete!" লেখা দেখা হয়।
 if [ "${PIPESTATUS[0]}" -ne 0 ] || ! grep -q "Deploy complete" "$LOG"; then
