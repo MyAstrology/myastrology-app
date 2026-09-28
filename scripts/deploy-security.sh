@@ -37,9 +37,14 @@ echo "✅ নিয়ম চালু। ওয়েবসাইটের আ�
 say "④ Razorpay যাচাই — webhook"
 echo "Razorpay-র Key Secret লাগবে না। webhook-এর নিজস্ব গোপন শব্দ এই স্ক্রিপ্টই বানাবে"
 echo "(আগের বার বানানো থাকলে সেটাই আবার ব্যবহার করবে — Razorpay-র সঙ্গে মিল থাকে)।"
-if SECRET=$(firebase functions:secrets:access RZP_WEBHOOK_SECRET --project "$PROJECT" 2>/dev/null) && [ -n "$SECRET" ]; then
+# ⛔ ২০২৬-০৯-২৮ — আগে প্রতিবার চালালেই Secret পর্দায় ছাপা হত, আর সহকর্মী স্বাভাবিকভাবেই
+# ফলের স্ক্রিনশট পাঠালেন — Secret চ্যাটে চলে গেল। এখন ছাপা হয় কেবল নতুন বানালে।
+# ফাঁস হলে:  bash scripts/deploy-security.sh --new-secret  (নতুন বানিয়ে একবার দেখায়)।
+NEW=0
+if [ "${1:-}" != "--new-secret" ] && SECRET=$(firebase functions:secrets:access RZP_WEBHOOK_SECRET --project "$PROJECT" 2>/dev/null) && [ -n "$SECRET" ]; then
   echo "আগের গোপন শব্দই রইল।"
 else
+  NEW=1
   SECRET=$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))") || fail "গোপন শব্দ বানানো গেল না।"
   printf '%s' "$SECRET" | firebase functions:secrets:set RZP_WEBHOOK_SECRET --data-file - --project "$PROJECT" --force \
     || fail "গোপন শব্দ Firebase-এ রাখা গেল না।"
@@ -58,15 +63,21 @@ URL=$(grep -o 'https://[^ ]*razorpaywebhook[^ ]*' "$LOG" | head -1)
 [ -n "$URL" ] || URL="https://asia-south1-${PROJECT}.cloudfunctions.net/razorpayWebhook"
 rm -f "$LOG"
 
-say "⑤ শেষ কাজ — Razorpay-তে webhook বসানো (একবারই)"
-echo "Razorpay ড্যাশবোর্ড → Account & Settings → Webhooks → + Add New Webhook"
-echo ""
-echo "  Webhook URL :  $URL"
-echo "  Secret      :  $SECRET"
-echo "  Alert Email :  আপনার ইমেইল"
-echo "  Active Events-এ টিক দিন:  payment.captured · payment.failed · refund.processed"
-echo ""
-echo "⚠️ উপরের Secret লাইনটা কাউকে পাঠাবেন না, স্ক্রিনশটেও নয় — কপি করে সোজা Razorpay-তে বসান।"
-echo "   (হারালেও চিন্তা নেই — এই স্ক্রিপ্ট আবার চালালে আবার দেখাবে।)"
+if [ "$NEW" = "1" ]; then
+  say "⑤ শেষ কাজ — Razorpay-তে Secret বসানো"
+  echo "Razorpay ড্যাশবোর্ড → Account & Settings → Webhooks"
+  echo "  · আগে webhook বসানো থাকলে: সেটার Edit → Secret-এর ঘরে নিচেরটা বসিয়ে Save"
+  echo "  · না থাকলে: + Add New Webhook"
+  echo ""
+  echo "  Webhook URL :  $URL"
+  echo "  Secret      :  $SECRET"
+  echo "  Active Events:  payment.captured · payment.failed · refund.processed"
+  echo ""
+  echo "⚠️ এই পর্দার স্ক্রিনশট কাউকে পাঠাবেন না — Secret-টা কপি করে সোজা Razorpay-তে বসান।"
+  echo "   Razorpay-তে বসানোর আগে পর্যন্ত আসা পেমেন্টের খবর Razorpay নিজেই পরে আবার পাঠায়, কিছু হারায় না।"
+else
+  say "⑤ Razorpay-তে কিছু বদলাতে হবে না — আগের webhook ও Secret-ই চলছে।"
+  echo "  (Secret এখানে ইচ্ছে করেই দেখানো হয় না — স্ক্রিনশট নিরাপদ।)"
+fi
 unset SECRET
 say "✅ হয়ে গেল। এরপর যত পেমেন্ট আসবে, অ্যাডমিন পাতার 'যাচাই' বোতাম সেটা মিলিয়ে দেখাবে।"
