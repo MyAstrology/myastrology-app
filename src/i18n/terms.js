@@ -731,9 +731,9 @@ export const TERMS = {
     "en": "On Kartik Shukla Dwitiya a sister marks her brother's forehead with the phonta.",
     "hi": "कार्तिक शुक्ल द्वितीया को बहन भाई को टीका लगाती है।"
   },
-  "কার্তিক শুক্লা নবমী — শ্রীশ্রীজগদ্ধাত্রী দেবীর অধিক পূজা। অক্ষয়া নবমী।": {
-    "en": "Kartik Shukla Navami — the additional worship (adhik puja) of Sri Sri Jagaddhatri Devi. Akshaya Navami.",
-    "hi": "कार्तिक शुक्ल नवमी — श्रीश्री जगद्धात्री देवी की अधिक पूजा। अक्षय नवमी।"
+  "কার্তিক শুক্লা নবমী — বিশুদ্ধসিদ্ধান্ত পঞ্জিকা মতে: নবমী বিহিত শ্রীশ্রীজগদ্ধাত্রী পূজা প্রশস্তা।": {
+    "en": "Kartik Shukla Navami — as per the Bishuddha Siddhanta Panjika, the Jagaddhatri Puja prescribed for Navami is the one most commended.",
+    "hi": "कार्तिक शुक्ल नवमी — विशुद्धसिद्धान्त पंचांग के अनुसार: नवमी को विहित श्रीश्री जगद्धात्री पूजा प्रशस्त है।"
   },
   "কার্তিক শুক্লা প্রতিপদে গোবর্ধন পূজা ও অন্নকূট।": {
     "en": "Govardhan Puja and Annakuta on Kartik Shukla Pratipada.",
