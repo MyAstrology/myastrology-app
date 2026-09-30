@@ -723,10 +723,6 @@ export const TERMS = {
     "en": "The start of the month of Kartik — the Damodara month. Service to Tulasi bears special fruit.",
     "hi": "कार्तिक मास का आरंभ। दामोदर मास। तुलसी सेवा विशेष फलदायी।"
   },
-  "কার্তিক শুক্লা অষ্টমী — জগদ্ধাত্রী পূজার আরম্ভ। বোধন ও সপ্তমী পূজা।": {
-    "en": "Kartik Shukla Ashtami — the start of Jagaddhatri Puja. Bodhana and Saptami puja.",
-    "hi": "कार्तिक शुक्ल अष्टमी — जगद्धात्री पूजा का आरंभ। बोधन एवं सप्तमी पूजा।"
-  },
   "কার্তিক শুক্লা দশমী — জগদ্ধাত্রী পূজার সমাপ্তি ও বিসর্জন।": {
     "en": "Kartik Shukla Dashami — the close of Jagaddhatri Puja and the immersion.",
     "hi": "कार्तिक शुक्ल दशमी — जगद्धात्री पूजा की समाप्ति और विसर्जन।"
@@ -735,9 +731,9 @@ export const TERMS = {
     "en": "On Kartik Shukla Dwitiya a sister marks her brother's forehead with the phonta.",
     "hi": "कार्तिक शुक्ल द्वितीया को बहन भाई को टीका लगाती है।"
   },
-  "কার্তিক শুক্লা নবমী — জগদ্ধাত্রী পূজার মূল দিন। মহাপূজা।": {
-    "en": "Kartik Shukla Navami — the main day of Jagaddhatri Puja. Mahapuja.",
-    "hi": "कार्तिक शुक्ल नवमी — जगद्धात्री पूजा का मुख्य दिन। महापूजा।"
+  "কার্তিক শুক্লা নবমী — শ্রীশ্রীজগদ্ধাত্রী দেবীর অধিক পূজা। অক্ষয়া নবমী।": {
+    "en": "Kartik Shukla Navami — the additional worship (adhik puja) of Sri Sri Jagaddhatri Devi. Akshaya Navami.",
+    "hi": "कार्तिक शुक्ल नवमी — श्रीश्री जगद्धात्री देवी की अधिक पूजा। अक्षय नवमी।"
   },
   "কার্তিক শুক্লা প্রতিপদে গোবর্ধন পূজা ও অন্নকূট।": {
     "en": "Govardhan Puja and Annakuta on Kartik Shukla Pratipada.",
