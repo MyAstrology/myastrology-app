@@ -251,7 +251,7 @@ TypeScript-এর পার্সার (`/opt/node22/lib/node_modules/typescrip
 
 ## নিরাপত্তা — দায়িত্ব আমাদের (সহকর্মী, ২০২৬-০৯-২৯: "নিরাপত্তায় অভিজ্ঞতা নেই, দায়িত্ব আপনার")
 
-- সহকর্মীর ভাগে কেবল একটা কমান্ড: `bash scripts/deploy-security.sh` (নিয়ম + Razorpay webhook ও যাচাই-ফাংশন,
+- সহকর্মীর ভাগে কেবল একটা কমান্ড: `bash scripts/deploy-security.sh` — **Google Cloud Shell-এ** (`git clone` করে), Termux-এ নয়: Termux-এ ফাংশন-ধাপ "env: 'node': Permission denied"-এ থামে (২০২৬-০৯-৩০; Cloud Shell-এ তিন ফাংশনই সফল) (নিয়ম + Razorpay webhook ও যাচাই-ফাংশন,
   প্রতিটি ধাপ বাংলায়, ব্যর্থ হলে থামে)। নতুন নিরাপত্তা-কাজও এই স্ক্রিপ্টেই যোগ করুন, ধাপ বাড়িয়ে নয়।
 - `firestore.rules` বদলালে `scripts/verify-firestore-rules.js` **emulator-এ** চালান (পুরনো নিয়মে লাল দেখে)।
 - `purchases` (সাইটের কেনা সাধারণ PDF-এর খাতা) — create-এ uid নিজের/null, update কেবল null→নিজের uid (claim)। PDF নয়, জন্মতথ্য; টাকার প্রমাণও নয়।
